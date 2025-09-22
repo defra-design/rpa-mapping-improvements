@@ -1,0 +1,37 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Register land request submitted – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ govukPanel({
+        titleText: "Request submitted",
+        html: "Your submission ID<br><strong>1745 839 186</strong>"
+      }) }}
+
+      <h2 class="govuk-heading-m">
+        What happens next
+      </h2>
+
+      <p>
+        We will aim to action your request within 5 working days. This may take longer if we need to contact you for more information.
+      </p>
+
+      <p>
+        The registered land parcel will only appear on your land maps after the effective date of change. If your request concerns a date in the future, the land parcel will appear after that date. 
+      </p>
+      <p>
+        <a href="#">
+          Return to business overview
+      </p>
+
+
+    </div>
+  </div>
+
+{% endblock %}

@@ -1,0 +1,215 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Business overview – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back to your businesses",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Business overview
+      </h1>
+
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Details</h2>
+      <p class="govuk-!-margin-bottom-2">Address: Old Hall, Garnetts, Hardwick, Cirencester, CA16 6NR</p>
+
+      <p class="govuk-!-margin-bottom-2">Email: ajr@sgninnejal.com.test</p>
+      <p class="govuk-!-margin-bottom-2">Landline: 01234895207</p>
+      <p class="govuk-!-margin-bottom-2">Mobile: 01234895206</p>
+
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">View and amend your business details</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">View and amend your bank details</a></li>
+      </ul>
+
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Contents</h2>
+      <ul class="govuk-list govuk-list--spaced">
+        <li>
+          <a class="govuk-link govuk-link--no-visited-state" href="#permission">Give people permission to act for this business</a>
+        </li>
+        <li>
+          <a class="govuk-link govuk-link--no-visited-state" href="#biz-summary">Business summary</a>
+        </li>
+        <li>
+          <a class="govuk-link govuk-link--no-visited-state" href="#land">Land</a>
+        </li>
+        <li>
+          <a class="govuk-link govuk-link--no-visited-state" href="#sfi">Apply for the Expanded Sustainable Farming Incentive (SFI) Offer</a>
+        </li>
+        <li>
+          <a class="govuk-link govuk-link--no-visited-state" href="#sfi2023">Sustainable Farming Incentive 2023</a>
+        </li>
+        <li>
+          <a class="govuk-link govuk-link--no-visited-state" href="#payment">Basic Payment Scheme</a>
+        </li>
+        <li>
+          <a class="govuk-link govuk-link--no-visited-state" href="#delinked">Delinked Payments</a>
+        </li>
+        <li>
+          <a class="govuk-link govuk-link--no-visited-state" href="#stewardship">Countryside Stewardship</a>
+        </li>
+      </ul>
+
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="permission">Give people permission to act for this business</h2>
+
+      <p>This permission allows someone (including agents) to act for this business in the Rural Payments service. Choose a name from the list below to see their permission levels.</p>
+
+      {% from "govuk/components/table/macro.njk" import govukTable %}
+
+      {{ govukTable({
+        firstCellIsHeader: true,
+        head: [
+          {
+            text: "Full Name"
+          },
+          {
+            text: "Relationship"
+          }
+        ],
+        rows: [
+          [
+            {
+              text: "Geoffrey Baker"
+            },
+            {
+              text: "Business Partner"
+            }
+          ],
+          [
+            {
+              text: "Janice Johnson"
+            },
+            {
+              text: "Agent"
+            }
+          ],
+          [
+            {
+              text: "Catherine McAll-Kersting"
+            },
+            {
+              text: "Agent"
+            }
+          ],
+          [
+            {
+              text: "Henry Ward"
+            },
+            {
+              text: "Agent"
+            }
+          ]
+        ]
+      }) }}
+
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Add people</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Add people from a firm of agents</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Remove people</a></li>
+      </ul>
+
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="biz-summary">Business summary</h2>
+      <p>Check and print the details we have for your business. These include business details, entitlements, land and land use details and any common land rights you have.</p>
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Business summary</a></li>
+      </ul>
+
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="land">Land</h2>
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">View or print land</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="register-land-start">Register land</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Transfer land</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Change land maps</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Change land use</a></li>
+      </ul>
+
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="sfi">Apply for the Expanded Sustainable Farming Incentive (SFI) Offer</h2>
+
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Apply for the Expanded Sustainable Farming Incentive (SFI) Offer</a></li>
+      </ul>
+
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="sfi2023">Sustainable Farming Incentive 2023</h2>
+
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Sustainable Farming Incentive 2023</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Pilot Sustainable Farming Incentive</a></li>
+      </ul>
+
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="payment">Basic Payment Scheme</h2>
+
+      <p>Check what entitlements you have for the Basic Payment Scheme or view past applications.</p>
+
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">View entitlements</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">View a previous BPS application</a></li>
+      </ul>
+
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="delinked">Delinked Payments</h2>
+
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">View and transfer reference data</a></li>
+      </ul>
+
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="stewardship">Countryside Stewardship</h2>
+
+      <p>Find out which Countryside Stewardship options best suit your farm, apply to join the scheme and submit your claims.</p>
+
+      <ul class="govuk-list govuk-list--spaced">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Countryside Stewardship options finder tool</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Countryside Stewardship Mid Tier Applications</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Countryside Stewardship applications</a></li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="#">Countryside Stewardship claims</a></li>
+      </ul>
+
+
+
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+
+  
+
+{% endblock %}
