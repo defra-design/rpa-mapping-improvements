@@ -1,7 +1,7 @@
 {% extends "layouts/main.html" %}
 
 {% block pageTitle %}
-  The land parcel is registered on the Rural Payments service – {{ serviceName }} – GOV.UK Prototype Kit
+ Register new land parcel on the Rural Payments service – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
 {% block beforeContent %}
@@ -18,17 +18,17 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        The land parcel is registered on the Rural Payments service
+        Register new land parcel on the Rural Payments service
       </h1>
 
       <h2 class="govuk-heading-m">
-        Parcel ID - TL42570684
+        Parcel ID - CS07717013
       </h2>
 
       {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
       {{ govukInsetText({
-        html: "<p>The land parcel you entered is already registered on the Rural Payments service.</p><p>Register this land parcel to your business.</p>"
+        html: "<p>You will need to provide an annotated map, or sketch map.</p>"
       }) }}
 
       <form method="post">
