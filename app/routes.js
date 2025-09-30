@@ -58,10 +58,10 @@ router.post("/know-parcel-id", function (req, res) {
 // });
 
 router.post("/enter-parcel-id", function (req, res) {
-  if (req.session.data["parcelID"] == "TL42570684") {
+  if (req.session.data["parcelID"] == "TL4257 0684") {
     res.redirect("parcel-is-registered");
   }
-    else if (req.session.data["parcelID"] == "CS07717013") {
+    else if (req.session.data["parcelID"] == "CS0771 7013") {
     res.redirect("parcel-is-new");
     }
     else {
@@ -128,7 +128,7 @@ router.post("/upload-land-parcel-map", function (req, res) {
 // });
 
 router.post("/find-parcel-id", function (req, res) {
-  if (req.session.data["foundParcelID"] == "TL42570684") {
+  if (req.session.data["foundParcelID"] == "TL4257 0684") {
     res.redirect("parcel-is-registered");
   } else {
     res.redirect("parcel-is-not-registered");
@@ -144,7 +144,7 @@ router.post("/estimate-parcel-ID", function (req, res) {
 });
 
 router.post("/check-if-parcel-id-registered", function (req, res) {
-  if (req.session.data["foundParcelID"] == "TL42570684") {
+  if (req.session.data["foundParcelID"] == "TL4257 0684") {
     res.redirect("parcel-is-registered");
   } else {
     res.redirect("parcel-is-not-registered");
