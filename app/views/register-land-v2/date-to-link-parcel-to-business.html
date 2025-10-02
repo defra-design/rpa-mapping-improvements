@@ -1,0 +1,53 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Enter the date you want to link the land parcel to your business – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <form method="post">
+
+        {% from "govuk/components/date-input/macro.njk" import govukDateInput %}
+
+        {{ govukDateInput({
+        id: "date-to-link",
+        namePrefix: "date-to-link",
+        fieldset: {
+            legend: {
+            html: "<span class='govuk-caption-l'>AR FIELDING</span>Enter the date you want to link the land parcel to your business",
+            isPageHeading: true,
+            classes: "govuk-fieldset__legend--l"
+            }
+        },
+        formGroup: {
+        beforeInputs: {
+            html: "<p class='govuk-body'>The effective date of change can be up to:</p>
+                    <ul class='govuk-list govuk-list--bullet'>
+                    <li>12 months in the past</li>
+                    <li>3 months in the future</li>
+                    </ul><div class='govuk-hint'>For example, 27 3 2007</div>"
+        }
+        }
+        }) }}
+              {{ govukButton({
+                text: "Continue"
+              }) }}
+      </form>
+
+
+
+    </div>
+  </div>
+
+{% endblock %}

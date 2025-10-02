@@ -1,0 +1,43 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Register land Declaration– {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Declaration
+      </h1>
+
+      {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+      {{ govukInsetText({
+        html: "<p>By submitting this request, I confirm that I am the land owner or have permission of the land owner to link my business to the registered land parcel.</p><p>The information provided in this request is true, accurate and complete to the best of my knowledge.</p>"
+      }) }}
+
+      {% from "govuk/components/button/macro.njk" import govukButton %}
+
+      <form method="post">
+
+      {{ govukButton({
+        text: "Register land"
+      }) }}
+
+      </form>
+
+    </div>
+  </div>
+
+{% endblock %}

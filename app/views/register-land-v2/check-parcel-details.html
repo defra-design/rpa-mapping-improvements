@@ -1,0 +1,151 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Check parcel details before submitting – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds-from-desktop">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Check parcel details before submitting
+      </h1>
+
+      <!-- <p>{{ data | dump }}</p> -->
+
+      {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+      
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: {
+              text: "Parcel ID"
+            },
+            value: {
+              text: "TL42570684"
+            },
+            actions: {
+              items: [
+                {
+                  href: "#",
+                  text: "Change",
+                  visuallyHiddenText: "Question 1"
+                }
+              ]
+            }
+          }
+          ,
+          {
+            key: {
+              text: "Effective from date"
+            },
+            value: {
+              html: data | isoDateFromDateInput('date-to-link') | govukDate
+            },
+            actions: {
+              items: [
+                {
+                  href: "#",
+                  text: "Change",
+                  visuallyHiddenText: "Question 2"
+                }
+              ]
+            }
+          }
+        ]
+      }) }}
+
+            <!-- {% for item in data['parcel-choices'] %}
+            <ul>
+              <li>{{item.registered}}</li>
+              <li>{{item.know}}</li>
+              <li>{{item.id}}</li>
+              <li>{{item.day}}</li>
+              <li>{{item.month}}</li>
+              <li>{{item.year}}</li>
+              <li></li>
+            </ul>
+            {% endfor %} -->
+
+<!-- <ul>
+{% for id in currentParcelChoices %}
+  <li>{{ id }}</li>
+{% else %}
+  <li>This would display if the 'item' collection were empty</li>
+{% endfor %}
+</ul> -->
+
+        <!-- <ul>
+          {% for name, item in items %}
+              <li>{{ name }}: {{ item }}</li>
+          {% endfor %}
+        </ul> -->
+
+      <!-- <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">
+            Parcel ID
+          </dt>
+          <dd class="govuk-summary-list__value">
+            TL42570684
+          </dd>
+          <dd class="govuk-summary-list__actions">
+            <a class="govuk-link" href="#">Change<span class="govuk-visually-hidden"> name</span></a>
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">
+            Effective from date
+          </dt>
+          <dd class="govuk-summary-list__value">
+            {{ data | isoDateFromDateInput('date-to-link') | govukDate }}
+          </dd>
+          <dd class="govuk-summary-list__actions">
+            <a class="govuk-link" href="#">Change<span class="govuk-visually-hidden"> date of birth</span></a>
+          </dd>
+        </div>
+      </dl> -->
+
+      {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+      <form method="post">
+        
+      {{ govukRadios({
+        name: "registerAnotherParcel",
+        fieldset: {
+          legend: {
+            text: "Do you want to register another land parcel?",
+            isPageHeading: false,
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        items: [
+          {
+            value: "yes",
+            text: "Yes"
+          },
+          {
+            value: "no",
+            text: "No"
+          }
+        ]
+      }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+    </form>
+
+    </div>
+  </div>
+{% endblock %}

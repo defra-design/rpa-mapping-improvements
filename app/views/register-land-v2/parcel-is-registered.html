@@ -1,0 +1,43 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  The land parcel is registered on the Rural Payments service – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        The land parcel is registered on the Rural Payments service
+      </h1>
+
+      <h2 class="govuk-heading-m">
+        Parcel ID - TL4257 0684
+      </h2>
+
+      {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+      {{ govukInsetText({
+        html: "<p>The land parcel you entered is already registered on the Rural Payments service.</p><p>Register this land parcel to your business.</p>"
+      }) }}
+
+      <form method="post">
+        {{ govukButton({
+            text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+
+{% endblock %}

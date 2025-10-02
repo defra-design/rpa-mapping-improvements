@@ -1,0 +1,59 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Do you know the Parcel ID? – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <!-- <p>{{ data | dump }}</p> -->
+
+      <form method="post">
+        {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+        {{ govukRadios({
+          name: "knowParcelID",
+          fieldset: {
+            legend: {
+              html: "<span class='govuk-caption-l'>AR FIELDING</span>Do you know the Parcel ID?",
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          formGroup: {
+            beforeInputs: {
+              html: "<p>The Parcel ID is the unique identifier of a land parcel. It is made up of the Ordnance Survey (OS) sheet reference (2 letters and 4 numbers) and National Grid field number (4 numbers), for example, SP4178 2432.</p><div class='govuk-hint'>Select one option</div>"
+            }
+          },
+          items: [
+            {
+              value: "yes",
+              text: "Yes"
+            },
+            {
+              value: "no",
+              text: "No"
+            }
+          ]
+        }) }}
+              {{ govukButton({
+                text: "Continue"
+              }) }}
+      </form>
+
+
+
+    </div>
+  </div>
+
+{% endblock %}
