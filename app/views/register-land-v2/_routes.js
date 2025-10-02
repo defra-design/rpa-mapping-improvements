@@ -28,22 +28,44 @@ router.post("/register-land-v2/parcel-registered", function (req, res) {
 //   }
 // });
 
+// router.post("/register-land-v2/know-parcel-id", function (req, res) {
+//   if (req.session.data["parcelRegistered"] == "yes" && req.session.data["knowParcelID"] == "yes" || req.session.data["parcelRegistered"] == "no" && req.session.data["knowParcelID"] == "yes") {
+//     res.redirect("enter-parcel-id");
+//   }
+//     else if (req.session.data["parcelRegistered"] == "yes" && req.session.data["knowParcelID"] == "no") {
+//     res.redirect("find-parcel-id");
+//   }
+
+//     else if (req.session.data["parcelRegistered"] == "no" && req.session.data["knowParcelID"] == "no") {
+//     res.redirect("estimate-parcel-id");
+//   }
+
+// });
+
 router.post("/register-land-v2/know-parcel-id", function (req, res) {
-  if (req.session.data["parcelRegistered"] == "yes" && req.session.data["knowParcelID"] == "yes" || req.session.data["parcelRegistered"] == "no" && req.session.data["knowParcelID"] == "yes") {
+  if (req.session.data["knowParcelID"] == "yes") {
     res.redirect("enter-parcel-id");
-  }
-    // if (req.session.data["parcelRegistered"] == "no" && req.session.data["knowParcelID"] == "yes") {
-    // res.redirect("enter-parcel-id");
-    // }
-    else if (req.session.data["parcelRegistered"] == "yes" && req.session.data["knowParcelID"] == "no") {
+  } else {
     res.redirect("find-parcel-id");
   }
-
-    else if (req.session.data["parcelRegistered"] == "no" && req.session.data["knowParcelID"] == "no") {
-    res.redirect("estimate-parcel-id");
-  }
-
 });
+
+// router.post("/register-land-v2/know-parcel-id", function (req, res) {
+//   if (req.session.data["parcelRegistered"] == "yes" && req.session.data["knowParcelID"] == "yes" || req.session.data["parcelRegistered"] == "no" && req.session.data["knowParcelID"] == "yes") {
+//     res.redirect("enter-parcel-id");
+//   }
+//     // if (req.session.data["parcelRegistered"] == "no" && req.session.data["knowParcelID"] == "yes") {
+//     // res.redirect("enter-parcel-id");
+//     // }
+//     else if (req.session.data["parcelRegistered"] == "yes" && req.session.data["knowParcelID"] == "no") {
+//     res.redirect("find-parcel-id");
+//   }
+
+//     else if (req.session.data["parcelRegistered"] == "no" && req.session.data["knowParcelID"] == "no") {
+//     res.redirect("estimate-parcel-id");
+//   }
+
+// });
 
 // router.post("/enter-parcel-id", function (req, res) {
 //   res.redirect("parcel-is-registered");
@@ -135,8 +157,12 @@ router.post("/register-land-v2/find-parcel-id", function (req, res) {
   }
 });
 
+// router.post("/register-land-v2/parcel-is-new", function (req, res) {
+//   res.redirect("upload-land-parcel-map");
+// });
+
 router.post("/register-land-v2/parcel-is-new", function (req, res) {
-  res.redirect("upload-land-parcel-map");
+  res.redirect("find-parcel-id");
 });
 
 router.post("/register-land-v2/estimate-parcel-ID", function (req, res) {

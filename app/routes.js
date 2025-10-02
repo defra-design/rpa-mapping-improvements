@@ -13,7 +13,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// Sprint routes setup
+// Routes setup
 const rl1 = require("./views/register-land-v1/_routes");
 router.use("register-land-v1", rl1);
 
