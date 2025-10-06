@@ -127,7 +127,7 @@ router.post("/register-land-v2/check-parcel-details", function (req, res) {
 
 
   if (req.session.data["registerAnotherParcel"] == "yes") {
-    res.redirect("parcel-registered");
+    res.redirect("know-parcel-id");
   } else if (req.session.data["registerAnotherParcel"] == "no") {
     res.redirect("register-land-declaration");
   }

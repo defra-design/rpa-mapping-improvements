@@ -23,7 +23,7 @@
       <!-- <p>{{ data | dump }}</p> -->
 
       {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
-      
+      {% for item in data['parcel-choices'] %}
       {{ govukSummaryList({
         rows: [
           {
@@ -31,12 +31,12 @@
               text: "Parcel ID"
             },
             value: {
-              text: "TL42570684"
+              text: item.id
             },
             actions: {
               items: [
                 {
-                  href: "#",
+                  href: "know-parcel-id",
                   text: "Change",
                   visuallyHiddenText: "Question 1"
                 }
@@ -54,7 +54,7 @@
             actions: {
               items: [
                 {
-                  href: "#",
+                  href: "date-to-link-parcel-to-business",
                   text: "Change",
                   visuallyHiddenText: "Question 2"
                 }
@@ -63,6 +63,7 @@
           }
         ]
       }) }}
+      {% endfor %}
 
             <!-- {% for item in data['parcel-choices'] %}
             <ul>
@@ -70,7 +71,7 @@
               <li>{{item.know}}</li>
               <li>{{item.id}}</li>
               <li>{{item.day}}</li>
-              <li>{{item.month}}</li>
+              <li>{{item.month | monthName }}</li>
               <li>{{item.year}}</li>
               <li></li>
             </ul>

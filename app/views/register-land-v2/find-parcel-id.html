@@ -18,10 +18,10 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        Find the Parcel ID
+        Find or estimate the Parcel ID
       </h1>
 
-        <p class="govuk-body">To find the land parcel on a map either:</p>
+        <p class="govuk-body">To find or estimate the land parcel on a map either:</p>
         <ul class="govuk-list govuk-list--bullet">
             <li>use the +/- icons or keyboard controls to zoom in and out of the map</li>
             <li>search by location, for example, the nearest city, town or postcode</li>
@@ -41,7 +41,8 @@
             hint: {
                 text: "Enter a location or postcode"
             },
-            value: "",
+            value: "CS0771 7013",
+            disabled: true,
             id: "found-parcel-id",
             name: "foundParcelID"
             }) }}
@@ -54,6 +55,12 @@
             }) }}
 
         <iframe class="govuk-!-margin-bottom-6" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d5734071.448819131!2d-4.435451460821117!3d53.83619188322447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2suk!4v1758722248015!5m2!1sen!2suk" width="600" height="750" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+        {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+        {{ govukInsetText({
+          html: "<span class='govuk-body govuk-!-font-weight-bold'>Parcel ID - CS0771 7013</span>"
+        }) }}
 
       
         {{ govukButton({
