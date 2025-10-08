@@ -17,14 +17,24 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        Check parcel details before submitting
+        Check land parcel details before submitting
       </h1>
+
+<!-- <h1 class="govuk-heading-l">
+  <span class="govuk-caption-l">AR FIELDING</span>
+  Check {{ 'parcel' if data['parcel-choices'].length == 1 else 'parcels' }} details before submitting
+</h1> -->
 
       <!-- <p>{{ data | dump }}</p> -->
 
       {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
       {% for item in data['parcel-choices'] %}
       {{ govukSummaryList({
+        card: {
+          title: {
+            text: "Land parcel " + ("0" + loop.index if loop.index < 10 else loop.index)
+          }
+        },
         rows: [
           {
             key: {
@@ -47,9 +57,9 @@
           {
             key: {
               text: "Effective from date"
-            },
+            }, 
             value: {
-              html: data | isoDateFromDateInput('date-to-link') | govukDate
+              html: "today" | govukDate
             },
             actions: {
               items: [

@@ -18,18 +18,17 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        The land parcel is registered on the Rural Payments service
+        The land parcel {{ data['parcelID'] or "RD6920 2871" }} is already registered on the Rural Payments service
       </h1>
+
+      <!-- <p>{{ data | dump }}</p> 
 
       <h2 class="govuk-heading-m">
         Parcel ID - TL4257 0684
-      </h2>
+      </h2> -->
 
-      {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
-
-      {{ govukInsetText({
-        html: "<p>The land parcel you entered is already registered on the Rural Payments service.</p><p>Register this land parcel to your business.</p>"
-      }) }}
+      <!-- <p>The land parcel you entered is already registered on the Rural Payments service. Register this land parcel to your business.</p> -->
+          <p>Register this land parcel to your business.</p> 
 
       <form method="post">
         {{ govukButton({
