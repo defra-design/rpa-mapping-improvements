@@ -18,10 +18,12 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        Register new land parcel on the Rural Payments service
+        Register new land parcel {{ data['parcelID'] or "RD6920 2871" }} on the Rural Payments service
       </h1>
 
-      <h2 class="govuk-heading-m">
+      <p>You will need to provide an annotated map, or sketch map.</p>
+
+      <!-- <h2 class="govuk-heading-m">
         Parcel ID - CS0771 7013
       </h2>
 
@@ -29,7 +31,7 @@
 
       {{ govukInsetText({
         html: "<p>You will need to provide an annotated map, or sketch map.</p>"
-      }) }}
+      }) }} -->
 
       <form method="post">
         {{ govukButton({
