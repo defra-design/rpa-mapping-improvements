@@ -21,6 +21,10 @@
         Find or estimate the Parcel ID
       </h1>
 
+        <!-- <p>
+          {{ data | dump }}
+        </p> -->
+
         <p class="govuk-body">To find or estimate the land parcel on a map either:</p>
         <ul class="govuk-list govuk-list--bullet">
             <li>use the +/- icons or keyboard controls to zoom in and out of the map</li>
@@ -28,7 +32,8 @@
         </ul>
 
         <p class="govuk-body">Click on the land parcel then select Continue.</p>
-    <form method="post">
+
+        <form method="post">
             {% from "govuk/components/input/macro.njk" import govukInput %}
 
             {{ govukInput({
@@ -43,7 +48,7 @@
             },
             value: "CS0771 7013",
             disabled: false,
-            id: "found-parcel-id",
+            id: "parcelID",
             name: "parcelID"
             }) }}
 
