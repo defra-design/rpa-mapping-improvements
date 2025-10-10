@@ -86,7 +86,7 @@ router.post("/register-land-v2/register-land-declaration", function (req, res) {
 // If parcel not send to map to estimate parcel ID
 
 router.post("/register-land-v2/parcel-is-not-registered", function (req, res) {
-  res.redirect("find-parcel-ID");
+  res.redirect("find-parcel-id");
 });
 
 // When map uploaded send to date to link parcel to business
