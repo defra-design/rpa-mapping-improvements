@@ -20,44 +20,56 @@
         Check land parcel details before submitting
       </h1>
 
-<!-- <h1 class="govuk-heading-l">
-  <span class="govuk-caption-l">AR FIELDING</span>
-  Check {{ 'parcel' if data['parcel-choices'].length == 1 else 'parcels' }} details before submitting
-</h1> -->
-
       <!-- <p>{{ data | dump }}</p> -->
 
       {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
-      {% for item in data['parcel-choices'] %}
-      {{ govukSummaryList({
-        card: {
-          title: {
-            text: "Land parcel " + ("0" + loop.index if loop.index < 10 else loop.index)
-          }
-        },
-        rows: [
-          {
-            key: {
-              text: "Parcel ID"
-            },
-            value: {
-              text: item.id
-            },
-            actions: {
-              items: [
-                {
-                  href: "know-parcel-id",
-                  text: "Change",
-                  visuallyHiddenText: "Question 1"
-                }
-              ]
-            }
-          }
-          ,
-          {
+        {% for item in data['parcel-choices'] %}
+          {% set summaryRows = [] %}
+          
+          {% if item.id %}
+            {% set summaryRows = summaryRows.concat([{
+              key: {
+                text: "Parcel ID"
+              },
+              value: {
+                text: item.id
+              },
+              actions: {
+                items: [
+                  {
+                    href: "know-parcel-id",
+                    text: "Change",
+                    visuallyHiddenText: "Land parcel ID"
+                  }
+                ]
+              }
+            }]) %}
+          {% endif %}
+          
+          {% if item.map %}
+            {% set summaryRows = summaryRows.concat([{
+              key: {
+                text: "Map"
+              },
+              value: {
+                text: item.map
+              },
+              actions: {
+                items: [
+                  {
+                    href: "upload-land-parcel-map",
+                    text: "Change",
+                    visuallyHiddenText: "land parcel map"
+                  }
+                ]
+              }
+            }]) %}
+          {% endif %}
+          
+          {% set summaryRows = summaryRows.concat([{
             key: {
               text: "Effective from date"
-            }, 
+            },
             value: {
               html: "today" | govukDate
             },
@@ -66,65 +78,30 @@
                 {
                   href: "date-to-link-parcel-to-business",
                   text: "Change",
-                  visuallyHiddenText: "Question 2"
+                  visuallyHiddenText: "date to link parcel to business"
                 }
               ]
             }
-          }
-        ]
-      }) }}
-      {% endfor %}
-
-            <!-- {% for item in data['parcel-choices'] %}
-            <ul>
-              <li>{{item.registered}}</li>
-              <li>{{item.know}}</li>
-              <li>{{item.id}}</li>
-              <li>{{item.day}}</li>
-              <li>{{item.month | monthName }}</li>
-              <li>{{item.year}}</li>
-              <li></li>
-            </ul>
-            {% endfor %} -->
-
-<!-- <ul>
-{% for id in currentParcelChoices %}
-  <li>{{ id }}</li>
-{% else %}
-  <li>This would display if the 'item' collection were empty</li>
-{% endfor %}
-</ul> -->
-
-        <!-- <ul>
-          {% for name, item in items %}
-              <li>{{ name }}: {{ item }}</li>
-          {% endfor %}
-        </ul> -->
-
-      <!-- <dl class="govuk-summary-list">
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">
-            Parcel ID
-          </dt>
-          <dd class="govuk-summary-list__value">
-            TL42570684
-          </dd>
-          <dd class="govuk-summary-list__actions">
-            <a class="govuk-link" href="#">Change<span class="govuk-visually-hidden"> name</span></a>
-          </dd>
-        </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">
-            Effective from date
-          </dt>
-          <dd class="govuk-summary-list__value">
-            {{ data | isoDateFromDateInput('date-to-link') | govukDate }}
-          </dd>
-          <dd class="govuk-summary-list__actions">
-            <a class="govuk-link" href="#">Change<span class="govuk-visually-hidden"> date of birth</span></a>
-          </dd>
-        </div>
-      </dl> -->
+          }]) %}
+          
+          {{ govukSummaryList({
+            card: {
+              title: {
+                text: "Land parcel " + loop.index
+              },
+              actions: {
+                items: [
+                  {
+                    href: "delete-parcel?deleteIndex=" + loop.index0,
+                    text: "Delete parcel",
+                    visuallyHiddenText: "land parcel " + loop.index
+                  }
+                ]
+              }
+            },
+            rows: summaryRows
+          }) }}
+        {% endfor %}
 
       {% from "govuk/components/radios/macro.njk" import govukRadios %}
 

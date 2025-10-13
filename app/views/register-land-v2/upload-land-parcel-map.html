@@ -37,17 +37,18 @@
         </ul>
 
         {% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
-
+      <form method="post">
         {{ govukFileUpload({
-        id: "file-upload-1",
-        name: "fileUpload1",
+        id: "file-upload",
+        name: "fileUpload",
         label: {
-            text: "Upload a file"
+            text: "Upload a file",
+        value: "Hello World"
         },
         javascript: true
         }) }}
 
-      <form method="post">
+      
         {{ govukButton({
             text: "Continue"
         }) }}
