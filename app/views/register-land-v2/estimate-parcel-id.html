@@ -18,7 +18,7 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        Estimate the Parcel ID
+        Find the parcel ID
       </h1>
 
         <p class="govuk-body">To find the land parcel on a map either:</p>
@@ -27,16 +27,16 @@
             <li>search by location, for example, the nearest city, town or postcode</li>
         </ul>
 
-        <p class="govuk-body">Click in the middle of the land parcel to get the estimated Parcel ID. A pop up box will appear with the estimated Parcel ID.</p>
+        <p class="govuk-body">Click in the middle of the land parcel you want to register. A pop up box will appear with the estimated parcel ID. Select Continue to complete the registration.</p>
 
         {% from "govuk/components/details/macro.njk" import govukDetails %}
 
         {{ govukDetails({
         summaryText: "Why is the parcel ID an estimate?",
-        text: "The Parcel ID you give to us is a best estimate. It is made up of the Ordnance Survey (OS) 
+        text: "The parcel ID you give to us is a best estimate. It is made up of the Ordnance Survey (OS) 
             sheet reference (2 letters and 4 numbers) and National Grid field number (4 numbers), for 
-            example, SP4178 2432. It may be slightly different to the Parcel ID that we eventually 
-            register on the Rural Payments service."
+            example, SP4178 2432. It may be slightly different to the parcel ID that is eventually 
+            registered on the Rural Payments service."
         }) }}
 
         <form method="post">

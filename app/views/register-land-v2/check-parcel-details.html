@@ -17,7 +17,7 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        Check land parcel details before submitting
+        Check your answers
       </h1>
 
       <!-- <p>{{ data | dump }}</p> -->
@@ -76,7 +76,7 @@
 
           {% set summaryRows = summaryRows.concat([{
             key: {
-              text: "Effective from date"
+              text: "Effective from"
             },
             value: {
               html: dateString | govukDate
@@ -86,7 +86,7 @@
                 {
                   href: "date-to-link-parcel-to-business?editIndex=" + loop.index0,
                   text: "Change",
-                  visuallyHiddenText: "effective from date"
+                  visuallyHiddenText: "effective from"
                 }
               ]
             }
@@ -119,7 +119,7 @@
         name: "registerAnotherParcel",
         fieldset: {
           legend: {
-            text: "Do you want to register another land parcel?",
+            text: "Do you want to register any more land?",
             isPageHeading: false,
             classes: "govuk-fieldset__legend--m"
           }
