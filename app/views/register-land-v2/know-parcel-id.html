@@ -32,15 +32,12 @@
           },
           formGroup: {
             beforeInputs: {
-              html: "
-                <p class="govuk-body">The parcel ID is the unique identifier of a land parcel. It is made up of the:</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>Ordnance Survey sheet reference (2 letters and 4 numbers)</li>
-        <li>National Grid field number (4 numbers)</li>
-      </ul>
-<p>
-      For example, SP4178 2432.
-      </p>
+              html: "<p class='govuk-body'>The parcel ID is the unique identifier of a land parcel. It is made up of the:</p>
+                        <ul class='govuk-list govuk-list--bullet'>
+                          <li>Ordnance Survey sheet reference (2 letters and 4 numbers)</li>
+                          <li>National Grid field number (4 numbers)</li>
+                        </ul>
+                      <p>For example, SP4178 2432.</p>
                 <div class='govuk-hint'>Select one option</div>"
             }
           },
@@ -51,7 +48,10 @@
             },
             {
               value: "no",
-              text: "No"
+              text: "No",
+              hint: {
+                text: "You’ll be able to find this out"
+              }
             }
           ]
         }) }}

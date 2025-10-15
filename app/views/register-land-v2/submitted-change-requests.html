@@ -17,17 +17,64 @@
     <div class="govuk-grid-column-two-thirds">
 
       <h1 class="govuk-heading-l">
+        <span class='govuk-caption-l'>AR FIELDING</span>
         Submitted change requests
       </h1>
 
-      <p>
-        This is a paragraph of text. It explains in more detail what has happened and wraps across several lines.
-      </p>
+      <h2 class="govuk-heading-m">
+        Submission ID 1745 839 186
+      </h2>
 
-      <p>
-        Read more <a href="/path/of/page">about this topic</a>.
-      </p>
+      {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
+      {% if data['parcel-choices'] %}
+        {% set parcelIDs = '' %}
+        
+        {% for item in data['parcel-choices'] %}
+          {% if loop.first %}
+            {% set parcelIDs = item.id %}
+          {% else %}
+            {% set parcelIDs = parcelIDs + ' / ' + item.id %}
+          {% endif %}
+        {% endfor %}
+
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: {
+              text: "Date submitted"
+            },
+            value: {
+              html: "today" | govukDate
+            }
+          },
+          {
+            key: {
+              text: "Journey name"
+            },
+            value: {
+              text: "Register land"
+            }
+          },
+          {
+            key: {
+              text: "Land parcels"
+            },
+            value: {
+              text: parcelIDs
+            }
+          },
+          {
+            key: {
+              text: "Date of change"
+            },
+            value: {
+              html: "today" | govukDate
+            }
+          }
+        ]
+      }) }}
+    {% endif %}
     </div>
   </div>
 
