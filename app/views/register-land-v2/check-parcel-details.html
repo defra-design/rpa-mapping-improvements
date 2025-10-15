@@ -37,7 +37,7 @@
               actions: {
                 items: [
                   {
-                    href: "know-parcel-id",
+                    href: "edit-parcel-id?editIndex=" + loop.index0,
                     text: "Change",
                     visuallyHiddenText: "Land parcel ID"
                   }
@@ -57,28 +57,36 @@
               actions: {
                 items: [
                   {
-                    href: "upload-land-parcel-map",
+                    href: "edit-map?editIndex=" + loop.index0,
                     text: "Change",
-                    visuallyHiddenText: "land parcel map"
+                    visuallyHiddenText: "map"
                   }
                 ]
               }
             }]) %}
           {% endif %}
           
+          {% if item.day and item.month and item.year %}
+            {% set paddedDay = ("0" + item.day) if item.day | string | length == 1 else item.day %}
+            {% set paddedMonth = ("0" + item.month) if item.month | string | length == 1 else item.month %}
+            {% set dateString = item.year + "-" + paddedMonth + "-" + paddedDay %}
+          {% else %}
+            {% set dateString = "today" %}
+          {% endif %}
+
           {% set summaryRows = summaryRows.concat([{
             key: {
               text: "Effective from date"
             },
             value: {
-              html: "today" | govukDate
+              html: dateString | govukDate
             },
             actions: {
               items: [
                 {
-                  href: "date-to-link-parcel-to-business",
+                  href: "date-to-link-parcel-to-business?editIndex=" + loop.index0,
                   text: "Change",
-                  visuallyHiddenText: "date to link parcel to business"
+                  visuallyHiddenText: "effective from date"
                 }
               ]
             }
