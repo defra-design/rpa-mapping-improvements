@@ -1,5 +1,7 @@
 {% extends "layouts/main.html" %}
 
+{% set excludeBackLink = true %}
+
 {% block pageTitle %}
   Register land request submitted – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
@@ -25,16 +27,15 @@
       <p>
         The registered land parcel will only appear on your land maps after the effective date of change. If your request concerns a date in the future, the land parcel will appear after that date. 
       </p>
-      <p>
-        <a href="business-overview">
-          Return to business overview
-      </p>
-      <p>
-        <a href="submitted-change-requests">
-          Submitted change requests
-      </p>
 
-
+      <ul class="govuk-list">
+        <li>
+          <a class="govuk-link" href="business-overview">Return to business overview</a>
+        </li>
+        <li>
+          <a class="govuk-link" href="submitted-change-requests">Submitted change requests</a>
+        </li>
+      </ul>
     </div>
   </div>
 

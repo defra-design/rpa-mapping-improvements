@@ -12,21 +12,19 @@
 {% endblock %}
 
 {% block content %}
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-
       <h1 class="govuk-heading-l">
         <span class='govuk-caption-l'>AR FIELDING</span>
         Submitted change requests
       </h1>
-
+      
       <h2 class="govuk-heading-m">
         Submission ID 1745 839 186
       </h2>
-
+      
       {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
-
+      
       {% if data['parcel-choices'] %}
         {% set parcelIDs = '' %}
         
@@ -37,45 +35,123 @@
             {% set parcelIDs = parcelIDs + ' / ' + item.id %}
           {% endif %}
         {% endfor %}
+        
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: {
+                text: "Date submitted"
+              },
+              value: {
+                html: "today" | govukDate
+              }
+            },
+            {
+              key: {
+                text: "Journey name"
+              },
+              value: {
+                text: "Register land"
+              }
+            },
+            {
+              key: {
+                text: "Land parcels"
+              },
+              value: {
+                text: parcelIDs
+              }
+            },
+            {
+              key: {
+                text: "Date of change"
+              },
+              value: {
+                html: "today" | govukDate
+              }
+            }
+          ]
+        }) }}
+      {% else %}
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: {
+                text: "Date submitted"
+              },
+              value: {
+                html: "today" | govukDate
+              }
+            },
+            {
+              key: {
+                text: "Journey name"
+              },
+              value: {
+                text: "Register land"
+              }
+            },
+            {
+              key: {
+                text: "Land parcels"
+              },
+              value: {
+                text: "TL4257 0684 / CS0771 7013 / RD6920 2871"
+              }
+            },
+            {
+              key: {
+                text: "Date of change"
+              },
+              value: {
+                html: "today" | govukDate
+              }
+            }
+          ]
+        }) }}
 
-      {{ govukSummaryList({
-        rows: [
-          {
-            key: {
-              text: "Date submitted"
+      <h2 class="govuk-heading-m">
+        Submission ID 0802 197 169
+      </h2>
+
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: {
+                text: "Date submitted"
+              },
+              value: {
+                html: "09 September 2025"
+              }
             },
-            value: {
-              html: "today" | govukDate
-            }
-          },
-          {
-            key: {
-              text: "Journey name"
+            {
+              key: {
+                text: "Journey name"
+              },
+              value: {
+                text: "Register land"
+              }
             },
-            value: {
-              text: "Register land"
-            }
-          },
-          {
-            key: {
-              text: "Land parcels"
+            {
+              key: {
+                text: "Land parcels"
+              },
+              value: {
+                text: "TL4257 0684 / CS0771 7013 / RD6920 2871"
+              }
             },
-            value: {
-              text: parcelIDs
+            {
+              key: {
+                text: "Date of change"
+              },
+              value: {
+                html: "01 September 2025"
+              }
             }
-          },
-          {
-            key: {
-              text: "Date of change"
-            },
-            value: {
-              html: "today" | govukDate
-            }
-          }
-        ]
-      }) }}
-    {% endif %}
+          ]
+        }) }}
+
+      {% endif %}
     </div>
   </div>
-
 {% endblock %}

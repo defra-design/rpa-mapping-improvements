@@ -2,41 +2,53 @@
 For guidance on how to use layouts see:
 https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
 #}
-
 {% extends "govuk-prototype-kit/layouts/govuk-branded.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
 
 {% block header %}
+  {{ govukHeader() }}
+  {{ govukServiceNavigation({
+    serviceName: serviceName
+  })}}
+{% endblock %}
 
-    {{ govukHeader() }}
-    {{ govukServiceNavigation({
-        serviceName: serviceName
-    })}}
-
+{% block beforeContent %}
+  {% if not excludeBeforeContent %}
+    {{ govukPhaseBanner({
+      tag: {
+        text: "Alpha"
+      },
+      html: 'This is a new service. Help us improve it and <a class="govuk-link" href="#">give your feedback by email</a>.'
+    }) }}
+    {% if not excludeBackLink %}
+      {{ govukBackLink({
+        text: "Back",
+        href: "javascript:window.history.back()"
+      }) }}
+    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block footer %}
- {{ govukFooter({
-   meta: {
-     items: [
-       {
-         href: "/privacy",
-         text: "Privacy policy"
-       },
-       {
-         href: "/manage-prototype",
-         text: "Manage your prototype"
-       },
-       {
-         href: "/manage-prototype/clear-data",
-         text: "Clear data"
-       }
-     ],
-     visuallyHiddenTitle: "Footer links",
-
-     html: '<span class="govuk-!-font-weight-bold">Land parcel IDs</span><br>Registered: TL4257 0684<br>New: CS0771 7013<br>Not registered: RD6920 2871'
-   }
- }) }}
+  {{ govukFooter({
+    meta: {
+      items: [
+        {
+          href: "/privacy",
+          text: "Privacy policy"
+        },
+        {
+          href: "/manage-prototype",
+          text: "Manage your prototype"
+        },
+        {
+          href: "/manage-prototype/clear-data",
+          text: "Clear data"
+        }
+      ],
+      visuallyHiddenTitle: "Footer links",
+      html: '<span class="govuk-!-font-weight-bold">Land parcel IDs</span><br>Registered: TL4257 0684<br>New: CS0771 7013<br>Not registered: RD6920 2871'
+    }
+  }) }}
 {% endblock %}
-
-
