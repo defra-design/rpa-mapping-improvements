@@ -41,7 +41,7 @@
             hint: {
                 text: "Enter a location or postcode"
             },
-            value: "CS0771 7013",
+            value: data['parcelID'],
             disabled: false,
             id: "parcelID",
             name: "parcelID"
@@ -58,9 +58,14 @@
 
         {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
-        {{ govukInsetText({
-          html: "<span class='govuk-body govuk-!-font-weight-bold'>Parcel ID - CS0771 7013</span>"
+        {{ govukInsetText({ 
+          text: "Parcel ID - " + data['parcelID'],
+          classes: "govuk-!-font-weight-bold"
         }) }}
+
+        <p>
+    
+</p>
 
       
         {{ govukButton({

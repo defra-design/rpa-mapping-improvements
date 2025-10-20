@@ -1,5 +1,5 @@
 {
-  "serviceName": "Rural Payments Agency",
+  "serviceName": "Land and farm service",
   "plugins": {
     "govuk-frontend": {
       "rebrand": true
