@@ -11,7 +11,7 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        The land parcel {{ data['parcelID'] or "RD6920 2871" }} is already registered on the Rural Payments service
+        Do you want to register land parcel {{ data['parcelID'] or "RD6920 2871" }} to your business?
       </h1>
 
       <!-- <p>{{ data | dump }}</p> 
@@ -21,9 +21,10 @@
       </h2> -->
 
       <!-- <p>The land parcel you entered is already registered on the Rural Payments service. Register this land parcel to your business.</p> -->
-          <p>Register this land parcel to your business.</p> 
+          <p>Because this land was previously registered by another business you do not need to create a map.</p> 
 
       <form method="post">
+
         {{ govukButton({
             text: "Continue"
         }) }}
