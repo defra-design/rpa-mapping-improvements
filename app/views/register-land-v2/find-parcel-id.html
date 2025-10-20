@@ -4,6 +4,13 @@
   Find the Parcel ID – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
 {% block content %}
 
   <div class="govuk-grid-row">
@@ -11,12 +18,8 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        Find or estimate the Parcel ID
+        Find or estimate the parcel ID
       </h1>
-
-        <!-- <p>
-          {{ data | dump }}
-        </p> -->
 
         <p class="govuk-body">To find or estimate the land parcel on a map either:</p>
         <ul class="govuk-list govuk-list--bullet">
@@ -24,9 +27,8 @@
             <li>search by location, for example, the nearest city, town or postcode</li>
         </ul>
 
-        <p class="govuk-body">Click on the land parcel then select Continue.</p>
-
-        <form method="post">
+        <p class="govuk-body">Select the area you want to register, and then select Continue to link it to your business.</p>
+    <form method="post">
             {% from "govuk/components/input/macro.njk" import govukInput %}
 
             {{ govukInput({
