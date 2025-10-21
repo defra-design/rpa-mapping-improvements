@@ -24,6 +24,7 @@
         <p class="govuk-body">Select the area you want to register, and then Continue to link the land to your business.</p>
     <form method="post">
             {% from "govuk/components/input/macro.njk" import govukInput %}
+            {% from "govuk/components/button/macro.njk" import govukButton %}
 
             {{ govukInput({
             label: {
@@ -33,20 +34,20 @@
             },
             classes: "govuk-input--width-20",
             hint: {
-                text: "Enter a location or postcode"
+                text: "Search by location, for example, the nearest city, town or postcode"
             },
             value: data['parcelID'],
             disabled: false,
             id: "parcelID",
             name: "parcelID"
-            }) }}
-
-            {% from "govuk/components/button/macro.njk" import govukButton %}
+            }) }}       
 
             {{ govukButton({
             text: "Search map",
             classes: "govuk-button--secondary"
             }) }}
+
+
 
         <iframe class="govuk-!-margin-bottom-6" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d5734071.448819131!2d-4.435451460821117!3d53.83619188322447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2suk!4v1758722248015!5m2!1sen!2suk" width="600" height="750" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 
@@ -56,10 +57,6 @@
           text: "Parcel ID - " + data['parcelID'],
           classes: "govuk-!-font-weight-bold"
         }) }}
-
-        <p>
-    
-</p>
 
       
         {{ govukButton({
