@@ -71,13 +71,13 @@
     </div>
   </div>
 
-  <script>
-    document.getElementById('searchMapBtn').addEventListener('click', function() {
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-      });
+<script>
+  document.getElementById('searchMapBtn').addEventListener('click', function() {
+    window.scrollTo({
+      top: document.body.scrollHeight - 1000,  // Stop 300 pixels before the bottom
+      behavior: 'smooth'
     });
-  </script>
+  });
+</script>
 
 {% endblock %}
