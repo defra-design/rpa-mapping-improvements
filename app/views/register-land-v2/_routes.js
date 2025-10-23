@@ -434,7 +434,7 @@ router.post("/register-land-v2/find-parcel-id", function (req, res) {
       res.redirect("date-to-link-parcel-to-business")
     } else {
       // Normal add flow
-      res.redirect("parcel-is-registered")
+      res.redirect("date-to-link-parcel-to-business")
     }
   } else {
     // RD or other = not on system, needs upload

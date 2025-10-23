@@ -21,9 +21,26 @@
         Find or generate a parcel ID
       </h1>
 
-        <p class="govuk-body">Select the area you want to register, and then Continue to link the land to your business.</p>
-    <form method="post">
-            {% from "govuk/components/input/macro.njk" import govukInput %}
+      <div class="govuk-form-group govuk-!-margin-bottom-0">
+        <label class="govuk-label govuk-label--m govuk-!-margin-bottom-0" for="parcelID">
+          Search
+        </label>
+        <div id="parcelID-hint" class="govuk-hint">
+          Search by location, for example, the nearest city, town or postcode
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: flex-start;">
+          <input class="govuk-input govuk-input--width-20" id="parcelID" name="parcelID" type="text" value="{{ data['parcelID'] }}" aria-describedby="parcelID-hint">
+          {{ govukButton({
+            text: "Search map",
+            classes: "govuk-button--secondary",
+            href: "#"
+          }) }}
+        </div>
+      </div>
+
+        
+    
+            <!-- {% from "govuk/components/input/macro.njk" import govukInput %}
             {% from "govuk/components/button/macro.njk" import govukButton %}
 
             {{ govukInput({
@@ -45,24 +62,50 @@
             {{ govukButton({
             text: "Search map",
             classes: "govuk-button--secondary"
-            }) }}
+            }) }} -->
 
 
 
         <iframe class="govuk-!-margin-bottom-6" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d5734071.448819131!2d-4.435451460821117!3d53.83619188322447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2suk!4v1758722248015!5m2!1sen!2suk" width="600" height="750" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 
-        {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+        <!-- {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
         {{ govukInsetText({ 
-          text: "Parcel ID - " + data['parcelID'],
-          classes: "govuk-!-font-weight-bold"
+          text: "Parcel ID selected " + data['parcelID'],
+          classes: "govuk-!-font-weight-bold govuk-!-margin-top-0"
         }) }}
 
-      
+        <p class="govuk-body">Select the area you want to register, and then Continue to link the land to your business.</p> -->
+
+        {% if (data['parcelID'] == "CS0771 7013") %}
+
+        <h2 class="govuk-heading-m">Do you want to register land parcel CS0771 7013 to your business?</h2>
+
+        <p>Because this land was previously registered by another business you do not need to create a map.</p>
+
+            <form method="post">
+      <input type="hidden" name="parcelID" value="CS0771 7013">
         {{ govukButton({
             text: "Continue"
         }) }}
       </form>
+
+{% else %}
+
+        <h2 class="govuk-heading-m">Do you want to register land parcel RD6920 2871 to your business?</h2>
+
+        <p>Because this land has never been registered as a parcel, you need to create and upload a map of the area. For guidance, see <a href="#">Creating a sketch map to register land or update digital maps</a>.</p>
+
+            <form method="post" id="continue">
+      <input type="hidden" name="parcelID" value="RD6920 2871">
+        {{ govukButton({
+            text: "Continue"
+        }) }}
+      </form>
+
+{% endif %}
+
+
 
     </div>
   </div>
