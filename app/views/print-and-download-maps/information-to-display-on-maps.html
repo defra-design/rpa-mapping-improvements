@@ -1,0 +1,93 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Select the information you want to display on your maps – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+  text: "Back",
+  href: "javascript:window.history.back()"
+}) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <!-- <p>{{ data | dump }}</p> -->
+      <form class="form" method="post">
+
+      {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+
+      {{ govukCheckboxes({
+        name: "infoDisplayedOnMap",
+        fieldset: {
+          legend: {
+            html: "<span class='govuk-caption-l'>AR FIELDING</span>Select the information you want to display on your maps" + (" for your whole holding" if data['whatMaps'] == 'whole-holding' else ""),
+            isPageHeading: true,
+            classes: "govuk-fieldset__legend--l"
+          }
+        },
+        formGroup: {
+        beforeInputs: {
+            html: "<p class='govuk-body'>Your maps will display details of the land parcels that you have registered with the RPA (Parcel ID, boundaries, land covers).</p>
+                    <p>You can also choose to display other information:</p>
+                    <ul class='govuk-list govuk-list--bullet'>
+                        <li>about features of your surrounding area or region</li>
+                        <li>that the RPA holds about your land</li>
+                    </ul>
+                    <div class='govuk-hint'>Select all that apply</div>            
+                  "
+        }
+        },
+        items: [
+          {
+            value: "Agreements with RPA (live agreements only)",
+            text: "Agreements with RPA (live agreements only)"
+          },
+          {
+            value: "Common land",
+            text: "Common land"
+          },
+          {
+            value: "Hedgerows",
+            text: "Hedgerows"
+          },
+          {
+            value: "Land parcel area",
+            text: "Land parcel area"
+          },
+          {
+            value: "Land use",
+            text: "Land use"
+          },
+          {
+            value: "Less Favoured Areas (LFA)",
+            text: "Less Favoured Areas (LFA)"
+          },
+          {
+            value: "National boundaries",
+            text: "National boundaries"
+          },
+          {
+            value: "Regional boundaries",
+            text: "Regional boundaries"
+          },
+          {
+            value: "none",
+            text: "None", behaviour: "exclusive"
+          }
+        ]
+      }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+      </form>
+
+    </div>
+  </div>
+
+{% endblock %}

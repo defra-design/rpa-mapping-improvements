@@ -39,24 +39,24 @@
             }]) %}
           {% endif %}
           
-          {% if item.map %}
-            {% set summaryRows = summaryRows.concat([{
-              key: {
-                text: "Map"
-              },
-              value: {
-                text: item.map
-              },
-              actions: {
-                items: [
-                  {
-                    href: "edit-map?editIndex=" + loop.index0,
-                    text: "Change",
-                    visuallyHiddenText: "map"
-                  }
-                ]
-              }
-            }]) %}
+          {% if item.map or item.know == 'no' %}
+          {% set summaryRows = summaryRows.concat([{
+            key: {
+              text: "Map"
+            },
+            value: {
+              text: item.map or "map-of-land-parcel-RD69202871.pdf"
+            },
+            actions: {
+              items: [
+                {
+                  href: "edit-map?editIndex=" + loop.index0,
+                  text: "Change",
+                  visuallyHiddenText: "map"
+                }
+              ]
+            }
+          }]) %}
           {% endif %}
           
           {% if item.day and item.month and item.year %}
