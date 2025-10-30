@@ -1,14 +1,8 @@
+{% from "macros/parcel-checkbox.njk" import parcelCheckbox %}
 {% extends "layouts/main.html" %}
 
 {% block pageTitle %}
-  Question page template – {{ serviceName }} – GOV.UK Prototype Kit
-{% endblock %}
-
-{% block beforeContent %}
-  {{ govukBackLink({
-  text: "Back",
-  href: "javascript:window.history.back()"
-}) }}
+  Select one or more land parcels to download or print – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
 {% block content %}
@@ -17,16 +11,70 @@
     <div class="govuk-grid-column-two-thirds">
 
       <h1 class="govuk-heading-l">
-        Select one or more land parcel to download or print
+        <span class='govuk-caption-l'>AR FIELDING</span>
+        Select one or more land parcels to download or print
       </h1>
+    </div>
+  </div>
 
-      <form class="form" action="/path/of/next/page" method="post">
+  <div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+      <form class="form" method="post">
 
-        <p>
-          [Insert question content here - see the
-          <a href="https://design-system.service.gov.uk">GOV.UK Design System</a>
-          for examples]
-        </p>
+        {% from "govuk/components/tabs/macro.njk" import govukTabs %}
+        {% from "govuk/components/table/macro.njk" import govukTable %}
+        {% from "govuk/components/pagination/macro.njk" import govukPagination %}
+
+        {% set pastDayHtml %}
+        <h2 class="govuk-heading-m">Map</h2>
+          <iframe class="govuk-!-margin-bottom-0" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d5734071.448819131!2d-4.435451460821117!3d53.83619188322447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2suk!4v1758722248015!5m2!1sen!2suk" width="100%" height="800px" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        {% endset -%}
+
+        {% set parcelTableHtml %}
+        <h2 class="govuk-heading-m">List</h2>
+          {% include "partials/_parcel-table.njk" %}
+
+
+          {{ govukPagination({
+            next: {
+              href: "#"
+            },
+            items: [
+              {
+                number: 1,
+                current: true,
+                href: "#"
+              },
+              {
+                number: 2,
+                href: "#"
+              },
+              {
+                number: 3,
+                href: "#"
+              }
+            ]
+          }) }}
+        {% endset %}
+
+        {{ govukTabs({
+          items: [
+            {
+              label: "Map view",
+              id: "map-view",
+              panel: {
+                html: pastDayHtml
+              }
+            },
+            {
+              label: "List view",
+              id: "parcel-view",
+              panel: {
+                html: parcelTableHtml
+              }
+            }
+          ]
+        }) }}
 
         {{ govukButton({
           text: "Continue"

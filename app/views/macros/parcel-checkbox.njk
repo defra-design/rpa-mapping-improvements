@@ -1,0 +1,10 @@
+{% macro parcelCheckbox(id, value) %}
+<div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+<div class="govuk-checkboxes__item" style="margin-bottom: 0; display: flex; align-items: center; min-height: auto;">
+  <input class="govuk-checkboxes__input" id="parcel-{{ id }}" name="parcels" type="checkbox" value="{{ value }}">
+  <label class="govuk-checkboxes__label" for="parcel-{{ id }}">
+    <span class="govuk-visually-hidden">Select {{ value }}</span>
+  </label>
+</div>
+</div>
+{% endmacro %}

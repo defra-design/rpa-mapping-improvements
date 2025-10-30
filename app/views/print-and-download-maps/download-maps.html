@@ -1,0 +1,76 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  View or download {{ " a map of your whole holding" if data['whatMaps'] == 'whole-holding' else " maps of individual land parcels" }} – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+    <h1 class="govuk-heading-l">
+      <span class='govuk-caption-l'>AR FIELDING</span>
+      View or download {{ " a map of your whole holding" if data['whatMaps'] == 'whole-holding' else " maps of individual land parcels" }}
+    </h1>
+
+      <!-- <p>{{ data | dump }}</p>
+      <p>Selected parcels count: {{ selectedParcels.length if selectedParcels else 'No data' }}</p>
+<pre>{{ selectedParcels | dump }}</pre> -->
+
+      <form class="form" method="post">
+
+        <p>View a PDF map of all your land to download or print.</p>
+
+{% if data.whatMaps == "one-or-more" %}
+  <h2 class="govuk-heading-m">Selected parcels</h2>
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th scope="col" class="govuk-table__header">Parcel ID</th>
+        <th scope="col" class="govuk-table__header govuk-table__header--numeric">Total area (ha)</th>
+        <th scope="col" class="govuk-table__header">Land cover</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for parcel in selectedParcels %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">{{ parcel.parcelId }}</td>
+          <td class="govuk-table__cell govuk-table__cell--numeric">{{ parcel.area }}</td>
+          <td class="govuk-table__cell">{{ parcel.landType }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+
+        {% if data['infoDisplayedOnMap'] and data['infoDisplayedOnMap'].length > 0 %}
+          {% if 'none' in data['infoDisplayedOnMap'] %}
+            <p>You have chosen not to display any information on your maps.</p>
+          {% else %}
+            <p>You've selected the following information to be displayed on your maps:</p>
+            <ul class="govuk-list govuk-list--bullet">
+              {% for item in data['infoDisplayedOnMap'] %}
+                <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endif %}
+
+          {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+          {{ govukInsetText({
+            text: "It may take a few minutes to generate your map."
+          }) }}        
+
+        {{ govukButton({
+          text: "View or download maps"
+        }) }}
+
+      </form>
+
+    </div>
+  </div>
+
+{% endblock %}

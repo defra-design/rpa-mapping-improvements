@@ -4,13 +4,6 @@
   Select the information you want to display on your maps – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
-{% block beforeContent %}
-  {{ govukBackLink({
-  text: "Back",
-  href: "javascript:window.history.back()"
-}) }}
-{% endblock %}
-
 {% block content %}
 
   <div class="govuk-grid-row">
@@ -24,7 +17,7 @@
         name: "infoDisplayedOnMap",
         fieldset: {
           legend: {
-            html: "<span class='govuk-caption-l'>AR FIELDING</span>Select the information you want to display on your maps" + (" for your whole holding" if data['whatMaps'] == 'whole-holding' else ""),
+            html: "<span class='govuk-caption-l'>AR FIELDING</span>Select the information you want to display on maps" + (" for your whole holding" if data['whatMaps'] == 'whole-holding' else " of individual land parcels"),
             isPageHeading: true,
             classes: "govuk-fieldset__legend--l"
           }

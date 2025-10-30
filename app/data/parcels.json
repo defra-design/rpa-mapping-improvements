@@ -1,0 +1,50 @@
+{
+  "head": [
+    { "text": "Select" },
+    { "text": "Parcel ID" },
+    { "text": "Total area (ha)", "format": "numeric" },
+    { "text": "Land cover" }
+  ],
+  "rows": [
+    {
+      "parcelId": "TL52982595",
+      "area": "1.2771",
+      "landType": "Arable land"
+    },
+    {
+      "parcelId": "TL52984289",
+      "area": "1.6792",
+      "landType": "Arable land"
+    },
+    {
+      "parcelId": "TL52984575",
+      "area": "0.9123",
+      "landType": "Hard standings, Metal track, Farm building, Sports and Recreation, Hard standings, Farm building, Sports and recreation, Hard standings, Farm building, Metalled track, Sports and recreation, Hard standings, Hard standings, Farm building"
+    },
+    {
+      "parcelId": "TL52985767",
+      "area": "1.3964",
+      "landType": "Farm building, Permanent grassland"
+    },
+    {
+      "parcelId": "TL52986572",
+      "area": "0.7002",
+      "landType": "Arable land"
+    },
+    {
+      "parcelId": "TL52992505",
+      "area": "0.12",
+      "landType": "Permanent grassland"
+    },
+    {
+      "parcelId": "TL52993508",
+      "area": "6.12",
+      "landType": "Permanent grassland"
+    },
+    {
+      "parcelId": "TL52994002",
+      "area": "4.23",
+      "landType": "Metalled track, Farm building, Farm building, Farm building, Sports and recreation"
+    }
+  ]
+}
