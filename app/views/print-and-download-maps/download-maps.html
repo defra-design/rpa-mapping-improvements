@@ -20,7 +20,7 @@
 
       <form class="form" method="post">
 
-        <p>View a PDF map of all your land to download or print.</p>
+        <!-- <p>View a PDF map of all your land to download or print.</p> -->
 
 {% if data.whatMaps == "one-or-more" %}
   <h2 class="govuk-heading-m">Selected parcels</h2>
@@ -37,7 +37,7 @@
         <tr class="govuk-table__row">
           <td class="govuk-table__cell">{{ parcel.parcelId }}</td>
           <td class="govuk-table__cell govuk-table__cell--numeric">{{ parcel.area }}</td>
-          <td class="govuk-table__cell">{{ parcel.landType }}</td>
+          <td class="govuk-table__cell govuk-!-width-one-half">{{ parcel.landType }}</td>
         </tr>
       {% endfor %}
     </tbody>
@@ -49,7 +49,8 @@
           {% if 'none' in data['infoDisplayedOnMap'] %}
             <p>You have chosen not to display any information on your maps.</p>
           {% else %}
-            <p>You've selected the following information to be displayed on your maps:</p>
+          <h2 class="govuk-heading-m">Information displayed on maps</h2>
+            <!-- <p>You've selected the following information to be displayed on your maps:</p> -->
             <ul class="govuk-list govuk-list--bullet">
               {% for item in data['infoDisplayedOnMap'] %}
                 <li>{{ item }}</li>
