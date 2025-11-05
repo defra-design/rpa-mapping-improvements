@@ -11,14 +11,14 @@
   <tbody class="govuk-table__body">
     {% for row in tableData.rows %}
     <tr class="govuk-table__row">
-      <td class="govuk-table__cell" style="vertical-align: middle;">
-        <div style="display: flex; align-items: center; gap: 10px;">
+      <td class="govuk-table__cell" style="vertical-align: top;">
+        <div style="display: flex; align-items: center; gap: 0px;">
           {{ parcelCheckbox(loop.index, row.parcelId) }}
           <label for="parcel-{{ loop.index }}" style="cursor: pointer; margin: 0;">{{ row.parcelId }}</label>
         </div>
       </td>
-      <td class="govuk-table__cell govuk-table__cell--numeric" style="vertical-align: middle;">{{ row.area }}</td>
-      <td class="govuk-table__cell" style="vertical-align: middle;">{{ row.landType }}</td>
+      <td class="govuk-table__cell govuk-table__cell--numeric" style="vertical-align: top;">{{ row.area }}</td>
+      <td class="govuk-table__cell" style="vertical-align: top;">{{ row.landType }}</td>
     </tr>
     {% endfor %}
   </tbody>
