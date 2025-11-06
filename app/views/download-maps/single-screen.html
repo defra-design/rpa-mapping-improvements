@@ -40,7 +40,8 @@
           items: [
             {
               value: "whole-holding",
-              text: "Whole holding"
+              text: "Whole holding",
+              checked: true
             },
             {
               value: "indi-parcels",
@@ -53,6 +54,76 @@
 
 
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
+    
+    <div id="land-parcels-section" class="scrollable-checkbox-container">
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+
+{{ govukCheckboxes({
+          formGroup: {
+          classes: "govuk-!-static-margin-bottom-0"
+          },
+  name: "landParcels",
+  classes: "govuk-checkboxes--small",
+  fieldset: {
+    legend: {
+      text: "Land parcels",
+      isPageHeading: true,
+      classes: "govuk-fieldset__legend--s govuk-!-static-margin-bottom-1"
+    }
+  },
+  items: [
+    {
+      value: "TL5298 2595",
+      text: "TL5298 2595"
+    },
+    {
+      value: "TL5298 4289",
+      text: "TL5298 4289"
+    },
+    {
+      value: "TL5298 4575",
+      text: "TL5298 4575"
+    },
+    {
+      value: "TL5298 5767",
+      text: "TL5298 5767"
+    },    {
+      value: "TL5298 2595",
+      text: "TL5298 2595"
+    },
+    {
+      value: "TL5298 4289",
+      text: "TL5298 4289"
+    },
+    {
+      value: "TL5298 4575",
+      text: "TL5298 4575"
+    },
+    {
+      value: "TL5298 5767",
+      text: "TL5298 5767"
+    },    {
+      value: "TL5298 2595",
+      text: "TL5298 2595"
+    },
+    {
+      value: "TL5298 4289",
+      text: "TL5298 4289"
+    },
+    {
+      value: "TL5298 4575",
+      text: "TL5298 4575"
+    },
+    {
+      value: "TL5298 5767",
+      text: "TL5298 5767"
+    }
+  ]
+}) }}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
+    </div>
+
+    <div class="scrollable-checkbox-container">
 {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
 
 {{ govukCheckboxes({
@@ -104,41 +175,8 @@
         ]
 }) }}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+    </div>
 
-{{ govukCheckboxes({
-          formGroup: {
-          classes: "govuk-!-static-margin-bottom-0"
-          },
-  name: "landParcels",
-  classes: "govuk-checkboxes--small",
-  fieldset: {
-    legend: {
-      text: "Land parcels",
-      isPageHeading: true,
-      classes: "govuk-fieldset__legend--s govuk-!-static-margin-bottom-1"
-    }
-  },
-  items: [
-    {
-      value: "TL5298 2595",
-      text: "TL5298 2595"
-    },
-    {
-      value: "TL5298 4289",
-      text: "TL5298 4289"
-    },
-    {
-      value: "TL5298 4575",
-      text: "TL5298 4575"
-    },
-    {
-      value: "TL5298 5767",
-      text: "TL5298 5767"
-    }
-  ]
-}) }}
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
   </div>
   <div class="govuk-grid-column-three-quarters" style="position: relative;">
             {{ govukButton({
@@ -149,4 +187,78 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block pageScripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="changedName"]');
+    const landParcelsSection = document.getElementById('land-parcels-section');
+    
+    function toggleLandParcels() {
+      const selectedValue = document.querySelector('input[name="changedName"]:checked')?.value;
+      
+      // Show land parcels only when "indi-parcels" is selected
+      if (selectedValue === 'indi-parcels') {
+        landParcelsSection.style.display = 'block';
+      } else {
+        landParcelsSection.style.display = 'none';
+      }
+    }
+    
+    // Add event listeners to all radio buttons
+    radios.forEach(radio => {
+      radio.addEventListener('change', toggleLandParcels);
+    });
+    
+    // Run on page load to set initial state
+    toggleLandParcels();
+  });
+</script>
+
+<style>
+  .scrollable-checkbox-container {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: visible;
+    margin-left: -15px;
+    padding-left: 15px;
+    padding-right: 10px;
+    margin-bottom: 20px;
+  }
+  
+  /* Reduce checkbox label font size */
+  .scrollable-checkbox-container .govuk-checkboxes__label {
+    font-size: 1rem;
+  }
+  
+  /* Reduce radio label font size */
+  .govuk-radios__label {
+    font-size: 1rem;
+  }
+  
+  /* Reduce details component font size */
+  .govuk-details__summary-text,
+  .govuk-details__text {
+    font-size: 1rem;
+  }
+  
+  /* Styling for the scrollbar (optional, for better appearance) */
+  .scrollable-checkbox-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .scrollable-checkbox-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  .scrollable-checkbox-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  .scrollable-checkbox-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+</style>
 {% endblock %}
