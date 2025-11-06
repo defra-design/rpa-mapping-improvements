@@ -10,7 +10,7 @@ const tableData = require('../../data/parcels.json');
 // Add your routes here
 
 // What type of map
-router.post("/print-and-download-maps/what-maps", function (req, res) {
+router.post("/download-maps/what-maps", function (req, res) {
   if (req.session.data["whatMaps"] == "whole-holding") {
     res.redirect("information-to-display-on-maps");
   } else {
@@ -19,14 +19,14 @@ router.post("/print-and-download-maps/what-maps", function (req, res) {
 });
 
 // Load parcel id data
-router.get("/print-and-download-maps/select-land-parcels-to-print", function (req, res) {
-  res.render("print-and-download-maps/select-land-parcels-to-print", {
+router.get("/download-maps/select-land-parcels-to-print", function (req, res) {
+  res.render("download-maps/select-land-parcels-to-print", {
     tableData: tableData
   });
 });
 
 // Handle parcel selection
-router.post("/print-and-download-maps/select-land-parcels-to-print", function (req, res) {
+router.post("/download-maps/select-land-parcels-to-print", function (req, res) {
   const selectedParcels = req.body.parcels;
   
   if (!selectedParcels) {
@@ -46,14 +46,14 @@ router.post("/print-and-download-maps/select-land-parcels-to-print", function (r
 
 // Print or download maps
 
-router.post("/print-and-download-maps/information-to-display-on-maps", function (req, res) {
+router.post("/download-maps/information-to-display-on-maps", function (req, res) {
   res.redirect("download-maps");
 });
 
-router.get("/print-and-download-maps/download-maps", function (req, res) {
+router.get("/download-maps/download-maps", function (req, res) {
   const selectedParcels = req.session.data.selectedParcels;
   
-  res.render("print-and-download-maps/download-maps", {
+  res.render("download-maps/download-maps", {
     selectedParcels: selectedParcels
   });
 });
