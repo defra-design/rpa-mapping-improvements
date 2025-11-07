@@ -10,18 +10,7 @@
 
   <div class="govuk-grid-row">
   <div class="govuk-grid-column-one-quarter">
-    <!-- <h1 class="govuk-heading-m">Download map packs</h1>
-{% from "govuk/components/details/macro.njk" import govukDetails %}
-
-{{ govukDetails({
-  summaryText: "What is in a map pack?",
-  text: "A map. 😂 duh.",  
-  classes: "govuk-!-static-margin-bottom-0"
-}) }} -->
-
-
-    <!-- <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2"> -->
-    <!-- <h1 class="govuk-heading-s">Map type</h1> -->
+    <!-- <iframe  class="govuk-!-margin-bottom-0" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d5734071.448819131!2d-4.435451460821117!3d53.83619188322447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2suk!4v1758722248015!5m2!1sen!2suk" width="100%" height="800px" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe> -->
         {% from "govuk/components/radios/macro.njk" import govukRadios %}
 
         {{ govukRadios({
@@ -74,7 +63,10 @@
   items: [
     {
       value: "TL5298 2595",
-      text: "TL5298 2595"
+      text: "TL5298 2595",
+      hint: {
+        text: "Total size 1.2345 ha"
+      }
     },
     {
       value: "TL5298 4289",
@@ -179,13 +171,51 @@
     
 
   </div>
-  <div class="govuk-grid-column-three-quarters" style="position: relative;">
-            {{ govukButton({
-          text: "Download map",
-          classes: "hello-world"
-        }) }}
-    <iframe  class="govuk-!-margin-bottom-0" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d5734071.448819131!2d-4.435451460821117!3d53.83619188322447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2suk!4v1758722248015!5m2!1sen!2suk" width="100%" height="800px" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+<div class="govuk-grid-column-three-quarters" style="position: relative;">
+  <img src="/public/images/map-screenshot.png" alt="Map">
+  
+  <!-- Whole holding overlay -->
+  <div id="whole-holding-overlay" class="map-overlay">
+    <button class="map-overlay-close" aria-label="Close">×</button>
+    <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Whole holding</h2>
+    <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3">
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Total area</dt>
+        <dd class="govuk-summary-list__value">125.4 hectares</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Total parcels</dt>
+        <dd class="govuk-summary-list__value">4 parcels</dd>
+      </div>
+    </dl>
+    
+    {{ govukButton({
+      text: "Download map",
+      classes: "govuk-button--secondary"
+    }) }}
   </div>
+  
+  <!-- Individual parcels overlay -->
+  <div id="individual-parcels-overlay" class="map-overlay" style="display: none;">
+    <button class="map-overlay-close" aria-label="Close">×</button>
+    <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Selected parcels</h2>
+    <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3">
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Parcels selected</dt>
+        <dd class="govuk-summary-list__value">2 of 4</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Selected area</dt>
+        <dd class="govuk-summary-list__value">67.8 hectares</dd>
+      </div>
+    </dl>
+    
+    {{ govukButton({
+      text: "Download map",
+      classes: "govuk-button--secondary"
+    }) }}
+  </div>
+</div>
 </div>
 
 {% endblock %}
@@ -195,25 +225,40 @@
   document.addEventListener('DOMContentLoaded', function() {
     const radios = document.querySelectorAll('input[name="changedName"]');
     const landParcelsSection = document.getElementById('land-parcels-section');
+    const wholeHoldingOverlay = document.getElementById('whole-holding-overlay');
+    const individualParcelsOverlay = document.getElementById('individual-parcels-overlay');
+    const closeButtons = document.querySelectorAll('.map-overlay-close');
     
-    function toggleLandParcels() {
+    function toggleContent() {
       const selectedValue = document.querySelector('input[name="changedName"]:checked')?.value;
       
-      // Show land parcels only when "indi-parcels" is selected
       if (selectedValue === 'indi-parcels') {
+        // Show individual parcels content
         landParcelsSection.style.display = 'block';
+        wholeHoldingOverlay.style.display = 'none';
+        individualParcelsOverlay.style.display = 'block';
       } else {
+        // Show whole holding content
         landParcelsSection.style.display = 'none';
+        wholeHoldingOverlay.style.display = 'block';
+        individualParcelsOverlay.style.display = 'none';
       }
     }
     
-    // Add event listeners to all radio buttons
+    // Add event listeners to radio buttons
     radios.forEach(radio => {
-      radio.addEventListener('change', toggleLandParcels);
+      radio.addEventListener('change', toggleContent);
+    });
+    
+    // Add event listeners to close buttons
+    closeButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        this.parentElement.style.display = 'none';
+      });
     });
     
     // Run on page load to set initial state
-    toggleLandParcels();
+    toggleContent();
   });
 </script>
 
@@ -241,7 +286,8 @@
   
   /* Reduce details component font size */
   .govuk-details__summary-text,
-  .govuk-details__text {
+  .govuk-details__text,
+  .govuk-checkboxes__hint {
     font-size: 1rem;
   }
   
@@ -261,6 +307,57 @@
   
   .scrollable-checkbox-container::-webkit-scrollbar-thumb:hover {
     background: #555;
+  }
+
+  /* Map overlay styles */
+  .map-overlay {
+    position: absolute;
+    top: 5px;
+    left: 20px;
+    background-color: white;
+    padding: 10px;
+    padding-top: 15px; /* Extra space for close button */
+    /* border: 2px solid #0b0c0c; */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    max-width: 300px;
+    z-index: 10;
+  }
+
+  .map-overlay .govuk-summary-list {
+    font-size: 0.875rem;
+  }
+
+  .map-overlay .govuk-summary-list__key,
+  .map-overlay .govuk-summary-list__value {
+    padding: 5px 0;
+  }
+  
+  .map-overlay-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #0b0c0c;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .map-overlay-close:hover {
+    color: #505a5f;
+  }
+  
+  .map-overlay-close:focus {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    background-color: #ffdd00;
   }
 </style>
 {% endblock %}
