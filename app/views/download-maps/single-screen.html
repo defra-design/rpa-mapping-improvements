@@ -1,5 +1,32 @@
 {% extends "layouts/main.html" %}
 
+{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Register land"
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+
+
 {% set excludeBeforeContent = true %}
 
 {% block pageTitle %}
@@ -347,7 +374,7 @@
     right: 10px;
     background: none;
     border: none;
-    font-size: 28px;
+    font-size: 34px;
     line-height: 1;
     cursor: pointer;
     color: #0b0c0c;
@@ -372,6 +399,11 @@
   .govuk-button {
         font-size: 1rem;
         line-height: 1;
+        margin-bottom: 3px;
     }
+  
+.govuk-checkboxes__hint {
+  margin-top: -14px;
+}
 </style>
 {% endblock %}
