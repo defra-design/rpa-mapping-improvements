@@ -25,8 +25,6 @@
 }) }}
 {% endblock %}
 
-
-
 {% set excludeBeforeContent = true %}
 
 {% block pageTitle %}
@@ -34,221 +32,225 @@
 {% endblock %}
 
 {% block content %}
+  <div style="display: flex; gap: 20px; max-width: 100%; padding: 0;">
+    <!-- Left sidebar -->
+    <div style="width: 230px; flex-shrink: 0;">
+      <!-- <iframe  class="govuk-!-margin-bottom-0" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d5734071.448819131!2d-4.435451460821117!3d53.83619188322447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2suk!4v1758722248015!5m2!1sen!2suk" width="100%" height="800px" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe> -->
+      {% from "govuk/components/radios/macro.njk" import govukRadios %}
 
-  <div class="govuk-grid-row">
-  <div class="govuk-grid-column-one-quarter">
-    <!-- <iframe  class="govuk-!-margin-bottom-0" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d5734071.448819131!2d-4.435451460821117!3d53.83619188322447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2suk!4v1758722248015!5m2!1sen!2suk" width="100%" height="800px" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe> -->
-        {% from "govuk/components/radios/macro.njk" import govukRadios %}
-
-        {{ govukRadios({
-          formGroup: {
-          classes: "govuk-!-static-margin-bottom-0"
-          },
-          classes: "govuk-radios--small",
-          name: "changedName",
-          fieldset: {
-            legend: {
-              text: "Map type",
-              isPageHeading: true,
-              classes: "govuk-fieldset__legend--s govuk-!-static-margin-bottom-1"
-            }
-          },
-          items: [
-            {
-              value: "whole-holding",
-              text: "Whole holding",
-              checked: true
-            },
-            {
-              value: "indi-parcels",
-              text: "Individual land parcels"
-            }
-          ]
-        }) }}
-
-        {% from "govuk/components/button/macro.njk" import govukButton %}
-
-
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-    
-    <div id="land-parcels-section" class="scrollable-checkbox-container">
-{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
-
-{{ govukCheckboxes({
-          formGroup: {
-          classes: "govuk-!-static-margin-bottom-0"
-          },
-  name: "landParcels",
-  classes: "govuk-checkboxes--small",
-  fieldset: {
-    legend: {
-      text: "Land parcels",
-      isPageHeading: true,
-      classes: "govuk-fieldset__legend--s govuk-!-static-margin-bottom-1"
-    }
-  },
-  items: [
-    {
-      value: "TL5298 2595",
-      text: "TL5298 2595",
-      hint: {
-        text: "Total area (ha) 1.2771"
-      }
-    },
-    {
-      value: "TL5298 4289",
-      text: "TL5298 4289",
-      hint: {
-        text: "Total area (ha) 1.6792"
-      }
-    },
-    {
-      value: "TL5298 4575",
-      text: "TL5298 4575",
-      hint: {
-        text: "Total area (ha) 0.9123"
-      }
-    },
-    {
-      value: "TL5298 5767",
-      text: "TL5298 5767",
-      hint: {
-        text: "Total area (ha) 1.3964"
-      }
-    },    {
-      value: "TL5298 6572",
-      text: "TL5298 6572",
-      hint: {
-        text: "Total area (ha) 0.7002"
-      }
-    },
-    {
-      value: "TL5299 2505",
-      text: "TL5299 2505",
-      hint: {
-        text: "Total area (ha) 0.12"
-      }
-    },
-    {
-      value: "TL5299 3508",
-      text: "TL5299 3508",
-      hint: {
-        text: "Total area (ha) 6.12"
-      }
-    },
-    {
-      value: "TL5299 4002",
-      text: "TL5299 4002",
-      hint: {
-        text: "Total area (ha) 4.23"
-      }
-    }
-  ]
-}) }}
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-    </div>
-
-    <div class="scrollable-checkbox-container">
-{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
-
-{{ govukCheckboxes({
-          formGroup: {
-          classes: "govuk-!-static-margin-bottom-0"
-          },
-  name: "additionalInfo",
-  classes: "govuk-checkboxes--small",
-  fieldset: {
-    legend: {
-      text: "Additional information",
-      isPageHeading: true,
-      classes: "govuk-fieldset__legend--s govuk-!-static-margin-bottom-1"
-    }
-  },
+      {{ govukRadios({
+        formGroup: {
+        classes: "govuk-!-static-margin-bottom-0"
+        },
+        classes: "govuk-radios--small",
+        name: "changedName",
+        fieldset: {
+          legend: {
+            text: "Map type",
+            isPageHeading: true,
+            classes: "govuk-fieldset__legend--s govuk-!-static-margin-bottom-1"
+          }
+        },
         items: [
           {
-            value: "Live agreements with RPA",
-            text: "Live agreements with RPA"
+            value: "whole-holding",
+            text: "Whole holding",
+            checked: true
           },
           {
-            value: "Common land",
-            text: "Common land"
-          },
-          {
-            value: "Hedgerows",
-            text: "Hedgerows"
-          },
-          {
-            value: "Land parcel area",
-            text: "Land parcel area"
-          },
-          {
-            value: "Land use",
-            text: "Land use"
-          },
-          {
-            value: "Less Favoured Areas (LFA)",
-            text: "Less Favoured Areas (LFA)"
-          },
-          {
-            value: "National boundaries",
-            text: "National boundaries"
-          },
-          {
-            value: "Regional boundaries",
-            text: "Regional boundaries"
+            value: "indi-parcels",
+            text: "Individual land parcels"
           }
         ]
-}) }}
-</div>    
-<hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-    
+      }) }}
 
-  </div>
-<div class="govuk-grid-column-three-quarters" style="position: relative;">
-  <img src="/public/images/map-screenshot.png" alt="Map">
-  
-  <!-- Whole holding overlay -->
-  <div id="whole-holding-overlay" class="map-overlay">
-    <button class="map-overlay-close" aria-label="Close">×</button>
-    <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Whole holding</h2>
-    <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3">
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Total area (ha)</dt>
-        <dd class="govuk-summary-list__value">274.24</dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Total parcels</dt>
-        <dd class="govuk-summary-list__value">66</dd>
-      </div>
-    </dl>
-    
-    {{ govukButton({
-      text: "Download map"
-    }) }}
-  </div>
-  
-  <!-- Individual parcels overlay -->
-  <div id="individual-parcels-overlay" class="map-overlay" style="display: none;">
-    <button class="map-overlay-close" aria-label="Close">×</button>
-    <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Individual land parcels</h2>
-    <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3">
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Selected area (ha)</dt>
-        <dd class="govuk-summary-list__value">67.8</dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Parcels selected</dt>
-        <dd class="govuk-summary-list__value">2 of 66</dd>
-      </div>
-    </dl>
-    
-    {{ govukButton({
-      text: "Download map"
-    }) }}
-  </div>
-</div>
-</div>
+      {% from "govuk/components/button/macro.njk" import govukButton %}
 
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
+      
+      <div id="land-parcels-section">
+        {% from "govuk/components/input/macro.njk" import govukInput %}
+        {{ govukInput({
+          id: "parcel-filter",
+          name: "parcelFilter",
+          classes: "govuk-input--width-10",
+          formGroup: {
+            classes: "govuk-!-margin-bottom-2"
+          },
+          label: {
+            text: "Search land parcels",
+            classes: "govuk-label--s"
+          }
+        }) }}
+        
+        <div class="scrollable-checkbox-container">
+          {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+
+          {{ govukCheckboxes({
+            formGroup: {
+            classes: "govuk-!-static-margin-bottom-0"
+            },
+            name: "landParcels",
+            classes: "govuk-checkboxes--small",
+            items: [
+              {
+                value: "TL5298 2595",
+                text: "TL5298 2595",
+                hint: {
+                  text: "Total area (ha) 1.2771"
+                }
+              },
+              {
+                value: "TL5298 4289",
+                text: "TL5298 4289",
+                hint: {
+                  text: "Total area (ha) 1.6792"
+                }
+              },
+              {
+                value: "TL5298 4575",
+                text: "TL5298 4575",
+                hint: {
+                  text: "Total area (ha) 0.9123"
+                }
+              },
+              {
+                value: "TL5298 5767",
+                text: "TL5298 5767",
+                hint: {
+                  text: "Total area (ha) 1.3964"
+                }
+              },    {
+                value: "TL5298 6572",
+                text: "TL5298 6572",
+                hint: {
+                  text: "Total area (ha) 0.7002"
+                }
+              },
+              {
+                value: "TL5299 2505",
+                text: "TL5299 2505",
+                hint: {
+                  text: "Total area (ha) 0.12"
+                }
+              },
+              {
+                value: "TL5299 3508",
+                text: "TL5299 3508",
+                hint: {
+                  text: "Total area (ha) 6.12"
+                }
+              },
+              {
+                value: "TL5299 4002",
+                text: "TL5299 4002",
+                hint: {
+                  text: "Total area (ha) 4.23"
+                }
+              }
+            ]
+          }) }}
+        </div>
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
+      </div>
+
+      <div>
+        <h2 class="govuk-heading-s govuk-!-static-margin-bottom-1">Additional information</h2>
+        
+        <div class="scrollable-checkbox-container">
+          {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+
+          {{ govukCheckboxes({
+            formGroup: {
+            classes: "govuk-!-static-margin-bottom-0"
+            },
+            name: "additionalInfo",
+            classes: "govuk-checkboxes--small",
+            items: [
+              {
+                value: "Live agreements with RPA",
+                text: "Live agreements with RPA"
+              },
+              {
+                value: "Common land",
+                text: "Common land"
+              },
+              {
+                value: "Hedgerows",
+                text: "Hedgerows"
+              },
+              {
+                value: "Land parcel area",
+                text: "Land parcel area"
+              },
+              {
+                value: "Land use",
+                text: "Land use"
+              },
+              {
+                value: "Less Favoured Areas (LFA)",
+                text: "Less Favoured Areas (LFA)"
+              },
+              {
+                value: "National boundaries",
+                text: "National boundaries"
+              },
+              {
+                value: "Regional boundaries",
+                text: "Regional boundaries"
+              }
+            ]
+          }) }}
+        </div>    
+      </div>
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
+    </div>
+
+    <!-- Map area -->
+    <div style="flex: 1; position: relative;">
+      <img src="/public/images/map-screenshot.png" alt="Map" style="width: 100%; height: auto;">
+      
+      <!-- Whole holding overlay -->
+      <div id="whole-holding-overlay" class="map-overlay">
+        <button class="map-overlay-close" aria-label="Close">×</button>
+        <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Whole holding</h2>
+        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Total area (ha)</dt>
+            <dd class="govuk-summary-list__value">274.24</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Total parcels</dt>
+            <dd class="govuk-summary-list__value">66</dd>
+          </div>
+        </dl>
+        
+        {{ govukButton({
+          text: "Download map"
+        }) }}
+      </div>
+      
+      <!-- Individual parcels overlay -->
+      <div id="individual-parcels-overlay" class="map-overlay" style="display: none;">
+        <button class="map-overlay-close" aria-label="Close">×</button>
+        <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Individual land parcels</h2>
+        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Selected area (ha)</dt>
+            <dd class="govuk-summary-list__value">67.8</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Parcels selected</dt>
+            <dd class="govuk-summary-list__value">2 of 66</dd>
+          </div>
+        </dl>
+        
+        {{ govukButton({
+          text: "Download map"
+        }) }}
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block pageScripts %}
@@ -259,6 +261,8 @@
     const wholeHoldingOverlay = document.getElementById('whole-holding-overlay');
     const individualParcelsOverlay = document.getElementById('individual-parcels-overlay');
     const closeButtons = document.querySelectorAll('.map-overlay-close');
+    const filterInput = document.getElementById('parcel-filter');
+    const parcelCheckboxes = document.querySelectorAll('input[name="landParcels"]');
     
     function toggleContent() {
       const selectedValue = document.querySelector('input[name="changedName"]:checked')?.value;
@@ -276,6 +280,23 @@
       }
     }
     
+    // Filter parcels functionality (still uses toLowerCase for case-insensitive matching)
+    function filterParcels() {
+      const filterValue = filterInput.value.toLowerCase();
+      
+      parcelCheckboxes.forEach(checkbox => {
+        const parcelItem = checkbox.closest('.govuk-checkboxes__item');
+        const label = checkbox.nextElementSibling;
+        const labelText = label.textContent.toLowerCase();
+        
+        if (labelText.includes(filterValue)) {
+          parcelItem.style.display = '';
+        } else {
+          parcelItem.style.display = 'none';
+        }
+      });
+    }
+    
     // Add event listeners to radio buttons
     radios.forEach(radio => {
       radio.addEventListener('change', toggleContent);
@@ -287,6 +308,11 @@
         this.parentElement.style.display = 'none';
       });
     });
+    
+    // Add event listener to filter input
+    if (filterInput) {
+      filterInput.addEventListener('input', filterParcels);
+    }
     
     // Run on page load to set initial state
     toggleContent();
@@ -301,7 +327,7 @@
     margin-left: -15px;
     padding-left: 15px;
     padding-right: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     /* border-bottom: 1px solid red; */
   }
   
@@ -324,7 +350,7 @@
 
   .govuk-checkboxes__hint {
     padding-right: 0px;
-}
+  }
   
   /* Styling for the scrollbar (optional, for better appearance) */
   .scrollable-checkbox-container::-webkit-scrollbar {
@@ -337,7 +363,7 @@
   
   .scrollable-checkbox-container::-webkit-scrollbar-thumb {
     background: #888;
-    border-radius: 4px;
+    border-radius: 0px;
   }
   
   .scrollable-checkbox-container::-webkit-scrollbar-thumb:hover {
@@ -348,7 +374,7 @@
   .map-overlay {
     position: absolute;
     top: 5px;
-    left: 20px;
+    left: 6px;
     background-color: white;
     padding: 10px;
     padding-top: 15px; /* Extra space for close button */
@@ -397,13 +423,19 @@
   }
 
   .govuk-button {
-        font-size: 1rem;
-        line-height: 1;
-        margin-bottom: 3px;
-    }
+    font-size: 1rem;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
   
-.govuk-checkboxes__hint {
-  margin-top: -14px;
-}
+  .govuk-checkboxes__hint {
+    margin-top: -14px;
+  }
+  
+  /* Filter input styling - display text as uppercase */
+  #parcel-filter {
+    font-size: 1rem;
+    text-transform: uppercase;
+  }
 </style>
 {% endblock %}
