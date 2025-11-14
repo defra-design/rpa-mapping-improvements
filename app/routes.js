@@ -25,3 +25,6 @@ router.use("download-maps", dm1);
 
 const dm2 = require("./views/download-maps-v2/_routes");
 router.use("download-maps", dm2);
+
+const dm3 = require("./views/download-maps-v3/_routes");
+router.use("download-maps", dm3);
