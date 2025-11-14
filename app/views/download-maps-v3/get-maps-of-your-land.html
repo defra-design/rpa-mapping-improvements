@@ -476,11 +476,12 @@ map.on('click', 'parcels-fill', (e) => {
     new maplibregl.Popup()
       .setLngLat(e.lngLat)
       .setHTML(`
-        <strong>${props.SHEET_ID} ${props.PARCEL_ID}</strong><br>
+        <strong>Land parcel</strong><br>
+        ${props.SHEET_ID} ${props.PARCEL_ID}<br>
         Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
       `)
       .addTo(map);
-  }
+      }
 });
 
       // Change cursor on hover
@@ -548,17 +549,17 @@ map.on('click', 'parcels-fill', (e) => {
         if (e.features.length > 0) {
           const props = e.features[0].properties;
           
-          new maplibregl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`
-              <strong>Land Cover</strong><br>
-              Land parcel: ${props.SHEET_ID || ''} ${props.PARCEL_ID || ''}<br>
-              ${props.DESCRIPTION || 'N/A'}<br>
-              Code: ${props.LAND_COVER_CLASS_CODE || 'N/A'}<br>
-              Area (ha): ${parseFloat(props.AREA_HA || 0).toFixed(4)}
-            `)
-            .addTo(map);
-        }
+        new maplibregl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <strong>Land cover</strong><br>
+            ${props.DESCRIPTION || 'N/A'}<br>
+            Land parcel ${props.SHEET_ID || ''} ${props.PARCEL_ID || ''}<br>
+            Total area (ha) ${parseFloat(props.AREA_HA || 0).toFixed(4)}<br>
+            Code ${props.LAND_COVER_CLASS_CODE || 'N/A'}
+          `)
+          .addTo(map);
+                }
       });
 
       // Change cursor on hover
@@ -606,14 +607,14 @@ map.on('click', 'parcels-fill', (e) => {
         if (e.features.length > 0) {
           const props = e.features[0].properties;
           
-          new maplibregl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`
-              <strong>Hedgerow</strong><br>
-              Land parcel: ${props.REF_PARCEL_SHEET_ID || ''} ${props.REF_PARCEL_PARCEL_ID || ''}<br>
-              Length (m): ${parseFloat(props.LENGTH || 0).toFixed(2)}
-            `)
-            .addTo(map);
+        new maplibregl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <strong>Hedgerow</strong><br>
+            Length (m): ${parseFloat(props.LENGTH || 0).toFixed(2)}<br>
+            Land parcel: ${props.REF_PARCEL_SHEET_ID || ''} ${props.REF_PARCEL_PARCEL_ID || ''}
+          `)
+          .addTo(map);
         }
       });
 
@@ -941,8 +942,9 @@ map.on('click', 'parcels-fill', (e) => {
       new maplibregl.Popup()
         .setLngLat(center)
         .setHTML(`
-          <strong>${feature.properties.SHEET_ID} ${feature.properties.PARCEL_ID}</strong><br>
-          Total area (ha) ${parseFloat(feature.properties.AREA_HA).toFixed(4)}
+          <strong>Land parcel</strong><br>
+          ${feature.properties.SHEET_ID} ${feature.properties.PARCEL_ID}<br>
+          Total area (ha): ${parseFloat(feature.properties.AREA_HA).toFixed(4)}
         `)
         .addTo(map);
     }
@@ -1129,7 +1131,7 @@ map.on('click', 'parcels-fill', (e) => {
     overflow-y: auto;
     margin-bottom: 15px;
     margin-top: -10px;
-    max-width: 13.5em;
+    max-width: 11.24em;
   }
 
   .map-search-results-list {
@@ -1184,8 +1186,8 @@ map.on('click', 'parcels-fill', (e) => {
     background-color: white;
     padding: 10px;
     padding-top: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    max-width: 280px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    max-width: 275px;
     z-index: 10;
   }
 
@@ -1246,36 +1248,53 @@ map.on('click', 'parcels-fill', (e) => {
     text-transform: uppercase;
   }
 
-  /* Maplibre popup styles */
-  .maplibregl-popup-content {
-    padding: 15px 20px;
-    font-size: 1rem;
-    line-height: 1.25;
-    min-width: 200px;
-  }
+/* Maplibre popup styles */
+.maplibregl-popup-content {
+  padding: 15px 20px;
+  font-size: 1rem;
+  line-height: 1.25;
+  min-width: 200px;
+  font-family: "GDS Transport", arial, sans-serif;
+}
 
-  .maplibregl-popup-content strong {
-    font-size: 1.1875rem;
-    line-height: 1.25;
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 700;
-  }
+/* Remove focus outline from popup content itself */
+.maplibregl-popup-content:focus {
+  outline: none;
+}
 
-  .maplibregl-popup-close-button {
-    font-size: 24px;
-    padding: 5px 10px;
-    color: #0b0c0c;
-  }
+.maplibregl-popup-content strong {
+  font-size: 1.1875rem;
+  line-height: 1.25;
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 700;
+}
 
-  .maplibregl-popup-close-button:hover {
-    background-color: #f3f2f1;
-  }
+.maplibregl-popup-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 34px;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0b0c0c;
+  font-family: "GDS Transport", arial, sans-serif;
+}
 
-  .maplibregl-popup-close-button:focus {
-    outline: 3px solid #ffdd00;
-    outline-offset: 0;
-    background-color: #ffdd00;
-  }
+.maplibregl-popup-close-button:hover {
+  background-color: #f3f2f1;
+}
+
+/* Only show focus when actively focused via keyboard or click */
+.maplibregl-popup-close-button:focus-visible {
+  outline: 3px solid #ffdd00;
+  outline-offset: 0;
+  background-color: #ffdd00;
+}
 </style>
 {% endblock %}
