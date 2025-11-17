@@ -152,7 +152,7 @@
         <!-- Search input in overlay -->
         <form class="map-search-form" id="location-search-form">
           <label class="govuk-label govuk-label--s govuk-!-margin-bottom-1" for="location-search">
-            Search land parcels
+            Search
           </label>
           <div class="map-search-wrapper-inline">
             <input 
@@ -201,6 +201,7 @@
     let landCoversData = null;
     let hedgeControlData = null;
     let parcelLayers = {};
+    let cachedBounds = null; // Cache bounds calculation
 
     // Initialize the map
     const map = new maplibregl.Map({
@@ -226,16 +227,16 @@
             'maxzoom': 22
           }
         ]
-      },
-      center: [-2, 54], // Center of UK
-      zoom: 5 // Zoomed out to see whole UK initially
+      }
     });
 
     // Search marker
     let searchMarker = null;
 
     // Add navigation controls
-    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    map.addControl(new maplibregl.NavigationControl({
+    showCompass: false  // Hide the compass button
+    }), 'top-right');
 
     // Add scale control
     map.addControl(new maplibregl.ScaleControl({
@@ -351,7 +352,7 @@
         }
       });
 
-      // Add highlight layer (initially empty)
+      // Add highlight layer (initially empty) - SOURCE FIRST
       map.addSource('selected-parcels', {
         type: 'geojson',
         data: {
@@ -360,129 +361,191 @@
         }
       });
 
-      map.addLayer({
+        // THEN add the layers with explicit visibility
+        map.addLayer({
         id: 'selected-parcels-fill',
         type: 'fill',
         source: 'selected-parcels',
         paint: {
-          'fill-color': '#ffdd00', // GOV.UK yellow
-          'fill-opacity': 0.5
+            'fill-color': '#ffdd00', // GOV.UK yellow
+            'fill-opacity': 0.5
+        },
+        layout: {
+            'visibility': 'visible'
         }
-      });
+        });
 
-      map.addLayer({
+        map.addLayer({
         id: 'selected-parcels-outline',
         type: 'line',
         source: 'selected-parcels',
         paint: {
-          'line-color': '#0b0c0c',
-          'line-width': 3
+            'line-color': '#0b0c0c', // GOV.UK black
+            'line-width': 3
+        },
+        layout: {
+            'visibility': 'visible'
         }
-      });
+        });
 
-      // Fit map to parcels bounds
-      const bounds = new maplibregl.LngLatBounds();
-      data.features.forEach(feature => {
-        if (feature.geometry.type === 'Polygon') {
-          feature.geometry.coordinates[0].forEach(coord => {
-            bounds.extend(coord);
-          });
-        } else if (feature.geometry.type === 'MultiPolygon') {
-          feature.geometry.coordinates.forEach(polygon => {
-            polygon[0].forEach(coord => {
+      // Move selected layers to the top after a brief delay
+      setTimeout(() => {
+        if (map.getLayer('selected-parcels-fill')) {
+          map.moveLayer('selected-parcels-fill');
+        }
+        if (map.getLayer('selected-parcels-outline')) {
+          map.moveLayer('selected-parcels-outline');
+        }
+      }, 100);
+
+      // Calculate and cache bounds
+      if (!cachedBounds) {
+        const bounds = new maplibregl.LngLatBounds();
+
+        data.features.forEach(feature => {
+          if (feature.geometry.type === 'Polygon') {
+            feature.geometry.coordinates[0].forEach(coord => {
               bounds.extend(coord);
             });
+          } else if (feature.geometry.type === 'MultiPolygon') {
+            feature.geometry.coordinates.forEach(polygon => {
+              polygon[0].forEach(coord => {
+                bounds.extend(coord);
+              });
+            });
+          }
+        });
+
+        cachedBounds = bounds;
+
+        map.fitBounds(cachedBounds, {
+          padding: 50,
+          duration: 0  // Instant, no animation on initial load
+        });
+
+        // Show the map now it's positioned correctly
+        document.getElementById('map').classList.add('ready');
+      }
+
+      // Optimized click handler - single query for all layers
+      if (!map._parcelClickHandler) {
+        let isProcessingClick = false;
+        
+        map._parcelClickHandler = (e) => {
+          // If already processing a click, ignore this one completely
+          if (isProcessingClick) {
+            console.log('Click ignored - already processing another click');
+            return;
+          }
+          
+          isProcessingClick = true;
+          
+          // Reset the flag after 100ms
+          setTimeout(() => {
+            isProcessingClick = false;
+          }, 100);
+          
+          console.log('=== PARCEL CLICK EVENT ===');
+          
+          // Single query for all relevant layers at once
+          const allFeatures = map.queryRenderedFeatures(e.point, {
+            layers: ['land-covers-fill', 'hedge-control-line', 'parcels-fill']
           });
-        }
-      });
+          
+          // Check what was actually clicked
+          const landCoverClicked = allFeatures.some(f => f.layer.id === 'land-covers-fill');
+          const hedgeClicked = allFeatures.some(f => f.layer.id === 'hedge-control-line');
+          
+          // If we clicked on a data layer, don't process parcel click
+          if (landCoverClicked || hedgeClicked) {
+            return;
+          }
+          
+          // Find parcel features in the results
+          const parcelFeatures = allFeatures.filter(f => f.layer.id === 'parcels-fill');
+          
+          if (parcelFeatures.length > 0) {
+            const feature = parcelFeatures[0];
+            const props = feature.properties;
+            
+            console.log('Parcel clicked:', props);
+            
+            // Get the full feature from landParcelsData
+            const fullFeature = landParcelsData.features.find(f => 
+              f.properties.SHEET_ID === props.SHEET_ID && 
+              f.properties.PARCEL_ID === props.PARCEL_ID
+            );
+            
+            if (fullFeature) {
+              // Check if selected-parcels source exists
+              const selectedSource = map.getSource('selected-parcels');
+              if (!selectedSource) {
+                console.error('selected-parcels source not found');
+                return;
+              }
+              
+              // Get current selected parcels
+              const currentData = selectedSource._data;
+              const currentFeatures = currentData.features || [];
+              
+              // Check if this parcel is already selected
+              const parcelId = `${props.SHEET_ID}${props.PARCEL_ID}`;
+              const existingIndex = currentFeatures.findIndex(f => 
+                `${f.properties.SHEET_ID}${f.properties.PARCEL_ID}` === parcelId
+              );
+              
+              let newFeatures;
+              if (existingIndex !== -1) {
+                // Parcel already selected - remove it (toggle off)
+                newFeatures = currentFeatures.filter((f, i) => i !== existingIndex);
+              } else {
+                // Parcel not selected - add it
+                newFeatures = [...currentFeatures, fullFeature];
+              }
+              
+              // Update the selected parcels
+              console.log('About to update selected parcels, new count:', newFeatures.length);
+              console.log('Selected source exists:', !!selectedSource);
+              selectedSource.setData({
+                type: 'FeatureCollection',
+                features: newFeatures
+              });
+              console.log('Selected parcels data updated successfully');
+              
+              // Update statistics in the overlay
+              const totalArea = newFeatures.reduce((sum, f) => 
+                sum + parseFloat(f.properties.AREA_HA || 0), 0
+              );
+              document.getElementById('selected-area').textContent = totalArea.toFixed(4);
+              document.getElementById('selected-count').textContent = 
+                `${newFeatures.length} of ${landParcelsData.features.length}`;
+              
+              // Also update checkboxes to match
+              const checkbox = document.getElementById(`parcel-${parcelId}`);
+              if (checkbox) {
+                checkbox.checked = existingIndex === -1; // Check if we just added it
+              }
+            }
+            
+            // Show popup
+            new maplibregl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <strong>Land parcel</strong><br>
+                ${props.SHEET_ID} ${props.PARCEL_ID}<br>
+                Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
+              `)
+              .addTo(map);
+          }
+        };
+      }
 
-      map.fitBounds(bounds, { padding: 50 });
+      // Remove any existing handler first
+      map.off('click', 'parcels-fill', map._parcelClickHandler);
 
-// Add click handler for parcels
-map.on('click', 'parcels-fill', (e) => {
-  // Check if land covers or hedge control layers are visible
-  const landCoversVisible = map.getLayer('land-covers-fill') && 
-                           map.getLayoutProperty('land-covers-fill', 'visibility') === 'visible';
-  const hedgeControlVisible = map.getLayer('hedge-control-line') && 
-                              map.getLayoutProperty('hedge-control-line', 'visibility') === 'visible';
-  
-  // If data layers are visible, check if we actually clicked on them
-  if (landCoversVisible || hedgeControlVisible) {
-    const landCoverFeatures = map.queryRenderedFeatures(e.point, {
-      layers: ['land-covers-fill']
-    });
-    const hedgeFeatures = map.queryRenderedFeatures(e.point, {
-      layers: ['hedge-control-line']
-    });
-    
-    // Only block parcel interaction if we actually clicked on a data layer feature
-    if (landCoverFeatures.length > 0 || hedgeFeatures.length > 0) {
-      return;
-    }
-  }
-  
-  if (e.features.length > 0) {
-    const feature = e.features[0];
-    const props = feature.properties;
-    
-    // Get the full feature from landParcelsData
-    const fullFeature = landParcelsData.features.find(f => 
-      f.properties.SHEET_ID === props.SHEET_ID && 
-      f.properties.PARCEL_ID === props.PARCEL_ID
-    );
-    
-    if (fullFeature) {
-      // Get current selected parcels
-      const currentData = map.getSource('selected-parcels')._data;
-      const currentFeatures = currentData.features || [];
+      // Add the handler
+      map.on('click', 'parcels-fill', map._parcelClickHandler);
       
-      // Check if this parcel is already selected
-      const parcelId = `${props.SHEET_ID}${props.PARCEL_ID}`;
-      const existingIndex = currentFeatures.findIndex(f => 
-        `${f.properties.SHEET_ID}${f.properties.PARCEL_ID}` === parcelId
-      );
-      
-      let newFeatures;
-      if (existingIndex !== -1) {
-        // Parcel already selected - remove it (toggle off)
-        newFeatures = currentFeatures.filter((f, i) => i !== existingIndex);
-      } else {
-        // Parcel not selected - add it
-        newFeatures = [...currentFeatures, fullFeature];
-      }
-      
-      // Update the selected parcels
-      map.getSource('selected-parcels').setData({
-        type: 'FeatureCollection',
-        features: newFeatures
-      });
-      
-      // Update statistics in the overlay
-      const totalArea = newFeatures.reduce((sum, f) => 
-        sum + parseFloat(f.properties.AREA_HA || 0), 0
-      );
-      document.getElementById('selected-area').textContent = totalArea.toFixed(4);
-      document.getElementById('selected-count').textContent = 
-        `${newFeatures.length} of ${landParcelsData.features.length}`;
-      
-      // Also update checkboxes to match
-      const checkbox = document.getElementById(`parcel-${parcelId}`);
-      if (checkbox) {
-        checkbox.checked = existingIndex === -1; // Check if we just added it
-      }
-    }
-    
-    // Show popup
-    new maplibregl.Popup()
-      .setLngLat(e.lngLat)
-      .setHTML(`
-        <strong>Land parcel</strong><br>
-        ${props.SHEET_ID} ${props.PARCEL_ID}<br>
-        Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
-      `)
-      .addTo(map);
-      }
-});
 
       // Change cursor on hover
       map.on('mouseenter', 'parcels-fill', () => {
@@ -496,81 +559,92 @@ map.on('click', 'parcels-fill', (e) => {
 
     // Add land covers to map
     function addLandCoversToMap(data) {
-      if (!data || !data.features || data.features.length === 0) {
+    if (!data || !data.features || data.features.length === 0) {
         console.log('No land cover features found');
         return;
-      }
+    }
 
-      // Add source for land covers
-      map.addSource('land-covers', {
+    // Add source for land covers
+    map.addSource('land-covers', {
         type: 'geojson',
         data: data
-      });
+    });
 
-      // Add fill layer for land covers
-      map.addLayer({
+    // Add fill layer for land covers
+    map.addLayer({
         id: 'land-covers-fill',
         type: 'fill',
         source: 'land-covers',
         paint: {
-          'fill-color': '#00703c', // GOV.UK green
-          'fill-opacity': 0.3
+        'fill-color': '#00703c', // GOV.UK green
+        'fill-opacity': 0.3
         },
         layout: {
-          'visibility': 'none' // Hidden by default
+        'visibility': 'none' // Hidden by default
         }
-      });
+    });
 
-      // Add outline layer for land covers
-      map.addLayer({
+    // Add outline layer for land covers
+    map.addLayer({
         id: 'land-covers-outline',
         type: 'line',
         source: 'land-covers',
         paint: {
-          'line-color': '#00703c',
-          'line-width': 1
+        'line-color': '#00703c',
+        'line-width': 1
         },
         layout: {
-          'visibility': 'none' // Hidden by default
+        'visibility': 'none' // Hidden by default
         }
-      });
+    });
 
-      // Add click handler for land covers
-      map.on('click', 'land-covers-fill', (e) => {
+    // Store the handler function so we can remove it later
+    if (!map._landCoverClickHandler) {
+        map._landCoverClickHandler = (e) => {
         // Check if we clicked on a hedge - if so, don't show land cover popup
         const hedgeFeatures = map.queryRenderedFeatures(e.point, {
-          layers: ['hedge-control-line']
+            layers: ['hedge-control-line']
         });
         
         if (hedgeFeatures.length > 0) {
-          return; // Let the hedge handler take precedence
+            return; // Let the hedge handler take precedence
         }
         
         if (e.features.length > 0) {
-          const props = e.features[0].properties;
-          
-        new maplibregl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(`
-            <strong>Land cover</strong><br>
-            ${props.DESCRIPTION || 'N/A'}<br>
-            Land parcel ${props.SHEET_ID || ''} ${props.PARCEL_ID || ''}<br>
-            Total area (ha) ${parseFloat(props.AREA_HA || 0).toFixed(4)}<br>
-            Code ${props.LAND_COVER_CLASS_CODE || 'N/A'}
-          `)
-          .addTo(map);
-                }
-      });
-
-      // Change cursor on hover
-      map.on('mouseenter', 'land-covers-fill', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-
-      map.on('mouseleave', 'land-covers-fill', () => {
-        map.getCanvas().style.cursor = '';
-      });
+            const props = e.features[0].properties;
+            
+            new maplibregl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`
+                <strong>Land cover</strong><br>
+                ${props.DESCRIPTION || 'N/A'}<br>
+                Land parcel ${props.SHEET_ID || ''} ${props.PARCEL_ID || ''}<br>
+                Total area (ha) ${parseFloat(props.AREA_HA || 0).toFixed(4)}<br>
+                Code ${props.LAND_COVER_CLASS_CODE || 'N/A'}
+            `)
+            .addTo(map);
+        }
+        };
     }
+
+    // Remove any existing handlers first
+    map.off('click', 'land-covers-fill', map._landCoverClickHandler);
+    map.off('mouseenter', 'land-covers-fill');
+    map.off('mouseleave', 'land-covers-fill');
+
+    // Add the handlers
+    map.on('click', 'land-covers-fill', map._landCoverClickHandler);
+
+    // Change cursor on hover
+    map.on('mouseenter', 'land-covers-fill', () => {
+        map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on('mouseleave', 'land-covers-fill', () => {
+        map.getCanvas().style.cursor = '';
+    });
+    }
+    
 
     // Add hedge control to map
     function addHedgeControlToMap(data) {
@@ -599,24 +673,34 @@ map.on('click', 'parcels-fill', (e) => {
         }
       });
 
-      // Add click handler for hedge control
-      map.on('click', 'hedge-control-line', (e) => {
-        // Stop the event from propagating to layers below
-        e.preventDefault();
-        
-        if (e.features.length > 0) {
-          const props = e.features[0].properties;
+      // Store the handler function so we can remove it later
+      if (!map._hedgeClickHandler) {
+        map._hedgeClickHandler = (e) => {
+          // Stop the event from propagating to layers below
+          e.preventDefault();
           
-        new maplibregl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(`
-            <strong>Hedgerow</strong><br>
-            Length (m): ${parseFloat(props.LENGTH || 0).toFixed(2)}<br>
-            Land parcel: ${props.REF_PARCEL_SHEET_ID || ''} ${props.REF_PARCEL_PARCEL_ID || ''}
-          `)
-          .addTo(map);
-        }
-      });
+          if (e.features.length > 0) {
+            const props = e.features[0].properties;
+            
+            new maplibregl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <strong>Hedgerow</strong><br>
+                Length (m): ${parseFloat(props.LENGTH || 0).toFixed(2)}<br>
+                Land parcel: ${props.REF_PARCEL_SHEET_ID || ''} ${props.REF_PARCEL_PARCEL_ID || ''}
+              `)
+              .addTo(map);
+          }
+        };
+      }
+
+      // Remove any existing handlers first
+      map.off('click', 'hedge-control-line', map._hedgeClickHandler);
+      map.off('mouseenter', 'hedge-control-line');
+      map.off('mouseleave', 'hedge-control-line');
+
+      // Add the handlers
+      map.on('click', 'hedge-control-line', map._hedgeClickHandler);
 
       // Change cursor on hover
       map.on('mouseenter', 'hedge-control-line', () => {
@@ -638,10 +722,13 @@ map.on('click', 'parcels-fill', (e) => {
       
       // If no parcel was clicked and we're in "whole holding" mode, clear everything
       if (features.length === 0 && selectedValue === 'whole-holding') {
-        map.getSource('selected-parcels').setData({
-          type: 'FeatureCollection',
-          features: []
-        });
+        const selectedSource = map.getSource('selected-parcels');
+        if (selectedSource) {
+          selectedSource.setData({
+            type: 'FeatureCollection',
+            features: []
+          });
+        }
       }
       
       // In individual parcels mode, clicking background doesn't clear selections
@@ -716,18 +803,21 @@ map.on('click', 'parcels-fill', (e) => {
       });
 
       // Update selected parcels source
-      map.getSource('selected-parcels').setData({
-        type: 'FeatureCollection',
-        features: selectedFeatures
-      });
+      const selectedSource = map.getSource('selected-parcels');
+      if (selectedSource) {
+        selectedSource.setData({
+          type: 'FeatureCollection',
+          features: selectedFeatures
+        });
 
-      // Calculate selected area
-      const selectedArea = Array.from(selectedCheckboxes)
-        .reduce((sum, cb) => sum + parseFloat(cb.dataset.area || 0), 0);
-      
-      document.getElementById('selected-area').textContent = selectedArea.toFixed(4);
-      document.getElementById('selected-count').textContent = 
-        `${selectedCheckboxes.length} of ${landParcelsData.features.length}`;
+        // Calculate selected area
+        const selectedArea = Array.from(selectedCheckboxes)
+          .reduce((sum, cb) => sum + parseFloat(cb.dataset.area || 0), 0);
+        
+        document.getElementById('selected-area').textContent = selectedArea.toFixed(4);
+        document.getElementById('selected-count').textContent = 
+          `${selectedCheckboxes.length} of ${landParcelsData.features.length}`;
+      }
     }
 
     // Setup additional layers checkboxes
@@ -753,36 +843,7 @@ map.on('click', 'parcels-fill', (e) => {
       });
     }
 
-    // Load parcels when map is ready
-    map.on('load', async () => {
-      // Fetch all data
-      const parcelsData = await fetchLandParcels();
-      const coversData = await fetchLandCovers();
-      const hedgesData = await fetchHedgeControl();
-      
-      if (parcelsData) {
-        addParcelsToMap(parcelsData);
-        createParcelCheckboxes(parcelsData);
-      }
-      
-      if (coversData) {
-        addLandCoversToMap(coversData);
-      }
-      
-      if (hedgesData) {
-        addHedgeControlToMap(hedgesData);
-      }
-      
-      // Set up checkbox listeners for additional layers
-      setupAdditionalLayersCheckboxes();
-    });
-
-    // Location search functionality
-    const searchForm = document.getElementById('location-search-form');
-    const searchInput = document.getElementById('location-search');
-    const searchResults = document.getElementById('search-results');
-    const searchResultsList = document.getElementById('search-results-list');
-
+    // Debounce helper function
     function debounce(func, wait) {
       let timeout;
       return function executedFunction(...args) {
@@ -794,6 +855,12 @@ map.on('click', 'parcels-fill', (e) => {
         timeout = setTimeout(later, wait);
       };
     }
+
+    // Location search functionality
+    const searchForm = document.getElementById('location-search-form');
+    const searchInput = document.getElementById('location-search');
+    const searchResults = document.getElementById('search-results');
+    const searchResultsList = document.getElementById('search-results-list');
 
     function simplifyDisplayName(displayName) {
       let parts = displayName.split(',').map(part => part.trim());
@@ -932,10 +999,13 @@ map.on('click', 'parcels-fill', (e) => {
       searchResults.style.display = 'none';
 
       // Highlight the parcel
-      map.getSource('selected-parcels').setData({
-        type: 'FeatureCollection',
-        features: [feature]
-      });
+      const selectedSource = map.getSource('selected-parcels');
+      if (selectedSource) {
+        selectedSource.setData({
+          type: 'FeatureCollection',
+          features: [feature]
+        });
+      }
 
       // Show popup
       const center = bounds.getCenter();
@@ -1038,29 +1108,188 @@ map.on('click', 'parcels-fill', (e) => {
       radio.addEventListener('change', toggleContent);
     });
     
-      closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const overlay = this.parentElement;
-          
-          if (overlay.classList.contains('map-overlay-collapsed')) {
-            // Expand the overlay
-            overlay.classList.remove('map-overlay-collapsed');
-            this.textContent = 'Hide';
-            this.setAttribute('aria-label', 'Hide panel');
-          } else {
-            // Collapse the overlay
-            overlay.classList.add('map-overlay-collapsed');
-            this.textContent = 'Show';
-            this.setAttribute('aria-label', 'Show panel');
-          }
-        });
-      });
+    closeButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const overlay = this.parentElement;
+        
+        if (overlay.classList.contains('map-overlay-collapsed')) {
+        // Expand the overlay
+        overlay.classList.remove('map-overlay-collapsed');
+        this.textContent = 'Hide';
+        this.setAttribute('aria-label', 'Hide panel');
+        } else {
+        // Collapse the overlay
+        overlay.classList.add('map-overlay-collapsed');
+        this.textContent = 'Show';
+        this.setAttribute('aria-label', 'Show panel');
+        }
+        
+        // Remove focus after click
+        this.blur();
+    });
+    });
     
+    // Debounced filter function
     if (filterInput) {
-      filterInput.addEventListener('input', filterParcels);
+      const debouncedFilter = debounce(filterParcels, 150);
+      filterInput.addEventListener('input', debouncedFilter);
     }
     
     toggleContent();
+
+    // Load parcels when map is ready - THIS MUST BE LAST
+    map.on('load', function() {
+    // Create and add style toggle button with icon
+    const styleToggle = document.createElement('button');
+    styleToggle.id = 'style-toggle';
+    styleToggle.className = 'map-style-toggle';
+    styleToggle.setAttribute('aria-label', 'Switch to satellite view');
+    styleToggle.setAttribute('title', 'Switch to satellite view'); // Tooltip on hover
+
+    // Add icon as background image
+    styleToggle.innerHTML = '<img src="/public/images/map.svg" alt="" aria-hidden="true">';
+
+    // Add to map container
+    document.getElementById('map').appendChild(styleToggle);
+      
+      let currentStyle = 'streets';
+      styleToggle.addEventListener('click', () => {
+        // Store current view before switching
+        const currentCenter = map.getCenter();
+        const currentZoom = map.getZoom();
+        const currentBearing = map.getBearing();
+        const currentPitch = map.getPitch();
+        
+        if (currentStyle === 'streets') {
+          // Switch to satellite
+          map.setStyle({
+            'version': 8,
+            'sources': {
+              'satellite-tiles': {
+                'type': 'raster',
+                'tiles': [
+                  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                ],
+                'tileSize': 256,
+                'attribution': '© Esri, Maxar, Earthstar Geographics'
+              }
+            },
+            'layers': [
+              {
+                'id': 'satellite',
+                'type': 'raster',
+                'source': 'satellite-tiles',
+                'minzoom': 0,
+                'maxzoom': 22
+              }
+            ]
+          });
+          currentStyle = 'satellite';
+          styleToggle.setAttribute('aria-label', 'Switch to map view');
+          styleToggle.setAttribute('title', 'Switch to map view');
+        } else {  
+          // Switch to streets
+          map.setStyle({
+            'version': 8,
+            'sources': {
+              'raster-tiles': {
+                'type': 'raster',
+                'tiles': [
+                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                ],
+                'tileSize': 256,
+                'attribution': '© OpenStreetMap contributors'
+              }
+            },
+            'layers': [
+              {
+                'id': 'simple-tiles',
+                'type': 'raster',
+                'source': 'raster-tiles',
+                'minzoom': 0,
+                'maxzoom': 22
+              }
+            ]
+          });
+          currentStyle = 'streets';
+          styleToggle.setAttribute('aria-label', 'Switch to satellite view');
+          styleToggle.setAttribute('title', 'Switch to satellite view');
+        }
+        
+        // Remove focus after click
+        styleToggle.blur();
+        
+        // Re-add your data layers after style change
+        map.once('styledata', () => {
+          // Restore the view position
+          map.jumpTo({
+            center: currentCenter,
+            zoom: currentZoom,
+            bearing: currentBearing,
+            pitch: currentPitch
+          });
+          
+          // setStyle() already removes all layers and sources, so we just re-add
+          if (landParcelsData) {
+            addParcelsToMap(landParcelsData);
+          }
+          if (landCoversData) {
+            addLandCoversToMap(landCoversData);
+          }
+          if (hedgeControlData) {
+            addHedgeControlToMap(hedgeControlData);
+          }
+          
+          // Re-setup checkbox listeners
+          setupAdditionalLayersCheckboxes();
+          
+          // Restore the current selection state
+          updateSelectedParcels();
+          
+          // Restore visibility of land covers and hedgerows based on checkbox state
+          const landCoversCheckbox = document.querySelector('input[name="additionalInfo"][value="land-covers"]');
+          const hedgerowsCheckbox = document.querySelector('input[name="additionalInfo"][value="hedgerows"]');
+          
+          if (landCoversCheckbox && landCoversCheckbox.checked) {
+            if (map.getLayer('land-covers-fill')) {
+              map.setLayoutProperty('land-covers-fill', 'visibility', 'visible');
+              map.setLayoutProperty('land-covers-outline', 'visibility', 'visible');
+            }
+          }
+          
+          if (hedgerowsCheckbox && hedgerowsCheckbox.checked) {
+            if (map.getLayer('hedge-control-line')) {
+              map.setLayoutProperty('hedge-control-line', 'visibility', 'visible');
+            }
+          }
+        });
+      });
+
+      // OPTIMIZED: Fetch all data in parallel with Promise.all
+      (async () => {
+        const [parcelsData, coversData, hedgesData] = await Promise.all([
+          fetchLandParcels(),
+          fetchLandCovers(),
+          fetchHedgeControl()
+        ]);
+        
+        if (parcelsData) {
+          addParcelsToMap(parcelsData);
+          createParcelCheckboxes(parcelsData);
+        }
+        
+        if (coversData) {
+          addLandCoversToMap(coversData);
+        }
+        
+        if (hedgesData) {
+          addHedgeControlToMap(hedgesData);
+        }
+        
+        // Set up checkbox listeners for additional layers
+        setupAdditionalLayersCheckboxes();
+      })();
+    });
   });
 </script>
 
@@ -1193,8 +1422,8 @@ map.on('click', 'parcels-fill', (e) => {
   /* Map overlay styles */
   .map-overlay {
     position: absolute;
-    top: 5px;
-    left: 6px;
+    top: 10px;
+    left: 10px;
     background-color: white;
     padding: 10px;
     padding-top: 15px;
@@ -1216,37 +1445,40 @@ map.on('click', 'parcels-fill', (e) => {
     line-height: 1.25;
   }
   
-.map-overlay-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: white;
-  border: 2px solid #0b0c0c;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.25;
-  cursor: pointer;
-  color: #0b0c0c;
-  padding: 5px 10px;
-  min-width: 60px;
-  height: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "GDS Transport", arial, sans-serif;
-}
+    .map-overlay-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    border: 2px solid #0b0c0c;
+    color: #0b0c0c;
+    padding: 5px 10px;
+    font-size: 1rem; /* Changed from 14px to match map toggle */
+    line-height: 1.25;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: "GDS Transport", arial, sans-serif;
+    min-width: 60px;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
 
-.map-overlay-close:hover {
-  color: #0b0c0c;
-  background-color: #f3f2f1;
-}
+  .map-overlay-close:hover {
+    background-color: #f3f2f1;
+  }
 
-.map-overlay-close:focus {
-  outline: 3px solid #ffdd00;
-  outline-offset: 0;
-  background-color: #ffdd00;
-  color: #0b0c0c;
-}
+  .map-overlay-close:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .map-overlay-close:focus-visible {
+    outline: 3px solid #ffdd00 !important;
+    outline-offset: 0;
+    box-shadow: inset 0 0 0 4px #0b0c0c !important;
+  }
 
   .govuk-button {
     font-size: 1rem;
@@ -1264,78 +1496,173 @@ map.on('click', 'parcels-fill', (e) => {
     text-transform: uppercase;
   }
 
-/* Maplibre popup styles */
-.maplibregl-popup-content {
-  padding: 15px 20px;
-  font-size: 1rem;
-  line-height: 1.25;
-  min-width: 200px;
-  font-family: "GDS Transport", arial, sans-serif;
-}
+  /* Maplibre popup styles */
+  .maplibregl-popup {
+    pointer-events: none !important;
+  }
 
-/* Remove focus outline from popup content itself */
-.maplibregl-popup-content:focus {
-  outline: none;
-}
+  .maplibregl-popup-content {
+    padding: 15px 20px;
+    font-size: 1rem;
+    line-height: 1.25;
+    min-width: 200px;
+    font-family: "GDS Transport", arial, sans-serif;
+    pointer-events: auto !important;
+  }
 
-.maplibregl-popup-content strong {
-  font-size: 1.1875rem;
-  line-height: 1.25;
-  display: block;
-  margin-bottom: 2px;
-  font-weight: 700;
-}
+  .maplibregl-popup-tip {
+    pointer-events: auto !important;
+  }
 
-.maplibregl-popup-close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 34px;
-  line-height: 1;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0b0c0c;
-  font-family: "GDS Transport", arial, sans-serif;
-}
+  .maplibregl-popup-content:focus {
+    outline: none !important;
+  }
 
-.maplibregl-popup-close-button:hover {
-  background-color: #f3f2f1;
-}
+  .maplibregl-popup-content strong {
+    font-size: 1.1875rem;
+    line-height: 1.25;
+    display: block;
+    margin-bottom: 2px;
+    font-weight: 700;
+  }
 
-/* Only show focus when actively focused via keyboard or click */
-.maplibregl-popup-close-button:focus-visible {
-  outline: 3px solid #ffdd00;
-  outline-offset: 0;
-  background-color: #ffdd00;
-}
+  .maplibregl-popup-close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 34px;
+    line-height: 1;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0b0c0c;
+    font-family: "GDS Transport", arial, sans-serif;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    background: none !important;
+    border: none !important;
+  }
+
+  .maplibregl-popup-close-button:hover {
+    background-color: #f3f2f1 !important;
+  }
+
+  .maplibregl-popup-close-button:focus {
+    outline: none !important;
+    background-color: transparent !important;
+  }
+
+  .maplibregl-popup-close-button:focus-visible {
+    outline: 3px solid #ffdd00 !important;
+    outline-offset: 0;
+    background-color: #ffdd00 !important;
+  }
 
 /* Collapsed overlay state */
 .map-overlay-collapsed {
-  width: 80px;
-  height: 40px;
+  width: auto;
+  height: auto;
+  padding: 0; /* Changed from 5px to 0 */
+  overflow: visible;
+  max-width: none;
+}
+
+  .map-overlay-collapsed * {
+    display: none;
+  }
+
+  .map-overlay-collapsed .map-overlay-close {
+    display: flex !important;
+    position: static;
+    margin: 0;
+  }
+
+/* Style MapLibre controls to match GOV.UK */
+.maplibregl-ctrl-group {
+  background: white;
+  border-radius: 0; /* Remove rounded corners */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.maplibregl-ctrl button {
+  width: 29px;
+  height: 29px;
+  background-color: white;
+  border: none;
+}
+
+.maplibregl-ctrl button:hover {
+  background-color: #f3f2f1; /* GOV.UK grey hover */
+}
+
+.maplibregl-ctrl button:focus {
+  outline: none;
+}
+
+.maplibregl-ctrl button:focus-visible {
+  outline: 3px solid #ffdd00;
+  outline-offset: 0;
+  box-shadow: inset 0 0 0 4px #0b0c0c;
+}
+
+/* Add borders between buttons */
+.maplibregl-ctrl button + button {
+  border-top: 1px solid #b1b4b6;
+}
+
+/* Map style toggle button - positioned with spacing below zoom controls */
+.map-style-toggle {
+  position: absolute;
+  top: 78px; /* Position below zoom controls with 10px gap */
+  right: 10px;
+  z-index: 1;
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.1); /* Match maplibre controls */
+  border-radius: 0;
+  cursor: pointer;
   padding: 0;
-  overflow: hidden;
-  max-width: 80px;
+  width: 33px; /* Changed from 29px - includes border (29 + 2 + 2) */
+  height: 33px; /* Changed from 29px - includes border (29 + 2 + 2) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Match maplibre controls */
+  box-sizing: border-box; /* Ensure border is included in dimensions */
 }
 
-.map-overlay-collapsed * {
-  display: none;
+.map-style-toggle img {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
-.map-overlay-collapsed .map-overlay-close {
-  display: flex !important;
-  position: static;
-  margin: 5px;
-  width: 70px;
+.map-style-toggle:hover {
+  background-color: #f3f2f1;
 }
 
-/* Smooth transition
-.map-overlay {
-  transition: all 0.3s ease;
-} */
+.map-style-toggle:focus {
+  outline: none !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.map-style-toggle:focus-visible {
+  outline: 3px solid #ffdd00 !important;
+  outline-offset: 0;
+  box-shadow: inset 0 0 0 4px #0b0c0c !important;
+}
+
+#map {
+  opacity: 0;
+  transition: opacity 0.3s ease-in;
+}
+
+#map.ready {
+  opacity: 1;
+}
 </style>
 {% endblock %}

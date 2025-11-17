@@ -201,6 +201,7 @@
     let landCoversData = null;
     let hedgeControlData = null;
     let parcelLayers = {};
+    let cachedBounds = null; // Cache bounds calculation
 
     // Initialize the map
     const map = new maplibregl.Map({
@@ -226,9 +227,7 @@
             'maxzoom': 22
           }
         ]
-      },
-      center: [-2, 54], // Center of UK
-      zoom: 5 // Zoomed out to see whole UK initially
+      }
     });
 
     // Search marker
@@ -399,145 +398,153 @@
         }
       }, 100);
 
-      // Fit map to parcels bounds
-      const bounds = new maplibregl.LngLatBounds();
-      data.features.forEach(feature => {
-        if (feature.geometry.type === 'Polygon') {
-          feature.geometry.coordinates[0].forEach(coord => {
-            bounds.extend(coord);
-          });
-        } else if (feature.geometry.type === 'MultiPolygon') {
-          feature.geometry.coordinates.forEach(polygon => {
-            polygon[0].forEach(coord => {
+      // Calculate and cache bounds
+      if (!cachedBounds) {
+        const bounds = new maplibregl.LngLatBounds();
+
+        data.features.forEach(feature => {
+          if (feature.geometry.type === 'Polygon') {
+            feature.geometry.coordinates[0].forEach(coord => {
               bounds.extend(coord);
             });
-          });
-        }
-      });
-
-      map.fitBounds(bounds, { padding: 50 });
-
-// Store the handler function so we can remove it later
-if (!map._parcelClickHandler) {
-  let isProcessingClick = false;
-  
-  map._parcelClickHandler = (e) => {
-    // If already processing a click, ignore this one completely
-    if (isProcessingClick) {
-      console.log('Click ignored - already processing another click');
-      return;
-    }
-    
-    isProcessingClick = true;
-    
-    // Reset the flag after 100ms
-    setTimeout(() => {
-      isProcessingClick = false;
-    }, 100);
-    
-    console.log('=== PARCEL CLICK EVENT ===');
-    console.log('Parcel clicked:', e.features[0]?.properties);
-    
-    // Check if land covers or hedge control layers are visible
-    const landCoversVisible = map.getLayer('land-covers-fill') && 
-                             map.getLayoutProperty('land-covers-fill', 'visibility') === 'visible';
-    const hedgeControlVisible = map.getLayer('hedge-control-line') && 
-                                map.getLayoutProperty('hedge-control-line', 'visibility') === 'visible';
-    
-    // If data layers are visible, check if we actually clicked on them
-    if (landCoversVisible || hedgeControlVisible) {
-      const landCoverFeatures = map.queryRenderedFeatures(e.point, {
-        layers: ['land-covers-fill']
-      });
-      const hedgeFeatures = map.queryRenderedFeatures(e.point, {
-        layers: ['hedge-control-line']
-      });
-      
-      // Only block parcel interaction if we actually clicked on a data layer feature
-      if (landCoverFeatures.length > 0 || hedgeFeatures.length > 0) {
-        return;
-      }
-    }
-    
-    if (e.features.length > 0) {
-      const feature = e.features[0];
-      const props = feature.properties;
-      
-      // Get the full feature from landParcelsData
-      const fullFeature = landParcelsData.features.find(f => 
-        f.properties.SHEET_ID === props.SHEET_ID && 
-        f.properties.PARCEL_ID === props.PARCEL_ID
-      );
-      
-      if (fullFeature) {
-        // Check if selected-parcels source exists
-        const selectedSource = map.getSource('selected-parcels');
-        if (!selectedSource) {
-          console.error('selected-parcels source not found');
-          return;
-        }
-        
-        // Get current selected parcels
-        const currentData = selectedSource._data;
-        const currentFeatures = currentData.features || [];
-        
-        // Check if this parcel is already selected
-        const parcelId = `${props.SHEET_ID}${props.PARCEL_ID}`;
-        const existingIndex = currentFeatures.findIndex(f => 
-          `${f.properties.SHEET_ID}${f.properties.PARCEL_ID}` === parcelId
-        );
-        
-        let newFeatures;
-        if (existingIndex !== -1) {
-          // Parcel already selected - remove it (toggle off)
-          newFeatures = currentFeatures.filter((f, i) => i !== existingIndex);
-        } else {
-          // Parcel not selected - add it
-          newFeatures = [...currentFeatures, fullFeature];
-        }
-        
-        // Update the selected parcels
-        console.log('About to update selected parcels, new count:', newFeatures.length);
-        console.log('Selected source exists:', !!selectedSource);
-        selectedSource.setData({
-          type: 'FeatureCollection',
-          features: newFeatures
+          } else if (feature.geometry.type === 'MultiPolygon') {
+            feature.geometry.coordinates.forEach(polygon => {
+              polygon[0].forEach(coord => {
+                bounds.extend(coord);
+              });
+            });
+          }
         });
-        console.log('Selected parcels data updated successfully');
-        
-        // Update statistics in the overlay
-        const totalArea = newFeatures.reduce((sum, f) => 
-          sum + parseFloat(f.properties.AREA_HA || 0), 0
-        );
-        document.getElementById('selected-area').textContent = totalArea.toFixed(4);
-        document.getElementById('selected-count').textContent = 
-          `${newFeatures.length} of ${landParcelsData.features.length}`;
-        
-        // Also update checkboxes to match
-        const checkbox = document.getElementById(`parcel-${parcelId}`);
-        if (checkbox) {
-          checkbox.checked = existingIndex === -1; // Check if we just added it
-        }
+
+        cachedBounds = bounds;
+
+        map.fitBounds(cachedBounds, {
+          padding: 50,
+          duration: 0  // Instant, no animation on initial load
+        });
+
+        // Show the map now it's positioned correctly
+        document.getElementById('map').classList.add('ready');
       }
-      
-      // Show popup
-      new maplibregl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <strong>Land parcel</strong><br>
-          ${props.SHEET_ID} ${props.PARCEL_ID}<br>
-          Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
-        `)
-        .addTo(map);
-    }
-  };
-}
 
-// Remove any existing handler first
-map.off('click', 'parcels-fill', map._parcelClickHandler);
+      // Optimized click handler - single query for all layers
+      if (!map._parcelClickHandler) {
+        let isProcessingClick = false;
+        
+        map._parcelClickHandler = (e) => {
+          // If already processing a click, ignore this one completely
+          if (isProcessingClick) {
+            console.log('Click ignored - already processing another click');
+            return;
+          }
+          
+          isProcessingClick = true;
+          
+          // Reset the flag after 100ms
+          setTimeout(() => {
+            isProcessingClick = false;
+          }, 100);
+          
+          console.log('=== PARCEL CLICK EVENT ===');
+          
+          // Single query for all relevant layers at once
+          const allFeatures = map.queryRenderedFeatures(e.point, {
+            layers: ['land-covers-fill', 'hedge-control-line', 'parcels-fill']
+          });
+          
+          // Check what was actually clicked
+          const landCoverClicked = allFeatures.some(f => f.layer.id === 'land-covers-fill');
+          const hedgeClicked = allFeatures.some(f => f.layer.id === 'hedge-control-line');
+          
+          // If we clicked on a data layer, don't process parcel click
+          if (landCoverClicked || hedgeClicked) {
+            return;
+          }
+          
+          // Find parcel features in the results
+          const parcelFeatures = allFeatures.filter(f => f.layer.id === 'parcels-fill');
+          
+          if (parcelFeatures.length > 0) {
+            const feature = parcelFeatures[0];
+            const props = feature.properties;
+            
+            console.log('Parcel clicked:', props);
+            
+            // Get the full feature from landParcelsData
+            const fullFeature = landParcelsData.features.find(f => 
+              f.properties.SHEET_ID === props.SHEET_ID && 
+              f.properties.PARCEL_ID === props.PARCEL_ID
+            );
+            
+            if (fullFeature) {
+              // Check if selected-parcels source exists
+              const selectedSource = map.getSource('selected-parcels');
+              if (!selectedSource) {
+                console.error('selected-parcels source not found');
+                return;
+              }
+              
+              // Get current selected parcels
+              const currentData = selectedSource._data;
+              const currentFeatures = currentData.features || [];
+              
+              // Check if this parcel is already selected
+              const parcelId = `${props.SHEET_ID}${props.PARCEL_ID}`;
+              const existingIndex = currentFeatures.findIndex(f => 
+                `${f.properties.SHEET_ID}${f.properties.PARCEL_ID}` === parcelId
+              );
+              
+              let newFeatures;
+              if (existingIndex !== -1) {
+                // Parcel already selected - remove it (toggle off)
+                newFeatures = currentFeatures.filter((f, i) => i !== existingIndex);
+              } else {
+                // Parcel not selected - add it
+                newFeatures = [...currentFeatures, fullFeature];
+              }
+              
+              // Update the selected parcels
+              console.log('About to update selected parcels, new count:', newFeatures.length);
+              console.log('Selected source exists:', !!selectedSource);
+              selectedSource.setData({
+                type: 'FeatureCollection',
+                features: newFeatures
+              });
+              console.log('Selected parcels data updated successfully');
+              
+              // Update statistics in the overlay
+              const totalArea = newFeatures.reduce((sum, f) => 
+                sum + parseFloat(f.properties.AREA_HA || 0), 0
+              );
+              document.getElementById('selected-area').textContent = totalArea.toFixed(4);
+              document.getElementById('selected-count').textContent = 
+                `${newFeatures.length} of ${landParcelsData.features.length}`;
+              
+              // Also update checkboxes to match
+              const checkbox = document.getElementById(`parcel-${parcelId}`);
+              if (checkbox) {
+                checkbox.checked = existingIndex === -1; // Check if we just added it
+              }
+            }
+            
+            // Show popup
+            new maplibregl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <strong>Land parcel</strong><br>
+                ${props.SHEET_ID} ${props.PARCEL_ID}<br>
+                Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
+              `)
+              .addTo(map);
+          }
+        };
+      }
 
-// Add the handler
-map.on('click', 'parcels-fill', map._parcelClickHandler);
+      // Remove any existing handler first
+      map.off('click', 'parcels-fill', map._parcelClickHandler);
+
+      // Add the handler
+      map.on('click', 'parcels-fill', map._parcelClickHandler);
       
 
       // Change cursor on hover
@@ -640,71 +647,70 @@ map.on('click', 'parcels-fill', map._parcelClickHandler);
     
 
     // Add hedge control to map
-// Add hedge control to map
-function addHedgeControlToMap(data) {
-  if (!data || !data.features || data.features.length === 0) {
-    console.log('No hedge control features found');
-    return;
-  }
-
-  // Add source for hedge control
-  map.addSource('hedge-control', {
-    type: 'geojson',
-    data: data
-  });
-
-  // Add line layer for hedges
-  map.addLayer({
-    id: 'hedge-control-line',
-    type: 'line',
-    source: 'hedge-control',
-    paint: {
-      'line-color': '#912b88', // GOV.UK purple
-      'line-width': 3
-    },
-    layout: {
-      'visibility': 'none' // Hidden by default
-    }
-  });
-
-  // Store the handler function so we can remove it later
-  if (!map._hedgeClickHandler) {
-    map._hedgeClickHandler = (e) => {
-      // Stop the event from propagating to layers below
-      e.preventDefault();
-      
-      if (e.features.length > 0) {
-        const props = e.features[0].properties;
-        
-        new maplibregl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(`
-            <strong>Hedgerow</strong><br>
-            Length (m): ${parseFloat(props.LENGTH || 0).toFixed(2)}<br>
-            Land parcel: ${props.REF_PARCEL_SHEET_ID || ''} ${props.REF_PARCEL_PARCEL_ID || ''}
-          `)
-          .addTo(map);
+    function addHedgeControlToMap(data) {
+      if (!data || !data.features || data.features.length === 0) {
+        console.log('No hedge control features found');
+        return;
       }
-    };
-  }
 
-  // Remove any existing handlers first
-  map.off('click', 'hedge-control-line', map._hedgeClickHandler);
-  map.off('mouseenter', 'hedge-control-line');
-  map.off('mouseleave', 'hedge-control-line');
+      // Add source for hedge control
+      map.addSource('hedge-control', {
+        type: 'geojson',
+        data: data
+      });
 
-  // Add the handlers
-  map.on('click', 'hedge-control-line', map._hedgeClickHandler);
+      // Add line layer for hedges
+      map.addLayer({
+        id: 'hedge-control-line',
+        type: 'line',
+        source: 'hedge-control',
+        paint: {
+          'line-color': '#912b88', // GOV.UK purple
+          'line-width': 3
+        },
+        layout: {
+          'visibility': 'none' // Hidden by default
+        }
+      });
 
-  // Change cursor on hover
-  map.on('mouseenter', 'hedge-control-line', () => {
-    map.getCanvas().style.cursor = 'pointer';
-  });
+      // Store the handler function so we can remove it later
+      if (!map._hedgeClickHandler) {
+        map._hedgeClickHandler = (e) => {
+          // Stop the event from propagating to layers below
+          e.preventDefault();
+          
+          if (e.features.length > 0) {
+            const props = e.features[0].properties;
+            
+            new maplibregl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <strong>Hedgerow</strong><br>
+                Length (m): ${parseFloat(props.LENGTH || 0).toFixed(2)}<br>
+                Land parcel: ${props.REF_PARCEL_SHEET_ID || ''} ${props.REF_PARCEL_PARCEL_ID || ''}
+              `)
+              .addTo(map);
+          }
+        };
+      }
 
-  map.on('mouseleave', 'hedge-control-line', () => {
-    map.getCanvas().style.cursor = '';
-  });
-}
+      // Remove any existing handlers first
+      map.off('click', 'hedge-control-line', map._hedgeClickHandler);
+      map.off('mouseenter', 'hedge-control-line');
+      map.off('mouseleave', 'hedge-control-line');
+
+      // Add the handlers
+      map.on('click', 'hedge-control-line', map._hedgeClickHandler);
+
+      // Change cursor on hover
+      map.on('mouseenter', 'hedge-control-line', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', 'hedge-control-line', () => {
+        map.getCanvas().style.cursor = '';
+      });
+    }
 
     // Clear highlights when clicking on the map background (not on a parcel)
     map.on('click', (e) => {
@@ -837,12 +843,7 @@ function addHedgeControlToMap(data) {
       });
     }
 
-    // Location search functionality
-    const searchForm = document.getElementById('location-search-form');
-    const searchInput = document.getElementById('location-search');
-    const searchResults = document.getElementById('search-results');
-    const searchResultsList = document.getElementById('search-results-list');
-
+    // Debounce helper function
     function debounce(func, wait) {
       let timeout;
       return function executedFunction(...args) {
@@ -854,6 +855,12 @@ function addHedgeControlToMap(data) {
         timeout = setTimeout(later, wait);
       };
     }
+
+    // Location search functionality
+    const searchForm = document.getElementById('location-search-form');
+    const searchInput = document.getElementById('location-search');
+    const searchResults = document.getElementById('search-results');
+    const searchResultsList = document.getElementById('search-results-list');
 
     function simplifyDisplayName(displayName) {
       let parts = displayName.split(',').map(part => part.trim());
@@ -1122,8 +1129,10 @@ function addHedgeControlToMap(data) {
     });
     });
     
+    // Debounced filter function
     if (filterInput) {
-      filterInput.addEventListener('input', filterParcels);
+      const debouncedFilter = debounce(filterParcels, 150);
+      filterInput.addEventListener('input', debouncedFilter);
     }
     
     toggleContent();
@@ -1144,110 +1153,125 @@ function addHedgeControlToMap(data) {
     document.getElementById('map').appendChild(styleToggle);
       
       let currentStyle = 'streets';
-      
       styleToggle.addEventListener('click', () => {
-  if (currentStyle === 'streets') {
-    // Switch to satellite
-    map.setStyle({
-      'version': 8,
-      'sources': {
-        'satellite-tiles': {
-          'type': 'raster',
-          'tiles': [
-            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-          ],
-          'tileSize': 256,
-          'attribution': '© Esri, Maxar, Earthstar Geographics'
+        // Store current view before switching
+        const currentCenter = map.getCenter();
+        const currentZoom = map.getZoom();
+        const currentBearing = map.getBearing();
+        const currentPitch = map.getPitch();
+        
+        if (currentStyle === 'streets') {
+          // Switch to satellite
+          map.setStyle({
+            'version': 8,
+            'sources': {
+              'satellite-tiles': {
+                'type': 'raster',
+                'tiles': [
+                  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                ],
+                'tileSize': 256,
+                'attribution': '© Esri, Maxar, Earthstar Geographics'
+              }
+            },
+            'layers': [
+              {
+                'id': 'satellite',
+                'type': 'raster',
+                'source': 'satellite-tiles',
+                'minzoom': 0,
+                'maxzoom': 22
+              }
+            ]
+          });
+          currentStyle = 'satellite';
+          styleToggle.setAttribute('aria-label', 'Switch to map view');
+          styleToggle.setAttribute('title', 'Switch to map view');
+        } else {  
+          // Switch to streets
+          map.setStyle({
+            'version': 8,
+            'sources': {
+              'raster-tiles': {
+                'type': 'raster',
+                'tiles': [
+                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                ],
+                'tileSize': 256,
+                'attribution': '© OpenStreetMap contributors'
+              }
+            },
+            'layers': [
+              {
+                'id': 'simple-tiles',
+                'type': 'raster',
+                'source': 'raster-tiles',
+                'minzoom': 0,
+                'maxzoom': 22
+              }
+            ]
+          });
+          currentStyle = 'streets';
+          styleToggle.setAttribute('aria-label', 'Switch to satellite view');
+          styleToggle.setAttribute('title', 'Switch to satellite view');
         }
-      },
-      'layers': [
-        {
-          'id': 'satellite',
-          'type': 'raster',
-          'source': 'satellite-tiles',
-          'minzoom': 0,
-          'maxzoom': 22
-        }
-      ]
-    });
-    currentStyle = 'satellite';
-    styleToggle.setAttribute('aria-label', 'Switch to map view');
-    styleToggle.setAttribute('title', 'Switch to map view');
-  } else {  
-    // Switch to streets
-    map.setStyle({
-      'version': 8,
-      'sources': {
-        'raster-tiles': {
-          'type': 'raster',
-          'tiles': [
-            'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-          ],
-          'tileSize': 256,
-          'attribution': '© OpenStreetMap contributors'
-        }
-      },
-      'layers': [
-        {
-          'id': 'simple-tiles',
-          'type': 'raster',
-          'source': 'raster-tiles',
-          'minzoom': 0,
-          'maxzoom': 22
-        }
-      ]
-    });
-    currentStyle = 'streets';
-    styleToggle.setAttribute('aria-label', 'Switch to satellite view');
-    styleToggle.setAttribute('title', 'Switch to satellite view');
-  }
-  
-  // Remove focus after click
-  styleToggle.blur();
-  
-  // Re-add your data layers after style change
-  map.once('styledata', () => {
-    // setStyle() already removes all layers and sources, so we just re-add
-    if (landParcelsData) {
-      addParcelsToMap(landParcelsData);
-    }
-    if (landCoversData) {
-      addLandCoversToMap(landCoversData);
-    }
-    if (hedgeControlData) {
-      addHedgeControlToMap(hedgeControlData);
-    }
-    
-    // Re-setup checkbox listeners
-    setupAdditionalLayersCheckboxes();
-    
-    // Restore the current selection state
-    updateSelectedParcels();
-    
-    // Restore visibility of land covers and hedgerows based on checkbox state
-    const landCoversCheckbox = document.querySelector('input[name="additionalInfo"][value="land-covers"]');
-    const hedgerowsCheckbox = document.querySelector('input[name="additionalInfo"][value="hedgerows"]');
-    
-    if (landCoversCheckbox && landCoversCheckbox.checked) {
-      if (map.getLayer('land-covers-fill')) {
-        map.setLayoutProperty('land-covers-fill', 'visibility', 'visible');
-        map.setLayoutProperty('land-covers-outline', 'visibility', 'visible');
-      }
-    }
-    
-    if (hedgerowsCheckbox && hedgerowsCheckbox.checked) {
-      if (map.getLayer('hedge-control-line')) {
-        map.setLayoutProperty('hedge-control-line', 'visibility', 'visible');
-      }
-    }
-  });
-});
+        
+        // Remove focus after click
+        styleToggle.blur();
+        
+        // Re-add your data layers after style change
+        map.once('styledata', () => {
+          // Restore the view position
+          map.jumpTo({
+            center: currentCenter,
+            zoom: currentZoom,
+            bearing: currentBearing,
+            pitch: currentPitch
+          });
+          
+          // setStyle() already removes all layers and sources, so we just re-add
+          if (landParcelsData) {
+            addParcelsToMap(landParcelsData);
+          }
+          if (landCoversData) {
+            addLandCoversToMap(landCoversData);
+          }
+          if (hedgeControlData) {
+            addHedgeControlToMap(hedgeControlData);
+          }
+          
+          // Re-setup checkbox listeners
+          setupAdditionalLayersCheckboxes();
+          
+          // Restore the current selection state
+          updateSelectedParcels();
+          
+          // Restore visibility of land covers and hedgerows based on checkbox state
+          const landCoversCheckbox = document.querySelector('input[name="additionalInfo"][value="land-covers"]');
+          const hedgerowsCheckbox = document.querySelector('input[name="additionalInfo"][value="hedgerows"]');
+          
+          if (landCoversCheckbox && landCoversCheckbox.checked) {
+            if (map.getLayer('land-covers-fill')) {
+              map.setLayoutProperty('land-covers-fill', 'visibility', 'visible');
+              map.setLayoutProperty('land-covers-outline', 'visibility', 'visible');
+            }
+          }
+          
+          if (hedgerowsCheckbox && hedgerowsCheckbox.checked) {
+            if (map.getLayer('hedge-control-line')) {
+              map.setLayoutProperty('hedge-control-line', 'visibility', 'visible');
+            }
+          }
+        });
+      });
 
-      // Fetch all data
+      // OPTIMIZED: Fetch all data in parallel with Promise.all
       (async () => {
-        const parcelsData = await fetchLandParcels();
-        const coversData = await fetchLandCovers();
-        const hedgesData = await fetchHedgeControl();
+        const [parcelsData, coversData, hedgesData] = await Promise.all([
+          fetchLandParcels(),
+          fetchLandCovers(),
+          fetchHedgeControl()
+        ]);
         
         if (parcelsData) {
           addParcelsToMap(parcelsData);
@@ -1398,8 +1422,8 @@ function addHedgeControlToMap(data) {
   /* Map overlay styles */
   .map-overlay {
     position: absolute;
-    top: 5px;
-    left: 6px;
+    top: 10px;
+    left: 10px;
     background-color: white;
     padding: 10px;
     padding-top: 15px;
@@ -1630,6 +1654,15 @@ function addHedgeControlToMap(data) {
   outline: 3px solid #ffdd00 !important;
   outline-offset: 0;
   box-shadow: inset 0 0 0 4px #0b0c0c !important;
+}
+
+#map {
+  opacity: 0;
+  transition: opacity 0.3s ease-in;
+}
+
+#map.ready {
+  opacity: 1;
 }
 </style>
 {% endblock %}
