@@ -1,0 +1,140 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Check parcel details before submitting – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds-from-desktop">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Check your answers
+      </h1>
+
+      <!-- <p>{{ data | dump }}</p> -->
+
+      {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+        {% for item in data['parcel-choices'] %}
+          {% set summaryRows = [] %}
+          
+          {% if item.id %}
+            {% set summaryRows = summaryRows.concat([{
+              key: {
+                text: "Parcel ID"
+              },
+              value: {
+                text: item.id
+              },
+              actions: {
+                items: [
+                  {
+                    href: "edit-parcel-id?editIndex=" + loop.index0,
+                    text: "Change",
+                    visuallyHiddenText: "Land parcel ID"
+                  }
+                ]
+              }
+            }]) %}
+          {% endif %}
+          
+          {% if item.map or item.know == 'no' %}
+          {% set summaryRows = summaryRows.concat([{
+            key: {
+              text: "Map"
+            },
+            value: {
+              text: item.map or "map-of-land-parcel-RD69202871.pdf"
+            },
+            actions: {
+              items: [
+                {
+                  href: "edit-map?editIndex=" + loop.index0,
+                  text: "Change",
+                  visuallyHiddenText: "map"
+                }
+              ]
+            }
+          }]) %}
+          {% endif %}
+          
+          {% if item.day and item.month and item.year %}
+            {% set paddedDay = ("0" + item.day) if item.day | string | length == 1 else item.day %}
+            {% set paddedMonth = ("0" + item.month) if item.month | string | length == 1 else item.month %}
+            {% set dateString = item.year + "-" + paddedMonth + "-" + paddedDay %}
+          {% else %}
+            {% set dateString = "today" %}
+          {% endif %}
+
+          {% set summaryRows = summaryRows.concat([{
+            key: {
+              text: "Effective from"
+            },
+            value: {
+              html: dateString | govukDate
+            },
+            actions: {
+              items: [
+                {
+                  href: "date-to-link-parcel-to-business?editIndex=" + loop.index0,
+                  text: "Change",
+                  visuallyHiddenText: "effective from"
+                }
+              ]
+            }
+          }]) %}
+          
+          {{ govukSummaryList({
+            card: {
+              title: {
+                text: "Land parcel " + loop.index
+              },
+              actions: {
+                items: [
+                  {
+                    href: "delete-parcel?deleteIndex=" + loop.index0,
+                    text: "Delete parcel",
+                    visuallyHiddenText: "land parcel " + loop.index
+                  }
+                ]
+              }
+            },
+            rows: summaryRows
+          }) }}
+        {% endfor %}
+
+      {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+      <form method="post">
+        
+      {{ govukRadios({
+        name: "registerAnotherParcel",
+        fieldset: {
+          legend: {
+            text: "Do you want to register any more land?",
+            isPageHeading: false,
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        items: [
+          {
+            value: "yes",
+            text: "Yes"
+          },
+          {
+            value: "no",
+            text: "No"
+          }
+        ]
+      }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+    </form>
+
+    </div>
+  </div>
+{% endblock %}

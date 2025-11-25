@@ -1,0 +1,49 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  The land parcel is not registered on the Rural Payments service – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        A map of land parcel {{ data['parcelID'] or "RD6920 2871" }} is needed
+      </h1>
+
+      <!-- <p>
+        {{ data | dump }}
+      </p> -->
+
+      <p>Because this land has never been registered as a parcel, you need to create and upload a map of the area. For guidance, see <a href="#">Creating a sketch map to register land or update digital maps</a>.</p>
+      
+      <!-- <h2 class="govuk-heading-m">
+        Parcel ID - CS0771 7013
+      </h2>
+
+      {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+      {{ govukInsetText({
+        html: "<p>This land parcel is not registered on the Rural Payments service.</p><p>To register this land parcel you will need to provide an annotated map, or sketch map.</p>"
+      }) }} -->
+
+      <form method="post">
+        {{ govukButton({
+            text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+
+{% endblock %}

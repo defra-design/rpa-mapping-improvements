@@ -1,0 +1,75 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Do you know the parcel ID? – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <!-- <p>{{ data | dump }}</p> -->
+
+      <form method="post">
+        {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+        {{ govukRadios({
+        name: "knowParcelID",
+        fieldset: {
+          legend: {
+            html: "<span class='govuk-caption-l'>AR FIELDING</span>Do you know the parcel ID?",
+            isPageHeading: true,
+            classes: "govuk-fieldset__legend--l"
+          }
+        },
+        formGroup: {
+          beforeInputs: {
+            html: "<p class='govuk-body'>The parcel ID is the unique identifier of a land parcel. It is made up of the:</p>
+      <ul class='govuk-list govuk-list--bullet'>
+      <li>Ordnance Survey sheet reference (2 letters and 4 numbers)</li>
+      <li>National Grid field number (4 numbers)</li>
+      </ul>
+      <p>For example, SP4178 2432.</p>"
+          }
+        },
+        items: [
+          {
+            value: "yes",
+            text: "Yes",
+            conditional: {
+              html: govukInput({
+                id: "parcel-id",
+                name: "parcelID",
+                classes: "govuk-input--width-10",
+                label: {
+                  text: "Enter the parcel ID"
+                },
+                hint: {
+                  text: "For example, SP4178 2432"
+                }
+              })
+            }
+          },
+          {
+            value: "no",
+            text: "No",
+            hint: {
+              text: "You'll be able to find or generate a parcel ID if you do not have one"
+            }
+          }
+        ]
+      }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+      </form>
+
+
+
+    </div>
+  </div>
+
+{% endblock %}

@@ -1,0 +1,291 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  DefraMap page template – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block head %}
+  <link href="/public/stylesheets/application.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/map-styles/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/select/dist/css/index.css" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block bodyStart %}
+  <script>document.body.classList.add('am-is-loading')</script>
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+
+    <h1 class="govuk-heading-l">
+      Basic map
+    </h1>
+
+    <p>{{ data.VALUE }}</p>
+    <div id="map" data-zoom="12" data-center="[-2.968, 54.425]"></div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block pageScripts %}
+  <!-- Defra library scripts -->
+  <script src="/plugin-assets/%40defra%2Fdefra-map/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/providers/maplibre/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/providers/open-names/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/map-styles/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/zoom-controls/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/select/dist/umd/index.js"></script>
+  <script src="/public/javascripts/request.js"></script>
+  <script src="/public/javascripts/searchCustomDatasets.js"></script>
+  
+  <script>
+  console.log('Setting up parcel list - auto mode')
+
+setTimeout(() => {
+  console.log('Searching for map...')
+  
+  function findMapDeep(fiber, depth = 0, maxDepth = 15) {
+    if (!fiber || depth > maxDepth) return null
+    
+    if (fiber.stateNode && fiber.stateNode.getZoom && typeof fiber.stateNode.getZoom === 'function') {
+      return fiber.stateNode
+    }
+    
+    if (fiber.memoizedProps) {
+      for (let key in fiber.memoizedProps) {
+        const val = fiber.memoizedProps[key]
+        if (val && val.getZoom && typeof val.getZoom === 'function') {
+          return val
+        }
+      }
+    }
+    
+    let found = findMapDeep(fiber.child, depth + 1, maxDepth)
+    if (found) return found
+    
+    return findMapDeep(fiber.sibling, depth, maxDepth)
+  }
+  
+  const mapProvider = findMapDeep(defraMap._root._internalRoot.current)
+  
+  if (mapProvider && mapProvider.map) {
+    console.log('Map found! Initializing parcel list...')
+    initializeParcelList(mapProvider.map)
+  } else {
+    console.error('Could not find map, retrying in 2 seconds...')
+    // Retry once more
+    setTimeout(() => {
+      const mapProvider2 = findMapDeep(defraMap._root._internalRoot.current)
+      if (mapProvider2 && mapProvider2.map) {
+        console.log('Map found on retry! Initializing parcel list...')
+        initializeParcelList(mapProvider2.map)
+      } else {
+        console.error('Still could not find map after retry')
+      }
+    }, 2000)
+  }
+  
+}, 4000)
+
+function initializeParcelList(map) {
+  console.log('Initializing parcel list with map, zoom:', map.getZoom())
+  
+  const parcelPanel = document.createElement('div')
+  parcelPanel.className = 'dm-c-panel'
+  parcelPanel.style.cssText = 'position: absolute; top: 60px; right: 10px; width: 400px; height: 600px; overflow-y: auto; background: white; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1000;'
+  parcelPanel.innerHTML = `
+    <h2 class="govuk-heading-s" style="margin-top: 0;">Visible parcels</h2>
+    <div id="parcel-list-content" class="govuk-body-s">Loading...</div>
+  `
+  
+  const appInset = document.querySelector('.dm-o-app__inset')
+  if (appInset) {
+    appInset.appendChild(parcelPanel)
+    console.log('Panel added to page')
+  }
+  
+  function updateParcelList() {
+    if (map.getZoom() < 15) {
+      document.getElementById('parcel-list-content').innerHTML = '<p>Zoom in to see parcels (level 15+)</p>'
+      return
+    }
+    
+    try {
+      // Check if layers exist before querying
+      const style = map.getStyle()
+      const hasFieldParcels = style && style.layers && style.layers.some(l => l.id === 'field-parcels')
+      const hasLinkedParcels = style && style.layers && style.layers.some(l => l.id === 'linked-parcels')
+      
+      if (!hasFieldParcels && !hasLinkedParcels) {
+        document.getElementById('parcel-list-content').innerHTML = '<p>Loading parcels...</p>'
+        return
+      }
+      
+      const fieldParcels = hasFieldParcels ? map.queryRenderedFeatures({ layers: ['field-parcels'] }) : []
+      const linkedParcels = hasLinkedParcels ? map.queryRenderedFeatures({ layers: ['linked-parcels'] }) : []
+      
+      const fieldIds = [...new Set(fieldParcels.map(f => f.properties.ID))].sort()
+      const linkedIds = [...new Set(linkedParcels.map(f => f.properties.ID))].sort()
+      
+      let html = ''
+      
+      if (fieldIds.length > 0) {
+        html += `<p><strong>Field parcels (${fieldIds.length}):</strong><br>${fieldIds.join(', ')}</p>`
+      }
+      
+      if (linkedIds.length > 0) {
+        html += `<p><strong>Existing fields (${linkedIds.length}):</strong><br>${linkedIds.join(', ')}</p>`
+      }
+      
+      if (fieldIds.length === 0 && linkedIds.length === 0) {
+        html = '<p>No parcels visible in current view</p>'
+      }
+      
+      document.getElementById('parcel-list-content').innerHTML = html
+    } catch (error) {
+      console.error('Error updating parcel list:', error)
+    }
+  }
+  
+  map.on('moveend', updateParcelList)
+  map.on('zoomend', updateParcelList)
+  
+  // Wait for style to load before first update
+  if (map.isStyleLoaded()) {
+    setTimeout(updateParcelList, 1000)
+  } else {
+    map.once('styledata', () => {
+      setTimeout(updateParcelList, 1000)
+    })
+  }
+}
+    window.env = {
+      WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
+      GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
+      PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
+    }
+
+    const defraMap = new defra.DefraMap('map', {
+      mapProvider: defra.maplibreProvider,
+      reverseGeocodeProvider: defra.openNamesProvider({
+        url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
+      }),
+      behaviour: 'hybrid',
+      mapLabel: 'Ambleside',
+      minZoom: 6,
+      maxZoom: 18,
+      containerHeight: '650px',
+      transformRequest: transformTileRequest,
+      mapStyle: {
+        url: 'https://tiles.openfreemap.org/styles/liberty',
+        attribution: 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
+        backgroundColor: '#f5f5f0'
+      },
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [{
+            id: 'outdoor',
+            label: 'Outdoor',
+            url: '{{ data.VTS_OUTDOOR_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
+            backgroundColor: '#f5f5f0'
+          }, {
+            id: 'dark',
+            label: 'Dark',
+            url: '{{ data.VTS_DARK_URL }}',
+            mapColorScheme: 'dark',
+            appColorScheme: 'dark',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/dark-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-white.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'black-and-white',
+            label: 'Black/White',
+            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/black-and-white-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-black.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'satellite',
+            label: 'Satellite',
+            url: '{{ data.VTS_SATELLITE_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+          }]
+        }),
+        defra.dataLayersMLPlugin({
+          transformRequest: transformDataRequest,
+          layers: [{
+            id: 'field-parcels',
+            label: 'Field parcels',
+            filter: ['!=', ['get', 'SBI'], '106223377'],
+            url: '{{ data.WFS_DATA_URL | safe }}',
+            stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
+            strokeWidth: 2,
+            // strokeDashArray: [1, 2],
+            fill: 'transparent',
+            minZoom: 15,
+            maxZoom: 24
+          },{
+            id: 'linked-parcels',
+            label: 'Existing fields',
+            filter: ['==', ['get', 'SBI'], '106223377'],
+            url: '{{ data.WFS_DATA_URL | safe }}',
+            stroke: '#0000ff',
+            strokeWidth: 2,
+            fill: 'rgba(0,0,255,0.1)',
+            minZoom: 15,
+            maxZoom: 24
+          }]
+        }),
+        defra.selectPlugin({
+          dataLayers: [{
+            layerId: 'field-parcels',
+            idProperty: 'ID',
+            selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
+          },{
+            layerId: 'linked-parcels',
+            idProperty: 'ID',
+            selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
+          }],
+          markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
+          selectionMode: 'auto', // 'auto', 'select', 'marker' // defaults to 'marker'
+          // multiSelect: true
+        }),
+        defra.searchPlugin({
+          osNamesURL: '/api/geocode-proxy?query={query}',
+          customDatasets: searchCustomDatasets,
+          width: '300px',
+          showMarker: false
+        }),
+        defra.zoomControlsPlugin(),
+        defra.scaleBarPlugin({
+			    units: 'metric'
+		    })
+      ]
+    })
+  </script>
+{% endblock %}

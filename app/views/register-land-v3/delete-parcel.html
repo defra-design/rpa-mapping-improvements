@@ -1,0 +1,51 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Delete land parcel – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% set parcelIndex = data.deleteIndex or query.deleteIndex %}
+      {% set parcel = data['parcel-choices'][parcelIndex | int] %}
+      
+      <form method="post">
+        <input type="hidden" name="index" value="{{ parcelIndex }}">
+        
+        <!-- {{ govukWarningText({
+          text: "You are about to delete land parcel " + (parcelIndex | int + 1),
+          iconFallbackText: "Warning"
+        }) }} -->
+        
+        {{ govukRadios({
+          name: "confirmDelete",
+          fieldset: {
+            legend: {
+              html: "<span class='govuk-caption-l'>AR FIELDING</span>Are you sure you want to delete land parcel " + (parcel.id if parcel.id else (parcelIndex | int + 1)) + "?",
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          hint: {
+            text: "This action cannot be undone"
+          },
+          items: [
+            {
+              value: "yes",
+              text: "Yes"
+            },
+            {
+              value: "no",
+              text: "No, keep this land parcel"
+            }
+          ]
+        }) }}
+        
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

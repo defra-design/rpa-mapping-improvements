@@ -1,0 +1,36 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  The land parcel is registered on the Rural Payments service – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Do you want to register land parcel {{ data['parcelID'] or "RD6920 2871" }} to your business?
+      </h1>
+
+      <!-- <p>{{ data | dump }}</p> 
+
+      <h2 class="govuk-heading-m">
+        Parcel ID - TL4257 0684
+      </h2> -->
+
+      <!-- <p>The land parcel you entered is already registered on the Rural Payments service. Register this land parcel to your business.</p> -->
+          <p>Because this land was previously registered by another business you do not need to create a map.</p> 
+
+      <form method="post">
+
+        {{ govukButton({
+            text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+
+{% endblock %}

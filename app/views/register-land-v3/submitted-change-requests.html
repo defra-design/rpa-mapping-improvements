@@ -1,0 +1,157 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Submitted change requests – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">
+        <span class='govuk-caption-l'>AR FIELDING</span>
+        Submitted change requests
+      </h1>
+      
+      <h2 class="govuk-heading-m">
+        Submission ID 1745 839 186
+      </h2>
+      
+      {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+      
+      {% if data['parcel-choices'] %}
+        {% set parcelIDs = '' %}
+        
+        {% for item in data['parcel-choices'] %}
+          {% if loop.first %}
+            {% set parcelIDs = item.id %}
+          {% else %}
+            {% set parcelIDs = parcelIDs + ' / ' + item.id %}
+          {% endif %}
+        {% endfor %}
+        
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: {
+                text: "Date submitted"
+              },
+              value: {
+                html: "today" | govukDate
+              }
+            },
+            {
+              key: {
+                text: "Journey name"
+              },
+              value: {
+                text: "Register land"
+              }
+            },
+            {
+              key: {
+                text: "Land parcels"
+              },
+              value: {
+                text: parcelIDs
+              }
+            },
+            {
+              key: {
+                text: "Date of change"
+              },
+              value: {
+                html: "today" | govukDate
+              }
+            }
+          ]
+        }) }}
+      {% else %}
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: {
+                text: "Date submitted"
+              },
+              value: {
+                html: "today" | govukDate
+              }
+            },
+            {
+              key: {
+                text: "Journey name"
+              },
+              value: {
+                text: "Register land"
+              }
+            },
+            {
+              key: {
+                text: "Land parcels"
+              },
+              value: {
+                text: "TL4257 0684 / CS0771 7013 / RD6920 2871"
+              }
+            },
+            {
+              key: {
+                text: "Date of change"
+              },
+              value: {
+                html: "today" | govukDate
+              }
+            }
+          ]
+        }) }}
+
+      <h2 class="govuk-heading-m">
+        Submission ID 0802 197 169
+      </h2>
+
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: {
+                text: "Date submitted"
+              },
+              value: {
+                html: "09 September 2025"
+              }
+            },
+            {
+              key: {
+                text: "Journey name"
+              },
+              value: {
+                text: "Register land"
+              }
+            },
+            {
+              key: {
+                text: "Land parcels"
+              },
+              value: {
+                text: "TL4257 0684 / CS0771 7013 / RD6920 2871"
+              }
+            },
+            {
+              key: {
+                text: "Date of change"
+              },
+              value: {
+                html: "01 September 2025"
+              }
+            }
+          ]
+        }) }}
+
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

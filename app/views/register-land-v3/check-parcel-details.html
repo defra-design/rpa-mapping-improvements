@@ -1,0 +1,126 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Check parcel details before submitting – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds-from-desktop">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Check your answers
+      </h1>
+
+      <!-- <p>{{ data | dump }}</p> -->
+
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{{ govukSummaryList({
+  card: {
+    title: {
+      text: "Land parcel 1"
+    }
+    ,
+          actions: {
+            items: [
+              {
+                href: "#",
+                text: "Delete parcel",
+                visuallyHiddenText: "one"
+              }
+            ]
+          }
+  },
+  rows: [
+    {
+      key: {
+        text: "Parcel ID"
+      },
+      value: {
+        html: "CS0771 7013"
+      },
+      actions: {
+        items: [
+          {
+            href: "#",
+            text: "Change",
+            visuallyHiddenText: "age"
+          }
+        ]
+      }
+    },
+    {
+      key: {
+        text: "Effective from"
+      },
+      value: {
+        html: data | isoDateFromDateInput('date-to-link') | govukDate
+      },
+      actions: {
+        items: [
+          {
+            href: "#",
+            text: "Change",
+            visuallyHiddenText: "nationality"
+          }
+        ]
+      }
+    },
+    {
+      key: {
+        text: "Map of land parcel"
+      },
+      value: {
+        html: "Image of land parcel to be displayed"
+      },
+      actions: {
+        items: [
+          {
+            href: "#",
+            text: "Change",
+            visuallyHiddenText: "working situation"
+          }
+        ]
+      }
+    }
+  ]
+}) }}
+
+
+
+      {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+      <form method="post">
+        
+      {{ govukRadios({
+        name: "registerAnotherParcel",
+        fieldset: {
+          legend: {
+            text: "Do you want to register any more land?",
+            isPageHeading: false,
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        items: [
+          {
+            value: "yes",
+            text: "Yes"
+          },
+          {
+            value: "no",
+            text: "No"
+          }
+        ]
+      }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+    </form>
+
+    </div>
+  </div>
+{% endblock %}

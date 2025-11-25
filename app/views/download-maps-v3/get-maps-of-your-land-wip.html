@@ -129,6 +129,16 @@
       <div id="whole-holding-overlay" class="map-overlay">
         <button class="map-overlay-close" aria-label="Hide panel">Hide</button>
         <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Whole holding</h2>
+
+        <!-- Add this loading section -->
+        <div id="loading-indicator" style="display: none;">
+          <p class="govuk-body-s">Loading map data</p>
+          <div style="background: #f3f2f1; height: 30px; border-radius: 0px; overflow: hidden; margin-bottom: 10px;">
+            <div id="loading-progress-bar" style="background: #1d70b8; height: 100%; width: 0%; transition: width 0.3s;"></div>
+          </div>
+          <p class="govuk-body-s" id="loading-percentage">0%</p>
+        </div>
+
         <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3">
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">Total area (ha)</dt>
@@ -196,12 +206,40 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // Configuration
-    const SBI = '106332870'; // Your test SBI
+    const SBI = '106332870'; // Your test SBI 106327021 / 106332870
     let landParcelsData = null;
     let landCoversData = null;
     let hedgeControlData = null;
     let parcelLayers = {};
     let cachedBounds = null; // Cache bounds calculation
+
+// Progress tracking
+function updateLoadingProgress(percentage) {
+  const progressBar = document.getElementById('loading-progress-bar');
+  const progressText = document.getElementById('loading-percentage');
+  const loadingIndicator = document.getElementById('loading-indicator');
+  
+      if (loadingIndicator) {
+        loadingIndicator.style.display = 'block';
+      }
+      
+      if (progressBar) {
+        progressBar.style.width = percentage + '%';
+      }
+      
+      if (progressText) {
+        progressText.textContent = Math.round(percentage) + '%';
+      }
+      
+      // Hide loading indicator when complete
+      if (percentage >= 100) {
+        setTimeout(() => {
+          if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+          }
+        }, 500);
+      }
+    }
 
     // Initialize the map
     const map = new maplibregl.Map({
@@ -1265,13 +1303,37 @@
         });
       });
 
-      // OPTIMIZED: Fetch all data in parallel with Promise.all
-      (async () => {
-        const [parcelsData, coversData, hedgesData] = await Promise.all([
-          fetchLandParcels(),
-          fetchLandCovers(),
-          fetchHedgeControl()
-        ]);
+// OPTIMIZED: Fetch all data in parallel with Promise.all and track progress
+(async () => {
+  updateLoadingProgress(0);
+  
+  let parcelsLoaded = false;
+  let coversLoaded = false;
+  let hedgesLoaded = false;
+  
+  const updateProgress = () => {
+    const loaded = [parcelsLoaded, coversLoaded, hedgesLoaded].filter(Boolean).length;
+    const percentage = (loaded / 3) * 100;
+    updateLoadingProgress(percentage);
+  };
+  
+  const [parcelsData, coversData, hedgesData] = await Promise.all([
+    fetchLandParcels().then(data => {
+      parcelsLoaded = true;
+      updateProgress();
+      return data;
+    }),
+    fetchLandCovers().then(data => {
+      coversLoaded = true;
+      updateProgress();
+      return data;
+    }),
+    fetchHedgeControl().then(data => {
+      hedgesLoaded = true;
+      updateProgress();
+      return data;
+    })
+  ]);
         
         if (parcelsData) {
           addParcelsToMap(parcelsData);
