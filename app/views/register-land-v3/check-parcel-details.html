@@ -70,20 +70,21 @@
     },
     {
       key: {
-        text: "Map of land parcel"
+        text: "Land parcel"
       },
       value: {
-        html: "Image of land parcel to be displayed"
+        html: "<img src='/public/images/land-parcel-CS07717013.png' alt='Map' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%;'>"
       },
       actions: {
         items: [
           {
             href: "#",
             text: "Change",
-            visuallyHiddenText: "working situation"
+            visuallyHiddenText: "map of land parcel"
           }
         ]
-      }
+      },
+  classes: "govuk-summary-list__row--align-top"
     }
   ]
 }) }}
@@ -123,4 +124,12 @@
 
     </div>
   </div>
+{% endblock %}
+
+{% block pageScripts %}
+.govuk-summary-list__row--align-top .govuk-summary-list__key,
+.govuk-summary-list__row--align-top .govuk-summary-list__value,
+.govuk-summary-list__row--align-top .govuk-summary-list__actions {
+  vertical-align: top;
+}
 {% endblock %}
