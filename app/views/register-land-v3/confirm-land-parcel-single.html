@@ -126,67 +126,75 @@
   }
 
   // Function to fetch parcels for a specific SBI and find one by parcel ID
-  function fetchSpecificParcel(sbi, parcelId) {
-    console.log('Fetching parcel for SBI:', sbi, 'Parcel ID:', parcelId);
-    
-    const parsed = parseParcelID(parcelId);
-    if (!parsed) {
-      console.error('Could not parse parcel ID:', parcelId);
-      return Promise.resolve(null);
-    }
-    
-    console.log('Parsed parcel:', parsed);
-    
-    // Fetch ALL parcels for this SBI (without parcel ID filter)
-    const wfsUrl = `{{ data.WFS_DATA_URL | safe }}`;
-    const wfsWithFilter = `${wfsUrl}&CQL_FILTER=SBI='${sbi}'&outputFormat=application/json&srsName=EPSG:4326`;
-    
-    // Use the proxy
-    const proxyUrl = `https://farming-data-7db3d1889632.herokuapp.com/wfs_geojson?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
-    
-    console.log('Fetching all parcels for SBI from proxy:', proxyUrl);
-    
-    return fetch(proxyUrl)
-      .then(response => {
-        console.log('Response status:', response.status);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Fetched all parcels for SBI:', data);
-        
-        // Filter client-side to find the specific parcel
-        if (data.features && data.features.length > 0) {
-          const matchingParcel = data.features.find(feature => 
-            feature.properties.SHEET_ID === parsed.sheetId && 
-            feature.properties.PARCEL_ID === parsed.parcelId
-          );
-          
-          if (matchingParcel) {
-            console.log('Found matching parcel:', matchingParcel);
-            // Store globally
-            targetParcelFeature = matchingParcel;
-            
-            // Return a FeatureCollection with just this parcel
-            return {
-              type: 'FeatureCollection',
-              features: [matchingParcel]
-            };
-          } else {
-            console.log('No matching parcel found for SHEET_ID:', parsed.sheetId, 'PARCEL_ID:', parsed.parcelId);
-            return null;
-          }
-        }
-        
-        return null;
-      })
-      .catch(error => {
-        console.error('Error fetching parcel:', error);
-        return null;
-      });
+  // Function to fetch parcels for a specific SBI and find one by parcel ID
+function fetchSpecificParcel(sbi, parcelId) {
+  console.log('Fetching parcel for SBI:', sbi, 'Parcel ID:', parcelId);
+  
+  const parsed = parseParcelID(parcelId);
+  if (!parsed) {
+    console.error('Could not parse parcel ID:', parcelId);
+    return Promise.resolve(null);
   }
+  
+  console.log('Parsed parcel:', parsed);
+  
+  // Fetch ALL parcels for this SBI (without parcel ID filter)
+  const wfsUrl = `{{ data.WFS_DATA_URL | safe }}`;
+  const wfsWithFilter = `${wfsUrl}&CQL_FILTER=SBI='${sbi}'&outputFormat=application/json&srsName=EPSG:4326`;
+  
+  // Detect environment and use correct proxy
+//   const proxyBase = window.location.hostname === 'localhost' 
+//     ? 'http://localhost:8000'
+//     : 'https://farming-data-7db3d1889632.herokuapp.com';
+
+    // Always use Heroku proxy
+    const proxyBase = 'https://farming-data-7db3d1889632.herokuapp.com';
+  
+  const proxyUrl = `${proxyBase}/wfs_geojson?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
+  
+  console.log('Fetching all parcels for SBI from proxy:', proxyUrl);
+  
+  return fetch(proxyUrl)
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Fetched all parcels for SBI:', data);
+      
+      // Filter client-side to find the specific parcel
+      if (data.features && data.features.length > 0) {
+        const matchingParcel = data.features.find(feature => 
+          feature.properties.SHEET_ID === parsed.sheetId && 
+          feature.properties.PARCEL_ID === parsed.parcelId
+        );
+        
+        if (matchingParcel) {
+          console.log('Found matching parcel:', matchingParcel);
+          // Store globally
+          targetParcelFeature = matchingParcel;
+          
+          // Return a FeatureCollection with just this parcel
+          return {
+            type: 'FeatureCollection',
+            features: [matchingParcel]
+          };
+        } else {
+          console.log('No matching parcel found for SHEET_ID:', parsed.sheetId, 'PARCEL_ID:', parsed.parcelId);
+          return null;
+        }
+      }
+      
+      return null;
+    })
+    .catch(error => {
+      console.error('Error fetching parcel:', error);
+      return null;
+    });
+}
 
   // Fetch the specific parcel and create the map
   if (TARGET_PARCEL_ID && TARGET_PARCEL_ID.trim() !== '') {

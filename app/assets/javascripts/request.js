@@ -39,10 +39,8 @@ const transformTileRequest = (url, resourceType) => {
 }
 
 const transformDataRequest = (request, bbox) => {
-  // Detect if we're on localhost or production
-  const proxyBase = window.location.hostname === 'localhost' 
-    ? 'http://localhost:8000'
-    : 'https://farming-data-7db3d1889632.herokuapp.com';
+  // Always use Heroku proxy for simplicity
+  const proxyBase = 'https://farming-data-7db3d1889632.herokuapp.com';
   
   return {
     url: `${proxyBase}/wfs_geojson?wfs_url=${encodeURIComponent(request.url)}&bbox=${bbox}`
