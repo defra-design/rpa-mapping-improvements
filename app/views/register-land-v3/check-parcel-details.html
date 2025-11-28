@@ -39,7 +39,7 @@
         text: "Parcel ID"
       },
       value: {
-        html: "CS0771 7013"
+        html: data['parcel-id']
       },
       actions: {
         items: [
@@ -56,7 +56,7 @@
         text: "Effective from"
       },
       value: {
-        html: data | isoDateFromDateInput('date-to-link') | govukDate
+        html: "today" | govukDate
       },
       actions: {
         items: [
