@@ -18,7 +18,7 @@ router.post("/register-land-v3/know-parcel-id", function (req, res) {
 });
 
 // Confirm land parcel
-router.post("/register-land-v3/confirm-land-parcel", function (req, res) {
+router.post("/register-land-v3/confirm-land-parcel-single", function (req, res) {
   res.redirect("date-to-link-parcel-to-business");
 });
 
