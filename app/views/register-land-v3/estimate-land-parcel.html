@@ -35,9 +35,11 @@
     </h1>
 
     <p>{{ data.VALUE }}</p>
-    <div id="map" data-zoom="12" data-center="[-2.968, 54.425]"></div>
+    <div id="map" data-zoom="15" data-center="[-2.968, 54.425]"></div>
 
     <br>
+
+    <div id="parcel-data-container"></div>
 
     <form method="post">
 
@@ -50,8 +52,8 @@
   </div>
 </div>
 {% endblock %}
-
-{% block pageScripts %}
+  
+  {% block pageScripts %}
   <!-- Defra library scripts -->
   <script src="/plugin-assets/%40defra%2Fdefra-map/dist/umd/index.js"></script>
   <script src="/plugin-assets/%40defra%2Fdefra-map/providers/maplibre/dist/umd/index.js"></script>
@@ -66,117 +68,312 @@
   <script src="/public/javascripts/searchCustomDatasets.js"></script>
   
   <script>
-    window.env = {
-      WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
-      GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
-      PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
-    }
+  console.log('Script block is running!');
+  console.log('WFS_DATA_URL:', '{{ data.WFS_DATA_URL | safe }}');
 
-    const defraMap = new defra.DefraMap('map', {
-      mapProvider: defra.maplibreProvider,
-      reverseGeocodeProvider: defra.openNamesProvider({
-        url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
+  window.env = {
+    WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
+    GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
+    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
+  }
+
+  const defraMap = new defra.DefraMap('map', {
+    mapProvider: defra.maplibreProvider,
+    reverseGeocodeProvider: defra.openNamesProvider({
+      url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
+    }),
+    behaviour: 'hybrid',
+    mapLabel: 'Ambleside',
+    minZoom: 6,
+    maxZoom: 18,
+    containerHeight: '650px',
+    transformRequest: transformTileRequest,
+    mapStyle: {
+      url: 'https://tiles.openfreemap.org/styles/liberty',
+      attribution: 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
+      backgroundColor: '#f5f5f0'
+    },
+    plugins: [
+      defra.mapStylesPlugin({
+        mapStyles: [{
+          id: 'outdoor',
+          label: 'Outdoor',
+          url: '{{ data.VTS_OUTDOOR_URL }}',
+          thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
+          logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+          logoAltText: 'Ordnance survey logo',
+          attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
+          backgroundColor: '#f5f5f0'
+        }, {
+          id: 'dark',
+          label: 'Dark',
+          url: '{{ data.VTS_DARK_URL }}',
+          mapColorScheme: 'dark',
+          appColorScheme: 'dark',
+          thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/dark-map-thumb.jpg',
+          logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-white.svg',
+          logoAltText: 'Ordnance survey logo',
+          attribution: 'Test'
+        }, {
+          id: 'black-and-white',
+          label: 'Black/White',
+          url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
+          thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/black-and-white-map-thumb.jpg',
+          logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-black.svg',
+          logoAltText: 'Ordnance survey logo',
+          attribution: 'Test'
+        }, {
+          id: 'satellite',
+          label: 'Satellite',
+          url: '/satellite-style.json',
+          thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
+          logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+          logoAltText: 'Ordnance survey logo',
+          attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+        }]
       }),
-      behaviour: 'hybrid',
-      mapLabel: 'Ambleside',
-      minZoom: 6,
-      maxZoom: 18,
-      containerHeight: '650px',
-      transformRequest: transformTileRequest,
-      mapStyle: {
-        url: 'https://tiles.openfreemap.org/styles/liberty',
-        attribution: 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
-        backgroundColor: '#f5f5f0'
-      },
-      plugins: [
-        defra.mapStylesPlugin({
-          mapStyles: [{
-            id: 'outdoor',
-            label: 'Outdoor',
-            url: '{{ data.VTS_OUTDOOR_URL }}',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
-            logoAltText: 'Ordnance survey logo',
-            attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
-            backgroundColor: '#f5f5f0'
-          }, {
-            id: 'dark',
-            label: 'Dark',
-            url: '{{ data.VTS_DARK_URL }}',
-            mapColorScheme: 'dark',
-            appColorScheme: 'dark',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/dark-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-white.svg',
-            logoAltText: 'Ordnance survey logo',
-            attribution: 'Test'
-          }, {
-            id: 'black-and-white',
-            label: 'Black/White',
-            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/black-and-white-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-black.svg',
-            logoAltText: 'Ordnance survey logo',
-            attribution: 'Test'
-          }, {
-            id: 'satellite',
-            label: 'Satellite',
-            url: '/satellite-style.json',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
-            logoAltText: 'Ordnance survey logo',
-            attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
-          }]
-        }),
-        defra.dataLayersMLPlugin({
-          transformRequest: transformDataRequest,
-          layers: [{
-            id: 'field-parcels',
-            label: 'Field parcels',
-            filter: ['!=', ['get', 'SBI'], '106223377'],
-            url: '{{ data.WFS_DATA_URL | safe }}',
-            stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
-            strokeWidth: 2,
-            // strokeDashArray: [1, 2],
-            fill: 'transparent',
-            minZoom: 15,
-            maxZoom: 24
-          },{
-            id: 'linked-parcels',
-            label: 'Existing fields',
-            filter: ['==', ['get', 'SBI'], '106223377'],
-            url: '{{ data.WFS_DATA_URL | safe }}',
-            stroke: '#0000ff',
-            strokeWidth: 2,
-            fill: 'rgba(0,0,255,0.1)',
-            minZoom: 15,
-            maxZoom: 24
-          }]
-        }),
-        defra.selectPlugin({
-          dataLayers: [{
-            layerId: 'field-parcels',
-            idProperty: 'ID',
-            selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
-          },{
-            layerId: 'linked-parcels',
-            idProperty: 'ID',
-            selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
-          }],
-          markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
-          selectionMode: 'auto', // 'auto', 'select', 'marker' // defaults to 'marker'
-          // multiSelect: true
-        }),
-        defra.searchPlugin({
-          osNamesURL: '/api/geocode-proxy?query={query}',
-          customDatasets: searchCustomDatasets,
-          width: '300px',
-          showMarker: false
-        }),
-        defra.zoomControlsPlugin(),
-        defra.scaleBarPlugin({
-			    units: 'metric'
-		    })
-      ]
-    })
-  </script>
+      defra.dataLayersMLPlugin({
+        transformRequest: transformDataRequest,
+        layers: [{
+          id: 'field-parcels',
+          label: 'Field parcels',
+          filter: ['!=', ['get', 'SBI'], '106223377'],
+          url: '{{ data.WFS_DATA_URL | safe }}',
+          stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
+          strokeWidth: 2,
+          // strokeDashArray: [1, 2],
+          fill: 'transparent',
+          minZoom: 15,
+          maxZoom: 24
+        },{
+          id: 'linked-parcels',
+          label: 'Existing fields',
+          filter: ['==', ['get', 'SBI'], '106223377'],
+          url: '{{ data.WFS_DATA_URL | safe }}',
+          stroke: '#0000ff',
+          strokeWidth: 2,
+          fill: 'rgba(0,0,255,0.1)',
+          minZoom: 15,
+          maxZoom: 24
+        }]
+      }),
+      defra.selectPlugin({
+        dataLayers: [{
+          layerId: 'field-parcels',
+          idProperty: 'ID',
+          selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
+        },{
+          layerId: 'linked-parcels',
+          idProperty: 'ID',
+          selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
+        }],
+        markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
+        selectionMode: 'auto',
+      }),
+      defra.searchPlugin({
+        osNamesURL: '/api/geocode-proxy?query={query}',
+        customDatasets: searchCustomDatasets,
+        width: '300px',
+        showMarker: false
+      }),
+      defra.zoomControlsPlugin(),
+      defra.scaleBarPlugin({
+        units: 'metric'
+      })
+    ]
+  })
+
+  // Try polling for the canvas element and checking for a map reference
+  let pollAttempts = 0;
+  const maxAttempts = 20;
+  
+  const pollForMap = setInterval(function() {
+    pollAttempts++;
+    console.log('Poll attempt', pollAttempts);
+    
+    const mapContainer = document.getElementById('map');
+    const canvas = mapContainer.querySelector('.maplibregl-canvas');
+    
+    if (canvas) {
+      console.log('Canvas found, checking for map...');
+      
+      // Check various possible locations where the map might be stored
+      if (canvas._map) {
+        console.log('Found map on canvas._map');
+        clearInterval(pollForMap);
+        setupDataExtraction(canvas._map);
+        return;
+      }
+      
+      // Check parent elements
+      let parent = canvas.parentElement;
+      while (parent && parent !== mapContainer) {
+        if (parent._map) {
+          console.log('Found map on parent element');
+          clearInterval(pollForMap);
+          setupDataExtraction(parent._map);
+          return;
+        }
+        parent = parent.parentElement;
+      }
+      
+      // Check if the map container itself has a reference
+      if (mapContainer._maplibreMap) {
+        console.log('Found map on container._maplibreMap');
+        clearInterval(pollForMap);
+        setupDataExtraction(mapContainer._maplibreMap);
+        return;
+      }
+      
+      // Check for any property that looks like a map
+      for (let key in mapContainer) {
+        let prop = mapContainer[key];
+        if (prop && typeof prop === 'object' && typeof prop.getSource === 'function') {
+          console.log('Found map on container.' + key);
+          clearInterval(pollForMap);
+          setupDataExtraction(prop);
+          return;
+        }
+      }
+    }
+    
+    if (pollAttempts >= maxAttempts) {
+      console.log('Gave up looking for map after', maxAttempts, 'attempts');
+      clearInterval(pollForMap);
+      
+      // Last resort: try to intercept data when sources load
+      console.log('Trying alternative approach - monitoring source data events');
+      monitorSourceDataEvents();
+    }
+  }, 500);
+
+  function monitorSourceDataEvents() {
+  // This is a fallback - we'll try to intercept the fetch requests directly
+  console.log('Setting up fetch interception...');
+  
+  let dataDisplayed = false; // Flag to track if we've already displayed data
+  
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+    const url = args[0];
+    
+    if (typeof url === 'string' && url.includes('LandParcels') && !dataDisplayed) {
+      console.log('Intercepted parcel data request:', url);
+      
+      return originalFetch.apply(this, args).then(response => {
+        return response.clone().json().then(data => {
+          console.log('Intercepted parcel data:', data);
+          
+          if (data.features && data.features.length > 0 && !dataDisplayed) {
+            dataDisplayed = true; // Set flag to prevent future displays
+            
+            const fieldParcels = data.features.filter(
+              feature => feature.properties.SBI !== '106223377'
+            );
+            
+            const linkedParcels = data.features.filter(
+              feature => feature.properties.SBI === '106223377'
+            );
+            
+            console.log('Field parcels:', fieldParcels.length);
+            console.log('Linked parcels:', linkedParcels.length);
+            
+            displayParcelData(fieldParcels, linkedParcels);
+            
+            // Restore original fetch to stop intercepting
+            window.fetch = originalFetch;
+            console.log('Data displayed, interception stopped');
+          }
+          
+          return response;
+        });
+      });
+    }
+    
+    return originalFetch.apply(this, args);
+  };
+}
+
+  function setupDataExtraction(map) {
+    console.log('Setting up data extraction with map:', map);
+    
+    if (map.loaded && map.loaded()) {
+      console.log('Map already loaded, extracting data now...');
+      extractData(map);
+    } else {
+      console.log('Waiting for map to load...');
+      map.on('load', function() {
+        console.log('Map load event fired');
+        setTimeout(function() {
+          extractData(map);
+        }, 2000);
+      });
+    }
+  }
+
+  function extractData(map) {
+    console.log('Extracting data from map...');
+    
+    try {
+      const style = map.getStyle();
+      console.log('Map style:', style);
+      console.log('Available sources:', Object.keys(style.sources));
+      
+      const fieldParcelsSource = map.getSource('field-parcels-source');
+      const linkedParcelsSource = map.getSource('linked-parcels-source');
+      
+      console.log('Field parcels source:', fieldParcelsSource);
+      console.log('Linked parcels source:', linkedParcelsSource);
+      
+      if (fieldParcelsSource && fieldParcelsSource._data) {
+        const allFeatures = fieldParcelsSource._data.features || [];
+        
+        const fieldParcels = allFeatures.filter(
+          feature => feature.properties.SBI !== '106223377'
+        );
+        
+        const linkedParcels = allFeatures.filter(
+          feature => feature.properties.SBI === '106223377'
+        );
+        
+        console.log('Field parcels:', fieldParcels.length);
+        console.log('Linked parcels:', linkedParcels.length);
+        
+        displayParcelData(fieldParcels, linkedParcels);
+      } else {
+        console.log('No data in sources yet');
+      }
+    } catch (error) {
+      console.error('Error extracting data:', error);
+    }
+  }
+
+  function displayParcelData(fieldParcels, linkedParcels) {
+    const container = document.getElementById('parcel-data-container');
+    console.log('Container element:', container);
+    
+    if (!container) {
+      console.error('Could not find parcel-data-container element');
+      return;
+    }
+    
+    container.innerHTML = `
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-one-half">
+          <h3 class="govuk-heading-s">Field parcels</h3>
+          <p class="govuk-body">Total: ${fieldParcels.length}</p>
+        </div>
+        <div class="govuk-grid-column-one-half">
+          <h3 class="govuk-heading-s">Existing fields (linked)</h3>
+          <p class="govuk-body">Total: ${linkedParcels.length}</p>
+          <ul class="govuk-list govuk-list--bullet">
+            ${linkedParcels.map(parcel => `
+              <li>${parcel.properties.PARCEL_ID || parcel.properties.id || 'Unknown ID'}</li>
+            `).join('')}
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+</script>
 {% endblock %}

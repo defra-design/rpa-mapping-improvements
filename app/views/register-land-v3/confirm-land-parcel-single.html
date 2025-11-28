@@ -77,8 +77,14 @@
     PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
   }
 
-  // The SBI we want to center on - CHANGE THIS VALUE TO YOUR TARGET SBI
+  // The SBI and Parcel ID we want to display
   const TARGET_SBI = '106332870';
+  const TARGET_PARCEL_ID = '{{ data["parcel-id"] }}'; // From the text input on previous page
+
+  console.log('TARGET_PARCEL_ID:', TARGET_PARCEL_ID);
+
+  // Store the target parcel feature globally so we can access it later
+  let targetParcelFeature = null;
 
   // Function to calculate center from parcel features
   function calculateCenter(features) {
@@ -86,7 +92,6 @@
     
     features.forEach(feature => {
       if (feature.geometry && feature.geometry.coordinates) {
-        // Handle Polygon geometry (most common for parcels)
         const coords = feature.geometry.type === 'Polygon' 
           ? feature.geometry.coordinates[0] 
           : feature.geometry.coordinates;
@@ -102,17 +107,46 @@
     return count > 0 ? [totalLng / count, totalLat / count] : null;
   }
 
-  // Function to fetch parcels for a specific SBI
-  function fetchParcelsBySBI(sbi) {
-    console.log('Fetching parcels for SBI:', sbi);
+  // Function to parse parcel ID (handles "NY3703 8152" or "NY37038152" formats)
+  function parseParcelID(parcelId) {
+    // Remove any spaces
+    const cleaned = parcelId.replace(/\s+/g, '');
     
-    // Build WFS request URL to get all parcels for this SBI in WGS84
+    // Try to extract sheet ID (letters + first digits) and parcel ID (remaining digits)
+    const match = cleaned.match(/^([A-Z]{2}\d{4})(\d+)$/i);
+    
+    if (match) {
+      return {
+        sheetId: match[1].toUpperCase(),
+        parcelId: match[2]
+      };
+    }
+    
+    return null;
+  }
+
+  // Function to fetch parcels for a specific SBI and find one by parcel ID
+  function fetchSpecificParcel(sbi, parcelId) {
+    console.log('Fetching parcel for SBI:', sbi, 'Parcel ID:', parcelId);
+    
+    const parsed = parseParcelID(parcelId);
+    if (!parsed) {
+      console.error('Could not parse parcel ID:', parcelId);
+      return Promise.resolve(null);
+    }
+    
+    console.log('Parsed parcel:', parsed);
+    
+    // Fetch ALL parcels for this SBI (without parcel ID filter)
     const wfsUrl = `{{ data.WFS_DATA_URL | safe }}`;
-    const filterUrl = `${wfsUrl}&CQL_FILTER=SBI='${sbi}'&outputFormat=application/json&srsName=EPSG:4326`;
+    const wfsWithFilter = `${wfsUrl}&CQL_FILTER=SBI='${sbi}'&outputFormat=application/json&srsName=EPSG:4326`;
     
-    console.log('Fetching from:', filterUrl);
+    // Use the proxy
+    const proxyUrl = `https://farming-data-7db3d1889632.herokuapp.com/wfs_geojson?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
     
-    return fetch(filterUrl)
+    console.log('Fetching all parcels for SBI from proxy:', proxyUrl);
+    
+    return fetch(proxyUrl)
       .then(response => {
         console.log('Response status:', response.status);
         if (!response.ok) {
@@ -121,44 +155,75 @@
         return response.json();
       })
       .then(data => {
-        console.log('Fetched parcel data:', data);
-        console.log('First feature geometry:', data.features[0]?.geometry);
-        console.log('CRS:', data.crs);
-        return data;
+        console.log('Fetched all parcels for SBI:', data);
+        
+        // Filter client-side to find the specific parcel
+        if (data.features && data.features.length > 0) {
+          const matchingParcel = data.features.find(feature => 
+            feature.properties.SHEET_ID === parsed.sheetId && 
+            feature.properties.PARCEL_ID === parsed.parcelId
+          );
+          
+          if (matchingParcel) {
+            console.log('Found matching parcel:', matchingParcel);
+            // Store globally
+            targetParcelFeature = matchingParcel;
+            
+            // Return a FeatureCollection with just this parcel
+            return {
+              type: 'FeatureCollection',
+              features: [matchingParcel]
+            };
+          } else {
+            console.log('No matching parcel found for SHEET_ID:', parsed.sheetId, 'PARCEL_ID:', parsed.parcelId);
+            return null;
+          }
+        }
+        
+        return null;
       })
       .catch(error => {
-        console.error('Error fetching parcels by SBI:', error);
+        console.error('Error fetching parcel:', error);
         return null;
       });
   }
 
-  // Fetch parcels and then create the map
-  fetchParcelsBySBI(TARGET_SBI).then(data => {
-    let mapCenter = [-2.968, 54.425]; // Default center
-    let mapZoom = 15;
-    
-    if (data && data.features && data.features.length > 0) {
-      console.log(`Found ${data.features.length} parcels for SBI ${TARGET_SBI}`);
-      const center = calculateCenter(data.features);
+  // Fetch the specific parcel and create the map
+  if (TARGET_PARCEL_ID && TARGET_PARCEL_ID.trim() !== '') {
+    fetchSpecificParcel(TARGET_SBI, TARGET_PARCEL_ID).then(data => {
+      let mapCenter = [-2.968, 54.425]; // Default center
+      let mapZoom = 15; // Set to 15
       
-      if (center) {
-        mapCenter = center;
-        console.log('Calculated center:', mapCenter);
+      if (data && data.features && data.features.length > 0) {
+        console.log(`Found parcel for SBI ${TARGET_SBI}, Parcel ID ${TARGET_PARCEL_ID}`);
+        const center = calculateCenter(data.features);
+        
+        if (center) {
+          mapCenter = center;
+          console.log('Calculated center:', mapCenter);
+        }
+        
+        // Display the target parcel data immediately
+        displayTargetParcelData();
+      } else {
+        console.log(`Parcel not found for SBI ${TARGET_SBI}, Parcel ID ${TARGET_PARCEL_ID}, using default center`);
       }
-    } else {
-      console.log(`No parcels found for SBI ${TARGET_SBI}, using default center`);
-    }
-    
-    // Update the map div with the calculated center
-    const mapDiv = document.getElementById('map');
-    mapDiv.setAttribute('data-center', `[${mapCenter[0]}, ${mapCenter[1]}]`);
-    mapDiv.setAttribute('data-zoom', mapZoom.toString());
-    
-    // Now create the map
+      
+      // Update the map div with the calculated center
+      const mapDiv = document.getElementById('map');
+      mapDiv.setAttribute('data-center', `[${mapCenter[0]}, ${mapCenter[1]}]`);
+      mapDiv.setAttribute('data-zoom', mapZoom.toString());
+      
+      // Now create the map
+      createMap();
+    });
+  } else {
+    console.log('No parcel ID provided');
+    // Create map at default location
     createMap();
-  });
+  }
 
-  // Set up fetch interception for displaying parcel data
+  // Set up fetch interception (but we won't use it for display anymore)
   let dataDisplayed = false;
   const originalFetch = window.fetch;
   
@@ -168,42 +233,7 @@
     
     if (typeof url === 'string' && url.includes('LandParcels') && !dataDisplayed) {
       console.log('Intercepted parcel data request:', url);
-      
-      return originalFetch.apply(this, args).then(response => {
-        return response.clone().json().then(data => {
-          console.log('Intercepted parcel data:', data);
-          console.log('Number of features:', data.features ? data.features.length : 0);
-          
-          if (data.features && data.features.length > 0 && !dataDisplayed) {
-            dataDisplayed = true;
-            
-            // Log sample properties
-            console.log('Sample parcel properties:', data.features[0].properties);
-            
-            // Use TARGET_SBI variable for filtering
-            const fieldParcels = data.features.filter(
-              feature => feature.properties.SBI !== TARGET_SBI
-            );
-            
-            const linkedParcels = data.features.filter(
-              feature => feature.properties.SBI === TARGET_SBI
-            );
-            
-            console.log('Field parcels:', fieldParcels.length);
-            console.log('Linked parcels:', linkedParcels.length);
-            
-            displayParcelData(fieldParcels, linkedParcels);
-            
-            window.fetch = originalFetch;
-            console.log('Data displayed, interception stopped');
-          }
-          
-          return response;
-        }).catch(err => {
-          console.error('Error parsing JSON:', err);
-          return response;
-        });
-      });
+      dataDisplayed = true;
     }
     
     return originalFetch.apply(this, args);
@@ -211,7 +241,7 @@
   
   console.log('Fetch interception set up');
 
-  // Function to create the map (moved into a function so we can call it after fetching)
+  // Function to create the map
   function createMap() {
     const defraMap = new defra.DefraMap('map', {
       mapProvider: defra.maplibreProvider,
@@ -273,18 +303,17 @@
           layers: [{
             id: 'field-parcels',
             label: 'Field parcels',
-            filter: ['!=', ['get', 'SBI'], TARGET_SBI],  // Using TARGET_SBI variable
+            filter: ['!=', ['get', 'SBI'], TARGET_SBI],
             url: '{{ data.WFS_DATA_URL | safe }}',
             stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
             strokeWidth: 2,
-            // strokeDashArray: [1, 2],
             fill: 'transparent',
             minZoom: 15,
             maxZoom: 24
           },{
             id: 'linked-parcels',
             label: 'Existing fields',
-            filter: ['==', ['get', 'SBI'], TARGET_SBI],  // Using TARGET_SBI variable
+            filter: ['==', ['get', 'SBI'], TARGET_SBI],
             url: '{{ data.WFS_DATA_URL | safe }}',
             stroke: '#0000ff',
             strokeWidth: 2,
@@ -318,9 +347,13 @@
         })
       ]
     });
+    
+    // Store defraMap globally for future reference
+    window.defraMapInstance = defraMap;
   }
 
-  function displayParcelData(fieldParcels, linkedParcels) {
+  // Function to display the target parcel data
+  function displayTargetParcelData() {
     const container = document.getElementById('parcel-data-container');
     console.log('Container element:', container);
     
@@ -329,47 +362,73 @@
       return;
     }
     
-    // Combine all parcels
-    const allParcels = [...fieldParcels, ...linkedParcels];
+    if (!targetParcelFeature) {
+      container.innerHTML = '<p class="govuk-body">No parcel data available.</p>';
+      return;
+    }
+    
+    const props = targetParcelFeature.properties;
+    const sheetId = props.SHEET_ID || 'N/A';
+    const parcelId = props.PARCEL_ID || 'N/A';
+    const combinedRef = sheetId !== 'N/A' && parcelId !== 'N/A' ? `${sheetId} ${parcelId}` : 'N/A';
     
     container.innerHTML = `
       <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
-          <h3 class="govuk-heading-s">Land parcels in view</h3>
-          <p class="govuk-body">Total: ${allParcels.length} parcels (${linkedParcels.length} linked to your business)</p>
+          <h3 class="govuk-heading-s">Parcel details: ${combinedRef}</h3>
           
-          ${allParcels.length > 0 ? `
-            <table class="govuk-table">
-              <thead class="govuk-table__head">
-                <tr class="govuk-table__row">
-                  <th scope="col" class="govuk-table__header">Parcel ID</th>
-                  <th scope="col" class="govuk-table__header">Area (ha)</th>
-                  <th scope="col" class="govuk-table__header">LFA Code</th>
-                  <th scope="col" class="govuk-table__header">Status</th>
-                </tr>
-              </thead>
-              <tbody class="govuk-table__body">
-                ${allParcels.map(parcel => {
-                  const sheetId = parcel.properties.SHEET_ID || '';
-                  const parcelId = parcel.properties.PARCEL_ID || '';
-                  const combinedRef = sheetId && parcelId ? `${sheetId} ${parcelId}` : 'N/A';
-                  
-                  return `
-                    <tr class="govuk-table__row">
-                      <td class="govuk-table__cell">${combinedRef}</td>
-                      <td class="govuk-table__cell">${parcel.properties.AREA_HA ? parseFloat(parcel.properties.AREA_HA).toFixed(4) : 'N/A'}</td>
-                      <td class="govuk-table__cell">${parcel.properties.LFA_CODE || 'N/A'}</td>
-                      <td class="govuk-table__cell">
-                        ${parcel.properties.SBI === TARGET_SBI  // Using TARGET_SBI variable
-                          ? '<strong class="govuk-tag govuk-tag--blue">Your business</strong>' 
-                          : '<strong class="govuk-tag govuk-tag--grey">Other</strong>'}
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          ` : '<p class="govuk-body">No parcels found in this area.</p>'}
+          <table class="govuk-table">
+            <tbody class="govuk-table__body">
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Parcel ID</th>
+                <td class="govuk-table__cell">${combinedRef}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">ID</th>
+                <td class="govuk-table__cell">${props.ID || 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Sheet ID</th>
+                <td class="govuk-table__cell">${sheetId}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Area (ha)</th>
+                <td class="govuk-table__cell">${props.AREA_HA ? parseFloat(props.AREA_HA).toFixed(4) : 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Shape Area</th>
+                <td class="govuk-table__cell">${props.SHAPE_AREA ? parseFloat(props.SHAPE_AREA).toFixed(2) : 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Shape Perimeter</th>
+                <td class="govuk-table__cell">${props.SHAPE_PERIMETER ? parseFloat(props.SHAPE_PERIMETER).toFixed(2) : 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">SBI</th>
+                <td class="govuk-table__cell">${props.SBI || 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">LFA Code</th>
+                <td class="govuk-table__cell">${props.LFA_CODE || 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Valid From</th>
+                <td class="govuk-table__cell">${props.VALID_FROM || 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Valid To</th>
+                <td class="govuk-table__cell">${props.VALID_TO || 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Created On</th>
+                <td class="govuk-table__cell">${props.CREATED_ON || 'N/A'}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Index</th>
+                <td class="govuk-table__cell">${props.index || 'N/A'}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     `;

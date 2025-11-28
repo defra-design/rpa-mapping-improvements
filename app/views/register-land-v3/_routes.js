@@ -11,7 +11,7 @@ const router = govukPrototypeKit.requests.setupRouter()
 // Do you know the Parcel ID?
 router.post("/register-land-v3/know-parcel-id", function (req, res) {
   if (req.session.data["knowParcelID"] == "yes") {
-    res.redirect("confirm-land-parcel");
+    res.redirect("confirm-land-parcel-single");
   } else {
     res.redirect("estimate-land-parcel");
   }
