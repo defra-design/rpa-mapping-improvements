@@ -24,6 +24,11 @@ router.post("/register-land-v3/confirm-land-parcel-single", function (req, res) 
 
 // Find or estimate parcel ID
 router.post("/register-land-v3/estimate-land-parcel", function (req, res) {
+  res.redirect("upload-land-parcel-map");
+});
+
+// Upload land parcel map
+router.post("/register-land-v3/upload-land-parcel-map", function (req, res) {
   res.redirect("date-to-link-parcel-to-business");
 });
 

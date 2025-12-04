@@ -11,7 +11,7 @@
   <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/css/index.css" rel="stylesheet" type="text/css">
   <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet" type="text/css">
   <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/css/index.css" rel="stylesheet" type="text/css">
-  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/select/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/interact/dist/css/index.css" rel="stylesheet" type="text/css">
 {% endblock %}
 
 {% block bodyStart %}
@@ -68,7 +68,7 @@
   <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/zoom-controls/dist/umd/index.js"></script>
   <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/umd/index.js"></script>
   <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/select/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/interact/dist/umd/index.js"></script>
   <script src="/public/javascripts/request.js"></script>
   <script src="/public/javascripts/searchCustomDatasets.js"></script>
   
@@ -83,7 +83,7 @@
   }
 
   const defraMap = new defra.DefraMap('map', {
-    mapProvider: defra.maplibreProvider,
+    mapProvider: defra.maplibreProvider(),
     reverseGeocodeProvider: defra.openNamesProvider({
       url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
     }),
@@ -162,7 +162,7 @@
           maxZoom: 24
         }]
       }),
-      defra.selectPlugin({
+      defra.interactPlugin({
         dataLayers: [{
           layerId: 'field-parcels',
           idProperty: 'ID',
