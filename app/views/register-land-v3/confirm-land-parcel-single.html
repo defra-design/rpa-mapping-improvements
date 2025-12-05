@@ -27,12 +27,46 @@
 
 {% block content %}
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-full">
-
+  <div class="govuk-grid-column-two-thirds">
     <h1 class="govuk-heading-l">
     <span class="govuk-caption-l">AR FIELDING</span>
-      Confirm land parcel
+      Confirm land parcel 
     </h1>
+    <p class="govuk-body">To find a land parcel either use the:</p>
+        <ul class="govuk-list govuk-list--bullet">
+            <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
+            <li>map search to enter a location, for example, the nearest city, town or postcode</li>
+        </ul>
+  </div>
+</div>
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-one-quarter">
+    <!-- <h2 class="govuk-heading-m">Land parcel</h2>
+    <p>Parcel ID</p>
+    <p>Approximate area (ha)</p>
+    <p>Location</p> -->
+
+  <div id="parcel-data-container"></div>
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+    <form method="post">
+
+    {{ govukButton({
+      text: "Save and continue"
+    }) }}
+
+    </form>
+
+  </div>
+  <div class="govuk-grid-column-three-quarters">
+    <p>{{ data.VALUE }}</p>
+    <div id="map" data-zoom="15" data-center="[-2.968, 54.425]"></div>
+  </div>
+</div>
+<!-- <div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+    <p>{{ data | dump }}</p>
 
     <p>{{ data.VALUE }}</p>
     <div id="map" data-zoom="15" data-center="[-2.968, 54.425]"></div>
@@ -50,7 +84,7 @@
     </form>
 
   </div>
-</div>
+</div> -->
 {% endblock %}
   
   {% block pageScripts %}
@@ -382,64 +416,24 @@ function fetchSpecificParcel(sbi, parcelId) {
     const combinedRef = sheetId !== 'N/A' && parcelId !== 'N/A' ? `${sheetId} ${parcelId}` : 'N/A';
     
     container.innerHTML = `
-      <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-          <h3 class="govuk-heading-m">Parcel details</h3>
+          <h2 class="govuk-heading-m govuk-!-margin-top-3">Land parcel</h2>
           
           <table class="govuk-table">
             <tbody class="govuk-table__body">
               <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">Parcel ID</th>
-                <td class="govuk-table__cell">${combinedRef}</td>
-              </tr>
-              <tr class="govuk-table__row">
                 <th scope="row" class="govuk-table__header">ID</th>
-                <td class="govuk-table__cell">${props.ID || 'N/A'}</td>
-              </tr>
-              <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">Sheet ID</th>
-                <td class="govuk-table__cell">${sheetId}</td>
+                <td class="govuk-table__cell">${combinedRef}</td>
               </tr>
               <tr class="govuk-table__row">
                 <th scope="row" class="govuk-table__header">Area (ha)</th>
                 <td class="govuk-table__cell">${props.AREA_HA ? parseFloat(props.AREA_HA).toFixed(4) : 'N/A'}</td>
               </tr>
               <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">Shape Area</th>
-                <td class="govuk-table__cell">${props.SHAPE_AREA ? parseFloat(props.SHAPE_AREA).toFixed(2) : 'N/A'}</td>
-              </tr>
-              <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">Shape Perimeter</th>
-                <td class="govuk-table__cell">${props.SHAPE_PERIMETER ? parseFloat(props.SHAPE_PERIMETER).toFixed(2) : 'N/A'}</td>
-              </tr>
-              <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">SBI</th>
-                <td class="govuk-table__cell">${props.SBI || 'N/A'}</td>
-              </tr>
-              <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">LFA Code</th>
-                <td class="govuk-table__cell">${props.LFA_CODE || 'N/A'}</td>
-              </tr>
-              <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">Valid From</th>
-                <td class="govuk-table__cell">${props.VALID_FROM || 'N/A'}</td>
-              </tr>
-              <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">Valid To</th>
-                <td class="govuk-table__cell">${props.VALID_TO || 'N/A'}</td>
-              </tr>
-              <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">Created On</th>
-                <td class="govuk-table__cell">${props.CREATED_ON || 'N/A'}</td>
-              </tr>
-              <tr class="govuk-table__row">
-                <th scope="row" class="govuk-table__header">Index</th>
-                <td class="govuk-table__cell">${props.index || 'N/A'}</td>
+                <th scope="row" class="govuk-table__header">Location</th>
+                <td class="govuk-table__cell">TBC</td>
               </tr>
             </tbody>
           </table>
-        </div>
-      </div>
     `;
   }
 </script>

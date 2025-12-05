@@ -30,101 +30,23 @@
   <div class="govuk-grid-column-two-thirds">
 
     <h1 class="govuk-heading-l">
-      Basic map
+      Confirm land parcel
     </h1>
 
   </div>
 </div>
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-one-quarter">
-      {% from "govuk/components/radios/macro.njk" import govukRadios %}
+    <h2 class="govuk-heading-m">Land parcel</h2>
+    <p>Parcel ID</p>
+    <p>Approximate area (ha)</p>
+    <p>Location</p>
 
-      {{ govukRadios({
-        classes: "govuk-radios--small",
-        name: "changedName",
-        fieldset: {
-          legend: {
-            text: "Maps",
-            isPageHeading: true,
-            classes: "govuk-fieldset__legend--m"
-          }
-        },
-        items: [
-          {
-            value: "wholeHolding",
-            text: "Whole holding"
-          },
-          {
-            value: "IndividualLandParcels",
-            text: "Individual land parcels"
-          }
-        ]
-      }) }}
-{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
-      {{ govukCheckboxes({
-        name: "organisation",
-        classes: "govuk-checkboxes--small",
-        fieldset: {
-          legend: {
-            text: "Filter",
-            isPageHeading: true,
-            classes: "govuk-fieldset__legend--m"
-          }
-        },
-        items: [
-          {
-            value: "hmrc",
-            text: "SK8287 1468",
-            hint: {
-              text: "Total area (ha) 2.9195"
-            }
-          },
-          {
-            value: "employment-tribunal",
-            text: "SK8287 1468",
-            hint: {
-              text: "Total area (ha) 2.9195"
-            }
-          },
-          {
-            value: "MOD",
-            text: "SK8287 1468",
-            hint: {
-              text: "Total area (ha) 2.9195"
-            }
-          },
-          {
-            value: "DfT",
-            text: "SK8287 1468",
-            hint: {
-              text: "Total area (ha) 2.9195"
-            }
-          }
-        ]
-      }) }}
-
-      {{ govukCheckboxes({
-        name: "organisation",
-        classes: "govuk-checkboxes--small",
-        fieldset: {
-          legend: {
-            text: "Data",
-            isPageHeading: true,
-            classes: "govuk-fieldset__legend--m"
-          }
-        },
-        items: [
-          {
-            value: "hmrc",
-            text: "Land covers"
-          },
-          {
-            value: "employment-tribunal",
-            text: "Hedgerows"
-          }
-        ]
-      }) }}
+{{ govukButton({
+  text: "Save and continue"
+}) }}
 
   </div>
   <div class="govuk-grid-column-three-quarters">

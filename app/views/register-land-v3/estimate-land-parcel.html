@@ -27,8 +27,7 @@
 
 {% block content %}
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-full">
-
+  <div class="govuk-grid-column-two-thirds">
     <h1 class="govuk-heading-l">
     <span class="govuk-caption-l">AR FIELDING</span>
       Find the land you want to register 
@@ -38,7 +37,11 @@
             <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
             <li>map search to enter a location, for example, the nearest city, town or postcode</li>
         </ul>
+  </div>
+</div>
 
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
     <p>{{ data.VALUE }}</p>
     <div id="map" data-zoom="15" data-center="[-2.968, 54.425]"></div>
 

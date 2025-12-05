@@ -51,6 +51,12 @@ router.post("/register-land-v3/declaration", function (req, res) {
   res.redirect("confirmation");
 });
 
+// Delete land parcel
+router.post("/register-land-v3/delete-parcel", function (req, res) {
+  res.redirect("check-parcel-details");
+});
+
+
 // Helper function to classify parcel ID based on prefix
 function classifyParcelID(parcelID) {
   if (!parcelID) return 'unknown'
