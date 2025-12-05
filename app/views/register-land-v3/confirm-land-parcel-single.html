@@ -102,8 +102,8 @@
   <script src="/public/javascripts/searchCustomDatasets.js"></script>
   
   <script>
-  console.log('Script block is running!');
-  console.log('WFS_DATA_URL:', '{{ data.WFS_DATA_URL | safe }}');
+  // console.log('Script block is running!');
+  // console.log('WFS_DATA_URL:', '{{ data.WFS_DATA_URL | safe }}');
 
   window.env = {
     WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
@@ -115,12 +115,12 @@
   const TARGET_SBI = '106332870';
   const TARGET_PARCEL_ID = '{{ data["parcel-id"] }}'; // From the text input on previous page
 
-  console.log('TARGET_PARCEL_ID:', TARGET_PARCEL_ID);
+  // console.log('TARGET_PARCEL_ID:', TARGET_PARCEL_ID);
 
-    // Store the target parcel feature globally so we can access it later
-    let targetParcelFeature = null;
+  // Store the target parcel feature globally so we can access it later
+  let targetParcelFeature = null;
 
-    function getBounds(geometry) {
+  function getBounds(geometry) {
     const coords = [];
 
     function extractCoords(g) {
@@ -204,17 +204,16 @@
   }
 
   // Function to fetch parcels for a specific SBI and find one by parcel ID
-  // Function to fetch parcels for a specific SBI and find one by parcel ID
-function fetchSpecificParcel(sbi, parcelId) {
-  console.log('Fetching parcel for SBI:', sbi, 'Parcel ID:', parcelId);
+  function fetchSpecificParcel(sbi, parcelId) {
+  // console.log('Fetching parcel for SBI:', sbi, 'Parcel ID:', parcelId);
   
   const parsed = parseParcelID(parcelId);
   if (!parsed) {
-    console.error('Could not parse parcel ID:', parcelId);
+    // console.error('Could not parse parcel ID:', parcelId);
     return Promise.resolve(null);
   }
   
-  console.log('Parsed parcel:', parsed);
+  // console.log('Parsed parcel:', parsed);
   
   // Fetch ALL parcels for this SBI (without parcel ID filter)
   const wfsUrl = `{{ data.WFS_DATA_URL | safe }}`;
@@ -230,18 +229,18 @@ function fetchSpecificParcel(sbi, parcelId) {
   
   const proxyUrl = `${proxyBase}/wfs_geojson?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
   
-  console.log('Fetching all parcels for SBI from proxy:', proxyUrl);
+  // console.log('Fetching all parcels for SBI from proxy:', proxyUrl);
   
   return fetch(proxyUrl)
     .then(response => {
-      console.log('Response status:', response.status);
+      // console.log('Response status:', response.status);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return response.json();
     })
     .then(data => {
-      console.log('Fetched all parcels for SBI:', data);
+      // console.log('Fetched all parcels for SBI:', data);
       
       // Filter client-side to find the specific parcel
       if (data.features && data.features.length > 0) {
@@ -251,7 +250,7 @@ function fetchSpecificParcel(sbi, parcelId) {
         );
         
         if (matchingParcel) {
-          console.log('Found matching parcel:', matchingParcel);
+          // console.log('Found matching parcel:', matchingParcel);
           // Store globally
           targetParcelFeature = matchingParcel;
           window.targetParcelFeature = targetParcelFeature;
@@ -262,7 +261,7 @@ function fetchSpecificParcel(sbi, parcelId) {
             features: [matchingParcel]
           };
         } else {
-          console.log('No matching parcel found for SHEET_ID:', parsed.sheetId, 'PARCEL_ID:', parsed.parcelId);
+          // console.log('No matching parcel found for SHEET_ID:', parsed.sheetId, 'PARCEL_ID:', parsed.parcelId);
           return null;
         }
       }
@@ -270,7 +269,7 @@ function fetchSpecificParcel(sbi, parcelId) {
       return null;
     })
     .catch(error => {
-      console.error('Error fetching parcel:', error);
+      // console.error('Error fetching parcel:', error);
       return null;
     });
 }
@@ -282,18 +281,18 @@ function fetchSpecificParcel(sbi, parcelId) {
       let mapZoom = 15; // Set to 15
       
       if (data && data.features && data.features.length > 0) {
-        console.log(`Found parcel for SBI ${TARGET_SBI}, Parcel ID ${TARGET_PARCEL_ID}`);
+        // console.log(`Found parcel for SBI ${TARGET_SBI}, Parcel ID ${TARGET_PARCEL_ID}`);
         const center = calculateCenter(data.features);
         
         if (center) {
           mapCenter = center;
-          console.log('Calculated center:', mapCenter);
+          // console.log('Calculated center:', mapCenter);
         }
         
         // Display the target parcel data immediately
         displayTargetParcelData();
       } else {
-        console.log(`Parcel not found for SBI ${TARGET_SBI}, Parcel ID ${TARGET_PARCEL_ID}, using default center`);
+        // console.log(`Parcel not found for SBI ${TARGET_SBI}, Parcel ID ${TARGET_PARCEL_ID}, using default center`);
       }
       
       // Update the map div with the calculated center
@@ -305,7 +304,7 @@ function fetchSpecificParcel(sbi, parcelId) {
       createMap();
     });
   } else {
-    console.log('No parcel ID provided');
+    // console.log('No parcel ID provided');
     // Create map at default location
     createMap();
   }
@@ -316,25 +315,23 @@ function fetchSpecificParcel(sbi, parcelId) {
   
   window.fetch = function(...args) {
     const url = args[0];
-    console.log('Fetch called with URL:', url);
+    // console.log('Fetch called with URL:', url);
     
     if (typeof url === 'string' && url.includes('LandParcels') && !dataDisplayed) {
-      console.log('Intercepted parcel data request:', url);
+      // console.log('Intercepted parcel data request:', url);
       dataDisplayed = true;
     }
     
     return originalFetch.apply(this, args);
   };
   
-  console.log('Fetch interception set up');
+  // console.log('Fetch interception set up');
 
   // Function to create the map
   function createMap() {
-    console.log(window.targetParcelFeature)
-
+    // console.log(window.targetParcelFeature)
 
     const bounds = getBounds(window.targetParcelFeature.geometry)
-
 
     const interactPlugin = defra.interactPlugin({
       dataLayers: [{
@@ -363,6 +360,7 @@ function fetchSpecificParcel(sbi, parcelId) {
       bounds,
       containerHeight: '650px',
       transformRequest: transformTileRequest,
+      hasExitButton: true,
       mapStyle: {
         url: 'https://tiles.openfreemap.org/styles/liberty',
         attribution: 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
@@ -429,9 +427,19 @@ function fetchSpecificParcel(sbi, parcelId) {
             fill: 'rgba(0,0,255,0.1)',
             minZoom: 15,
             maxZoom: 24
+          },{
+            id: 'selected-parcel',
+            label: 'Selected parcels',
+            filter: ['==', ['get', 'ID'], window.targetParcelFeature.properties.ID],
+            url: '{{ data.WFS_DATA_URL | safe }}',
+            stroke: '#ff0000',
+            strokeWidth: 2,
+            fill: 'rgba(255,0,0,0.1)',
+            minZoom: 15,
+            maxZoom: 24
           }]
         }),
-        interactPlugin,
+        // interactPlugin,
         // defra.searchPlugin({
         //   osNamesURL: '/api/geocode-proxy?query={query}',
         //   customDatasets: searchCustomDatasets,
@@ -447,12 +455,11 @@ function fetchSpecificParcel(sbi, parcelId) {
     
     defraMap.on('map:ready', () => {
 
-      document.querySelector('.dm-o-app__actions').style.display = 'none'
-      interactPlugin.selectFeature({
-        idProperty: 'ID',
-        featureId: window.targetParcelFeature.properties.ID,
-        layerId: 'linked-parcels'
-      })
+      // interactPlugin.selectFeature({
+      //   idProperty: 'ID',
+      //   featureId: window.targetParcelFeature.properties.ID,
+      //   layerId: 'linked-parcels'
+      // })
     })
 
     defraMap.on('interact:selectionchange', (e) => {
@@ -465,10 +472,10 @@ function fetchSpecificParcel(sbi, parcelId) {
   // Function to display the target parcel data
   function displayTargetParcelData() {
     const container = document.getElementById('parcel-data-container');
-    console.log('Container element:', container);
+    // console.log('Container element:', container);
     
     if (!container) {
-      console.error('Could not find parcel-data-container element');
+      // console.error('Could not find parcel-data-container element');
       return;
     }
     
