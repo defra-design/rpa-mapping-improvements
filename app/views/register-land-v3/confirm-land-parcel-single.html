@@ -60,7 +60,7 @@
   </div>
   <div class="govuk-grid-column-three-quarters">
     <p>{{ data.VALUE }}</p>
-    <div id="map" data-zoom="15" data-center="[-2.968, 54.425]"></div>
+    <div id="map"></div>
   </div>
 </div>
 <!-- <div class="govuk-grid-row">
@@ -117,8 +117,50 @@
 
   console.log('TARGET_PARCEL_ID:', TARGET_PARCEL_ID);
 
-  // Store the target parcel feature globally so we can access it later
-  let targetParcelFeature = null;
+    // Store the target parcel feature globally so we can access it later
+    let targetParcelFeature = null;
+
+    function getBounds(geometry) {
+    const coords = [];
+
+    function extractCoords(g) {
+      if (!g) return;
+
+      switch (g.type) {
+        case 'Point':
+          coords.push(g.coordinates);
+          break;
+        case 'MultiPoint':
+        case 'LineString':
+          g.coordinates.forEach(c => coords.push(c));
+          break;
+        case 'MultiLineString':
+        case 'Polygon':
+          g.coordinates.forEach(ring => ring.forEach(c => coords.push(c)));
+          break;
+        case 'MultiPolygon':
+          g.coordinates.forEach(polygon => polygon.forEach(ring => ring.forEach(c => coords.push(c))));
+          break;
+        case 'GeometryCollection':
+          g.geometries.forEach(extractCoords);
+          break;
+        default:
+          throw new Error(`Unsupported geometry type: ${g.type}`);
+      }
+    }
+
+    extractCoords(geometry);
+
+    const lons = coords.map(c => c[0]);
+    const lats = coords.map(c => c[1]);
+
+    return [
+      Math.min(...lons),
+      Math.min(...lats),
+      Math.max(...lons),
+      Math.max(...lats)
+    ];
+  }
 
   // Function to calculate center from parcel features
   function calculateCenter(features) {
@@ -156,6 +198,8 @@
       };
     }
     
+
+
     return null;
   }
 
@@ -210,6 +254,7 @@ function fetchSpecificParcel(sbi, parcelId) {
           console.log('Found matching parcel:', matchingParcel);
           // Store globally
           targetParcelFeature = matchingParcel;
+          window.targetParcelFeature = targetParcelFeature;
           
           // Return a FeatureCollection with just this parcel
           return {
@@ -253,8 +298,8 @@ function fetchSpecificParcel(sbi, parcelId) {
       
       // Update the map div with the calculated center
       const mapDiv = document.getElementById('map');
-      mapDiv.setAttribute('data-center', `[${mapCenter[0]}, ${mapCenter[1]}]`);
-      mapDiv.setAttribute('data-zoom', mapZoom.toString());
+      // mapDiv.setAttribute('data-center', `[${mapCenter[0]}, ${mapCenter[1]}]`);
+      // mapDiv.setAttribute('data-zoom', mapZoom.toString());
       
       // Now create the map
       createMap();
@@ -285,6 +330,27 @@ function fetchSpecificParcel(sbi, parcelId) {
 
   // Function to create the map
   function createMap() {
+    console.log(window.targetParcelFeature)
+
+
+    const bounds = getBounds(window.targetParcelFeature.geometry)
+
+
+    const interactPlugin = defra.interactPlugin({
+      dataLayers: [{
+        layerId: 'field-parcels',
+        idProperty: 'ID',
+        selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
+      },{
+        layerId: 'linked-parcels',
+        idProperty: 'ID',
+        selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
+      }],
+      markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
+      interactionMode: 'select',
+      multiSelect: true
+    })
+        
     const defraMap = new defra.DefraMap('map', {
       mapProvider: defra.maplibreProvider(),
       reverseGeocodeProvider: defra.openNamesProvider({
@@ -294,6 +360,7 @@ function fetchSpecificParcel(sbi, parcelId) {
       mapLabel: 'Ambleside',
       minZoom: 6,
       maxZoom: 18,
+      bounds,
       containerHeight: '650px',
       transformRequest: transformTileRequest,
       mapStyle: {
@@ -364,26 +431,13 @@ function fetchSpecificParcel(sbi, parcelId) {
             maxZoom: 24
           }]
         }),
-        defra.interactPlugin({
-          dataLayers: [{
-            layerId: 'field-parcels',
-            idProperty: 'ID',
-            selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
-          },{
-            layerId: 'linked-parcels',
-            idProperty: 'ID',
-            selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
-          }],
-          markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
-          interactionMode: 'select',
-          multiSelect: true
-        }),
-        defra.searchPlugin({
-          osNamesURL: '/api/geocode-proxy?query={query}',
-          customDatasets: searchCustomDatasets,
-          width: '300px',
-          showMarker: false
-        }),
+        interactPlugin,
+        // defra.searchPlugin({
+        //   osNamesURL: '/api/geocode-proxy?query={query}',
+        //   customDatasets: searchCustomDatasets,
+        //   width: '300px',
+        //   showMarker: false
+        // }),
         defra.zoomControlsPlugin(),
         defra.scaleBarPlugin({
           units: 'metric'
@@ -391,6 +445,19 @@ function fetchSpecificParcel(sbi, parcelId) {
       ]
     });
     
+    defraMap.on('map:ready', () => {
+
+      document.querySelector('.dm-o-app__actions').style.display = 'none'
+      interactPlugin.selectFeature({
+        idProperty: 'ID',
+        featureId: window.targetParcelFeature.properties.ID,
+        layerId: 'linked-parcels'
+      })
+    })
+
+    defraMap.on('interact:selectionchange', (e) => {
+      console.log(e)
+    })
     // Store defraMap globally for future reference
     window.defraMapInstance = defraMap;
   }
