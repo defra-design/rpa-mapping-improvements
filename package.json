@@ -2,7 +2,8 @@
   "scripts": {
     "dev": "govuk-prototype-kit dev",
     "serve": "govuk-prototype-kit serve",
-    "start": "govuk-prototype-kit start"
+    "start": "govuk-prototype-kit start",
+    "heroku-postbuild": "cd node_modules/@defra/defra-map && npm install && npm run build"
   },
   "dependencies": {
     "@defra/defra-map": "github:DEFRA/defra-map#main-v1",
