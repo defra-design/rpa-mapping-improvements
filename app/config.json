@@ -3,6 +3,7 @@
   "plugins": {
     "govuk-frontend": {
       "rebrand": true
-    }
+    },
+    "@defra/defra-map": {}
   }
 }
