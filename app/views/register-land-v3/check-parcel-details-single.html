@@ -29,12 +29,9 @@
         actions: {
           items: [
             {
-              href: "delete-parcel?deleteIndex=" + loop.index0,
+              href: "delete-parcel?parcelId=" + parcel.id, 
               text: "Delete parcel",
-              visuallyHiddenText: "parcel " + loop.index,
-              attributes: {
-              'data-bypass': 'true'
-          }
+              visuallyHiddenText: "parcel " + loop.index
             }
           ]
         }

@@ -7,47 +7,54 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {% set parcelIndex = data.deleteIndex or query.deleteIndex %}
-      {% set parcel = data['parcel-choices'][parcelIndex | int] %}
       
-      <form method="post">
-        <input type="hidden" name="index" value="{{ parcelIndex }}">
-        
-        <!-- {{ govukWarningText({
-          text: "You are about to delete land parcel " + (parcelIndex | int + 1),
-          iconFallbackText: "Warning"
-        }) }} -->
-        
-        {{ govukRadios({
-          name: "confirmDelete",
-          fieldset: {
-            legend: {
-              html: "<span class='govuk-caption-l'>AR FIELDING</span>Are you sure you want to delete land parcel " + (parcel.id if parcel.id else (parcelIndex | int + 1)) + "?",
-              isPageHeading: true,
-              classes: "govuk-fieldset__legend--l"
-            }
-          },
-          hint: {
-            text: "This action cannot be undone"
-          },
-          items: [
-            {
-              value: "yes",
-              text: "Yes"
-            },
-            {
-              value: "no",
-              text: "No, keep this land parcel"
-            }
-          ]
-        }) }}
-        
-        {{ govukButton({
-          text: "Continue"
-        }) }}
-      </form>
+      <!-- Retrieve the index from the query parameter using a filter -->
+      {% set parcelIndex = data.deleteIndex or query.deleteIndex | int %}
+      
+      <!-- Find the specific parcel object using the index -->
+      {% set parcel = data['parcels'][parcelIndex] %}
+      
+      <!-- Check if we actually found a parcel -->
+      {% if parcel %}
 
-      <!-- <p>{{ data | dump }}</p> -->
+        <form method="post" action="/confirm-delete-parcel">
+          <!-- Hidden input carries the index we need for the deletion route -->
+          <input type="hidden" name="index" value="{{ parcelIndex }}">
+          
+          {{ govukRadios({
+            name: "confirmDelete",
+            fieldset: {
+              legend: {
+                html: "<span class='govuk-caption-l'>AR FIELDING</span>Are you sure you want to delete land parcel " + parcel.id + "?",
+                isPageHeading: true,
+                classes: "govuk-fieldset__legend--l"
+              }
+            },
+            hint: {
+              text: "This action cannot be undone"
+            },
+            items: [
+              {
+                value: "yes",
+                text: "Yes"
+              },
+              {
+                value: "no",
+                text: "No, keep this land parcel"
+              }
+            ]
+          }) }}
+          
+          {{ govukButton({
+            text: "Continue"
+          }) }}
+        </form>
+
+      {% else %}
+        <p class="govuk-body govuk-!-margin-top-5">Error: Parcel not found.</p>
+        <a href="/register-land-v3/check-parcel-details" class="govuk-link">Return to parcel list</a>
+      {% endif %}
+
     </div>
   </div>
 {% endblock %}

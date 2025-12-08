@@ -7,6 +7,22 @@ const govukPrototypeKit = require("govuk-prototype-kit");
 const router = govukPrototypeKit.requests.setupRouter();
 
 router.use((req, res, next) => {
+
+  next()
+})
+
+router.use((req, res, next) => {
+  res.locals.data = res.locals.data || {}
+  res.locals.data.WFS_SERVICE_URL = process.env.WFS_SERVICE_URL
+  res.locals.data.WFS_DATA_URL = process.env.WFS_DATA_URL
+  res.locals.data.WFS_HEDGEROWS_URL = process.env.WFS_HEDGEROWS_URL
+  res.locals.data.WFS_LANDCOVERS_URL = process.env.WFS_LANDCOVERS_URL
+  res.locals.data.GRIDREF_SERVICE_URL = process.env.GRIDREF_SERVICE_URL
+  res.locals.data.PARCEL_SERVICE_URL = process.env.PARCEL_SERVICE_URL
+  res.locals.data.VTS_OUTDOOR_URL = process.env.VTS_OUTDOOR_URL
+  res.locals.data.VTS_DARK_URL = process.env.VTS_DARK_URL
+  res.locals.data.VTS_BLACK_AND_WHITE_URL = process.env.VTS_BLACK_AND_WHITE_URL
+
   res.locals.query = req.query;
   res.locals.path = req.path;
 
