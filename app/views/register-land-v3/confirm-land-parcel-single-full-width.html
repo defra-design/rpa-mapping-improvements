@@ -1,7 +1,7 @@
 {% extends "layouts/main.html" %}
 
 {% block pageTitle %}
-  Confirm land parcel – GOV.UK Prototype Kit
+  DefraMap page template – GOV.UK Prototype Kit
 {% endblock %}
 
 {% block head %}
@@ -40,9 +40,13 @@
   </div>
 </div>
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-one-quarter">
-
-  <div id="parcel-data-container"></div>
+  <div class="govuk-grid-column-full">
+    <div id="map"></div>
+  </div>
+</div>
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    <div id="parcel-data-container"></div>
 
 {% from "govuk/components/button/macro.njk" import govukButton %}
     <form method="post">
@@ -53,10 +57,6 @@
 
     </form>
 
-  </div>
-  <div class="govuk-grid-column-three-quarters">
-    <p>{{ data.VALUE }}</p>
-    <div id="map"></div>
   </div>
 </div>
 {% endblock %}
@@ -79,26 +79,26 @@
   // ============================================
   // CONFIGURATION - Update these URLs as needed
   // ============================================
-  const CONFIG = {
-    WFS_DATA_URL: '{{ data.WFS_DATA_URL | safe }}',
-    WFS_HEDGEROWS_URL: '{{ data.WFS_HEDGEROWS_URL | safe }}',
-    WFS_LANDCOVERS_URL: '{{ data.WFS_LANDCOVERS_URL | safe }}',
-    VTS_OUTDOOR_URL: '{{ data.VTS_OUTDOOR_URL | safe }}',
-    VTS_DARK_URL: '{{ data.VTS_DARK_URL | safe }}',
-    VTS_BLACK_AND_WHITE_URL: '{{ data.VTS_BLACK_AND_WHITE_URL | safe }}',
-    PROXY_BASE: 'https://farming-data-7db3d1889632.herokuapp.com'
-  };
-  
-  // For Heroku deployment without env vars, replace the lines above with actual URLs:
   // const CONFIG = {
-  //   WFS_DATA_URL: 'https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels&srsname=EPSG:4326&outputFormat=application/json',
-  //   WFS_HEDGEROWS_URL: 'https://environment.data.gov.uk/data-services/RPA/HedgeControl/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:HedgeControl&srsname=EPSG:4326&outputFormat=application/json',
-  //   WFS_LANDCOVERS_URL: 'https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&srsname=EPSG:4326&outputFormat=application/json',
-  //   VTS_OUTDOOR_URL: 'https://api.os.uk/maps/vector/v1/vts?key=YOUR_KEY',
-  //   VTS_DARK_URL: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?key=YOUR_KEY&srs=3857&style=Dark',
-  //   VTS_BLACK_AND_WHITE_URL: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?key=YOUR_KEY&srs=3857&style=BlackAndWhite',
+  //   WFS_DATA_URL: '{{ data.WFS_DATA_URL | safe }}',
+  //   WFS_HEDGEROWS_URL: '{{ data.WFS_HEDGEROWS_URL | safe }}',
+  //   WFS_LANDCOVERS_URL: '{{ data.WFS_LANDCOVERS_URL | safe }}',
+  //   VTS_OUTDOOR_URL: '{{ data.VTS_OUTDOOR_URL | safe }}',
+  //   VTS_DARK_URL: '{{ data.VTS_DARK_URL | safe }}',
+  //   VTS_BLACK_AND_WHITE_URL: '{{ data.VTS_BLACK_AND_WHITE_URL | safe }}',
   //   PROXY_BASE: 'https://farming-data-7db3d1889632.herokuapp.com'
   // };
+  
+  // For Heroku deployment without env vars, replace the lines above with actual URLs:
+  const CONFIG = {
+    WFS_DATA_URL: 'https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels&srsname=EPSG:4326&outputFormat=application/json',
+    WFS_HEDGEROWS_URL: 'https://environment.data.gov.uk/data-services/RPA/HedgeControl/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:HedgeControl&srsname=EPSG:4326&outputFormat=application/json',
+    WFS_LANDCOVERS_URL: 'https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&srsname=EPSG:4326&outputFormat=application/json',
+    VTS_OUTDOOR_URL: 'https://api.os.uk/maps/vector/v1/vts?key=YOUR_KEY',
+    VTS_DARK_URL: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?key=YOUR_KEY&srs=3857&style=Dark',
+    VTS_BLACK_AND_WHITE_URL: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?key=YOUR_KEY&srs=3857&style=BlackAndWhite',
+    PROXY_BASE: 'https://farming-data-7db3d1889632.herokuapp.com'
+  };
   // ============================================
 
   window.env = {
@@ -270,7 +270,10 @@
   };
 
   function createMap() {
-    const bounds = getBounds(window.targetParcelFeature.geometry)
+    // Check if we have a target parcel, otherwise use default bounds
+    const bounds = window.targetParcelFeature 
+      ? getBounds(window.targetParcelFeature.geometry)
+      : [-3.5, 53.5, -2.5, 54.5]; // Default bounds for general area
 
     const interactPlugin = defra.interactPlugin({
       dataLayers: [{
@@ -372,7 +375,9 @@
             {
               id: 'selected-parcel',
               label: 'Selected parcels',
-              filter: ['==', ['get', 'ID'], window.targetParcelFeature.properties.ID],
+              filter: window.targetParcelFeature 
+                ? ['==', ['get', 'ID'], window.targetParcelFeature.properties.ID]
+                : ['==', ['get', 'ID'], -1], // Filter that matches nothing if no parcel selected
               url: CONFIG.WFS_DATA_URL,
               stroke: '#ff0000',
               strokeWidth: 2,
@@ -383,7 +388,9 @@
             {
               id: 'hedgerows',
               label: 'Hedgerows',
-              filter: ['==', ['get', 'REF_PARCEL_ID'], window.targetParcelFeature.properties.ID],
+              filter: window.targetParcelFeature 
+                ? ['==', ['get', 'REF_PARCEL_ID'], window.targetParcelFeature.properties.ID]
+                : ['==', ['get', 'REF_PARCEL_ID'], -1],
               url: CONFIG.WFS_HEDGEROWS_URL,
               stroke: '#228B22',
               strokeWidth: 3,
@@ -394,7 +401,9 @@
             {
               id: 'land-covers',
               label: 'Land covers',
-              filter: ['==', ['get', 'REFERENCE_PARCELS_ID'], window.targetParcelFeature.properties.ID],
+              filter: window.targetParcelFeature 
+                ? ['==', ['get', 'REFERENCE_PARCELS_ID'], window.targetParcelFeature.properties.ID]
+                : ['==', ['get', 'REFERENCE_PARCELS_ID'], -1],
               url: CONFIG.WFS_LANDCOVERS_URL,
               stroke: '#666666',
               strokeWidth: 1,
@@ -531,16 +540,16 @@
     // Build hedgerow HTML
     let hedgerowHTML = 'None';
     if (hedgerowData.count > 0) {
-      hedgerowHTML = `${hedgerowData.count}<br>${hedgerowData.totalLength}m total`;
+      hedgerowHTML = `${hedgerowData.count} (${hedgerowData.totalLength}m total)`;
     }
     
-    // Build land cover HTML - no bullets, just line breaks
+    // Build land cover HTML - use line breaks for multiple items
     let landCoverHTML = 'None';
     if (landCoverData.features.length > 0) {
       const coverItems = landCoverData.features.map(feature => {
         const description = feature.properties.DESCRIPTION || 'Unknown';
         const area = feature.properties.AREA_HA ? parseFloat(feature.properties.AREA_HA).toFixed(4) : 'N/A';
-        return `${description}<br> ${area} ha<br>`;
+        return `${description}: ${area} ha`;
       });
       landCoverHTML = coverItems.join('<br>');
     }
@@ -554,14 +563,28 @@
       const combinedRef = sheetId !== 'N/A' && parcelId !== 'N/A' ? `${sheetId} ${parcelId}` : 'N/A';
       
       container.innerHTML = `
-        <h2 class="govuk-heading-m govuk-!-margin-top-3">Land parcel</h2>
+        <h2 class="govuk-heading-m govuk-!-margin-top-6">Land parcel</h2>
         
-        <ul class="govuk-list govuk-list--spaced">
-          <li><strong>ID</strong><br> ${combinedRef}</li>
-          <li><strong>Area (ha)</strong><br> ${props.AREA_HA ? parseFloat(props.AREA_HA).toFixed(4) : 'N/A'}</li>
-          <li><strong>Hedgerows</strong><br> ${hedgerowHTML}</li>
-          <li><strong>Land covers</strong><br>${landCoverHTML}</li>
-        </ul>
+        <table class="govuk-table">
+          <tbody class="govuk-table__body">
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header" style="width: 25%">ID</th>
+              <td class="govuk-table__cell">${combinedRef}</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Area (ha)</th>
+              <td class="govuk-table__cell">${props.AREA_HA ? parseFloat(props.AREA_HA).toFixed(4) : 'N/A'}</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Hedgerows</th>
+              <td class="govuk-table__cell">${hedgerowHTML}</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Land covers</th>
+              <td class="govuk-table__cell">${landCoverHTML}</td>
+            </tr>
+          </tbody>
+        </table>
       `;
     }
   }

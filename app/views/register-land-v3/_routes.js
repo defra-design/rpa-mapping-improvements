@@ -32,7 +32,7 @@ router.post("/register-land-v3/know-parcel-id", function (req, res) {
     }
     
     // Redirect to the confirmation page (which will display the summary list)
-    res.redirect("confirm-land-parcel-single");
+    res.redirect("confirm-land-parcel-single-full-width");
     
   } else {
     // Redirect to the alternative journey (estimate land parcel)
@@ -41,7 +41,7 @@ router.post("/register-land-v3/know-parcel-id", function (req, res) {
 });
 
 // Confirm land parcel
-router.post("/register-land-v3/confirm-land-parcel-single", function (req, res) {
+router.post("/register-land-v3/confirm-land-parcel-single-full-width", function (req, res) {
   res.redirect("date-to-link-parcel-to-business");
 });
 
