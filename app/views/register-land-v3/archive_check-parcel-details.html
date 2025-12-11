@@ -50,7 +50,7 @@
           actions: {
             items: [
               {
-                href: "confirm-land-parcel-single?parcelIndex=" + loop.index0,
+                href: "#",
                 text: "Change",
                 visuallyHiddenText: "parcel ID for land parcel " + loop.index
               }
@@ -79,14 +79,14 @@
             text: "Land parcel"
           },
           value: {
-            html: "<div class='parcel-map-container' data-parcel-index='" + loop.index0 + "'><img src='" + (parcel.mapScreenshot or '') + "' alt='Map showing land parcel " + loop.index + "' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%; border: 1px solid #b1b4b6;'></div>"
+            html: "<img src='/public/images/land-parcel-CS07717013.png' alt='Map' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%;'>"
           },
           actions: {
             items: [
               {
-                href: "confirm-land-parcel-single?parcelIndex=" + loop.index0,
+                href: "#",
                 text: "Change",
-                visuallyHiddenText: "map of land parcel " + loop.index
+                visuallyHiddenText: "map of land parcel"
               }
             ]
           },
@@ -148,27 +148,4 @@
   vertical-align: top;
 }
 </style>
-
-<script>
-  // Debug: Check if screenshots are in the data
-  window.addEventListener('DOMContentLoaded', function() {
-    const mapContainers = document.querySelectorAll('.parcel-map-container');
-    
-    console.log('Number of parcels:', mapContainers.length);
-    
-    mapContainers.forEach((container, index) => {
-      const img = container.querySelector('img');
-      if (img) {
-        const hasSrc = img.src && img.src !== window.location.href && img.src !== '';
-        console.log(`Parcel ${index + 1} screenshot:`, hasSrc ? 'Present (' + img.src.length + ' chars)' : 'Missing');
-        
-        // Hide broken image icon if no src
-        if (!hasSrc) {
-          img.style.display = 'none';
-          container.innerHTML = '<p class="govuk-body">Map preview not available</p>';
-        }
-      }
-    });
-  });
-</script>
 {% endblock %}

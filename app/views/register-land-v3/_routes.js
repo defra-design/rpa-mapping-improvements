@@ -11,28 +11,17 @@ router.post("/register-land-v3/know-parcel-id", function (req, res) {
   
   if (req.session.data["knowParcelID"] == "yes") {
     
-    const userEnteredId = req.session.data['parcel-id']; // Ensure this name matches your Nunjucks input name
+    // Store the parcel ID but don't create the parcel object yet
+    // We'll create it after the map screenshot is captured on the confirm page
+    const userEnteredId = req.session.data['parcel-id'];
     
-    // Add the parcel to the session array if the ID was entered
+    // Just store the ID and redirect to confirm page
     if (userEnteredId && userEnteredId.trim() !== '') {
-        // Initialize the parcels array if it doesn't exist
-        if (!req.session.data['parcels']) {
-          req.session.data['parcels'] = [];
-        }
-
-        // Create the new object with static prototype data
-        const newParcel = {
-          id: userEnteredId,
-          registeredDate: 'today',
-          imageUrl: '/public/images/land-parcel-CS07717013.png'
-        };
-
-        // Push the object into the array
-        req.session.data['parcels'].push(newParcel);
+      res.redirect("confirm-land-parcel-single-full-width");
+    } else {
+      // No ID entered, redirect back
+      res.redirect("know-parcel-id");
     }
-    
-    // Redirect to the confirmation page (which will display the summary list)
-    res.redirect("confirm-land-parcel-single-full-width");
     
   } else {
     // Redirect to the alternative journey (estimate land parcel)
@@ -40,9 +29,57 @@ router.post("/register-land-v3/know-parcel-id", function (req, res) {
   }
 });
 
-// Confirm land parcel
+// Confirm land parcel - NOW saves the parcel with screenshot
 router.post("/register-land-v3/confirm-land-parcel-single-full-width", function (req, res) {
+  
+  // Initialize the parcels array if it doesn't exist
+  if (!req.session.data['parcels']) {
+    req.session.data['parcels'] = [];
+  }
+  
+  // Get the parcel ID and map screenshot from the form
+  const parcelId = req.session.data['parcel-id'];
+  const mapScreenshot = req.body.mapScreenshot; // This comes from the hidden form field
+  
+  // Create the parcel object with the screenshot
+  const newParcel = {
+    id: parcelId,
+    registeredDate: 'today',
+    mapScreenshot: mapScreenshot || '/public/images/land-parcel-placeholder.png' // Fallback if screenshot fails
+  };
+  
+  // Check if we're editing an existing parcel
+  const parcelIndex = req.query.parcelIndex;
+  
+  if (parcelIndex !== undefined && req.session.data['parcels'][parcelIndex]) {
+    // Update existing parcel
+    req.session.data['parcels'][parcelIndex] = newParcel;
+    console.log('Updated parcel at index:', parcelIndex);
+  } else {
+    // Add new parcel
+    req.session.data['parcels'].push(newParcel);
+    console.log('Added new parcel. Total parcels:', req.session.data['parcels'].length);
+  }
+  
   res.redirect("date-to-link-parcel-to-business");
+});
+
+// GET route for editing an existing parcel
+router.get("/register-land-v3/confirm-land-parcel-single-full-width", function (req, res) {
+  const parcelIndex = req.query.parcelIndex;
+  
+  // If editing an existing parcel, pre-populate the form
+  if (parcelIndex !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelIndex]) {
+    const parcel = req.session.data['parcels'][parcelIndex];
+    
+    // Pre-populate the parcel ID
+    req.session.data['parcel-id'] = parcel.id;
+    
+    console.log('Loading parcel for editing:', parcel.id);
+  }
+  
+  // Let the default rendering happen
+  res.render('register-land-v3/confirm-land-parcel-single-full-width');
 });
 
 // Find or estimate parcel ID
@@ -63,6 +100,8 @@ router.post("/register-land-v3/date-to-link-parcel-to-business", function (req, 
 // Check parcel details
 router.post("/register-land-v3/check-parcel-details", function (req, res) {
   if (req.session.data["registerAnotherParcel"] == "yes") {
+    // Clear the parcel ID for a fresh entry
+    delete req.session.data['parcel-id'];
     res.redirect("know-parcel-id");
   } else if (req.session.data["registerAnotherParcel"] == "no") {
     res.redirect("declaration");

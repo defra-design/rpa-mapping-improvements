@@ -459,11 +459,11 @@
           });
           
           // Check what was actually clicked
+          const landCoverClicked = allFeatures.some(f => f.layer.id === 'land-covers-fill');
           const hedgeClicked = allFeatures.some(f => f.layer.id === 'hedge-control-line');
           
-          // Only block parcel selection if we clicked directly on a hedge
-          // Land covers should not block parcel selection
-          if (hedgeClicked) {
+          // If we clicked on a data layer, don't process parcel click
+          if (landCoverClicked || hedgeClicked) {
             return;
           }
           
@@ -533,18 +533,15 @@
               }
             }
             
-            // Only show parcel popup if land covers layer is not visible
-            const landCoversVisible = map.getLayoutProperty('land-covers-fill', 'visibility') === 'visible';
-            if (!landCoversVisible) {
-              new maplibregl.Popup()
-                .setLngLat(e.lngLat)
-                .setHTML(`
-                  <strong>Land parcel</strong><br>
-                  ${props.SHEET_ID} ${props.PARCEL_ID}<br>
-                  Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
-                `)
-                .addTo(map);
-            }
+            // Show popup
+            new maplibregl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <strong>Land parcel</strong><br>
+                ${props.SHEET_ID} ${props.PARCEL_ID}<br>
+                Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
+              `)
+              .addTo(map);
           }
         };
       }

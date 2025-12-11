@@ -6,144 +6,105 @@
 const govukPrototypeKit = require('govuk-prototype-kit')
 const router = govukPrototypeKit.requests.setupRouter()
 
-// Add your routes here
 
-
-// Do you know the Parcel ID?
-
-router.post("/register-land-v2/know-parcel-id", function (req, res) {
+router.post("/register-land-v3/know-parcel-id", function (req, res) {
+  
   if (req.session.data["knowParcelID"] == "yes") {
-    res.redirect("enter-parcel-id");
-  } else {
-    res.redirect("find-parcel-id");
-  }
-});
+    
+    const userEnteredId = req.session.data['parcel-id']; // Ensure this name matches your Nunjucks input name
+    
+    // Add the parcel to the session array if the ID was entered
+    if (userEnteredId && userEnteredId.trim() !== '') {
+        // Initialize the parcels array if it doesn't exist
+        if (!req.session.data['parcels']) {
+          req.session.data['parcels'] = [];
+        }
 
-// Enter the Parcel ID 
+        // Create the new object with static prototype data
+        const newParcel = {
+          id: userEnteredId,
+          registeredDate: 'today',
+          imageUrl: '/public/images/land-parcel-CS07717013.png'
+        };
 
-router.post("/register-land-v2/enter-parcel-id", function (req, res) {
-  if (req.session.data["parcelID"] == "TL4257 0684") {
-    res.redirect("parcel-is-registered");
-  }
-    else if (req.session.data["parcelID"] == "CS0771 7013") {
-    res.redirect("parcel-is-new");
+        // Push the object into the array
+        req.session.data['parcels'].push(newParcel);
     }
-    else {
-    res.redirect("parcel-is-not-registered");
+    
+    // Redirect to the confirmation page (which will display the summary list)
+    res.redirect("confirm-land-parcel-single-full-width");
+    
+  } else {
+    // Redirect to the alternative journey (estimate land parcel)
+    res.redirect("estimate-land-parcel");
   }
 });
 
-// If land parcel is registered
-
-router.post("/register-land-v2/parcel-is-registered", function (req, res) {
+// Confirm land parcel
+router.post("/register-land-v3/confirm-land-parcel-single-full-width", function (req, res) {
   res.redirect("date-to-link-parcel-to-business");
 });
 
-router.post("/register-land-v2/date-to-link-parcel-to-business", function (req, res) {
+// Find or estimate parcel ID
+router.post("/register-land-v3/estimate-land-parcel", function (req, res) {
+  res.redirect("upload-land-parcel-map");
+});
 
-  // Create a new parcel object from current form data
-let parcel = {
-  'registered': req.session.data['parcelRegistered'],
-  'know': req.session.data['knowParcelID'],
-  'id': req.session.data['parcelID'],
-  'map': req.session.data['fileUpload'],
-  'day': req.session.data['date-to-link-day'],
-  'month': req.session.data['date-to-link-month'],
-  'year': req.session.data['date-to-link-year']
-}
+// Upload land parcel map
+router.post("/register-land-v3/upload-land-parcel-map", function (req, res) {
+  res.redirect("date-to-link-parcel-to-business");
+});
 
-// Initialize and update the parcel choices array
-req.session.data['parcel-choices'] = req.session.data['parcel-choices'] || []
-req.session.data['parcel-choices'].push(parcel)
-
-// Clean up temporary form data
-const fieldsToClean = [
-  'parcelRegistered',
-  'knowParcelID', 
-  'parcelID',
-  'fileUpload',
-  'date-to-link-day',
-  'date-to-link-month',
-  'date-to-link-year'
-]
-
-  fieldsToClean.forEach(field => delete req.session.data[field])
-  
-  console.log('ParcelChoices Array ' + JSON.stringify(req.session.data['parcel-choices']))
-
-
+// Date to link parcel to business
+router.post("/register-land-v3/date-to-link-parcel-to-business", function (req, res) {
   res.redirect("check-parcel-details");
 });
 
-// Ask user if they'd like add additional parcels if yes begin process of adding parcel if not send to declaration
-
-router.post("/register-land-v2/check-parcel-details", function (req, res) {
+// Check parcel details
+router.post("/register-land-v3/check-parcel-details", function (req, res) {
   if (req.session.data["registerAnotherParcel"] == "yes") {
     res.redirect("know-parcel-id");
   } else if (req.session.data["registerAnotherParcel"] == "no") {
-    res.redirect("register-land-declaration");
+    res.redirect("declaration");
   }
 });
 
-// From declaration send to confirmation
-
-router.post("/register-land-v2/register-land-declaration", function (req, res) {
-  res.redirect("register-land-confirmation");
+// Date to link parcel to business
+router.post("/register-land-v3/declaration", function (req, res) {
+  res.redirect("confirmation");
 });
 
-// If parcel not registered send to map to find or estimate parcel ID
+// Delete land parcel
+// router.post("/register-land-v3/delete-parcel", function (req, res) {
+//   res.redirect("check-parcel-details");
+// });
 
-router.post("/register-land-v2/parcel-is-not-registered", function (req, res) {
-  res.redirect("find-parcel-id");
-});
-
-// When map uploaded send to date to link parcel to business
-
-router.post("/register-land-v2/upload-land-parcel-map", function (req, res) {
-  res.redirect("date-to-link-parcel-to-business");
-});
-
-// If parcel is new send to map to find parcel ID
-
-router.post("/register-land-v2/parcel-is-new", function (req, res) {
-  res.redirect("find-parcel-id");
-});
-
-// If parcel is new and already registered send to add date to link, if parcel is not registered send to map upload
-
-router.post("/register-land-v2/find-parcel-id", function (req, res) {
-  if (req.session.data["parcelID"] == "CS0771 7013") {
-    res.redirect("parcel-is-registered");
-  } else {
-    res.redirect("upload-land-parcel-map");
-  }
-});
-
-// Delete land parcels from check parcel details
-
-router.post('/register-land-v2/delete-parcel', function (req, res) {
-  console.log('Confirm delete:', req.body.confirmDelete)
-  console.log('Parcel index:', req.body.index)
-  console.log('Parcel choices before:', req.session.data['parcel-choices'])
+// --- 2. GET route to show the "Delete confirmation" page ---
+// This is triggered when the user clicks the "Delete parcel" link on the summary page.
+// The link must have data-bypass="true" in the Nunjucks attributes to hit this route.
+router.get('/delete-parcel', function (req, res) {
   
-  const confirmDelete = req.body.confirmDelete
-  const parcelIndex = req.body.index
-  
-  if (confirmDelete === 'yes' && req.session.data['parcel-choices'] && parcelIndex !== undefined) {
-    req.session.data['parcel-choices'].splice(parcelIndex, 1)
-    
-    if (req.session.data['parcel-choices'].length === 0) {
-      delete req.session.data['parcel-choices']
+  // The 'delete-parcel.html' template uses the query parameter to show the right parcel info.
+  // We simply redirect to the Nunjucks file.
+  res.redirect('/register-land-v3/delete-parcel');
+});
+
+
+// --- 3. POST route to process the final deletion confirmation ---
+// This handles the form submission from the delete-parcel.html page (Yes/No radios).
+router.post('/confirm-delete-parcel', function (req, res) {
+  const confirmation = req.session.data['confirmDelete']; // Value is 'yes' or 'no'
+  const indexToDelete = parseInt(req.session.data['index'], 10); // The array index passed from the form
+
+  if (confirmation === 'yes') {
+    // If the user confirms deletion, remove the item from the session array
+    if (req.session.data['parcels'] && req.session.data['parcels'][indexToDelete]) {
+      req.session.data['parcels'].splice(indexToDelete, 1);
     }
-  }
+  } 
   
-  console.log('Parcel choices after:', req.session.data['parcel-choices'])
-  
-  delete req.session.data['deleteIndex']
-  delete req.session.data['confirmDelete']
-  
-  res.redirect('check-parcel-details')
+  // Redirect back to the main summary page
+  res.redirect('/register-land-v3/check-parcel-details'); 
 });
-
 
 module.exports = router;
