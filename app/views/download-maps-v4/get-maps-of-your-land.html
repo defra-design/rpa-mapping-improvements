@@ -9,7 +9,7 @@
   serviceUrl: "#",
   navigation: [
     {
-      href: "#",
+      href: "start",
       text: "Get maps of your land",
       active: true
     },
@@ -37,158 +37,150 @@
 {% endblock %}
 
 {% block content %}
-  <div style="display: flex; gap: 20px; max-width: 100%; padding: 0;">
-    <!-- Left sidebar -->
-    <div style="width: 230px; flex-shrink: 0;">
-      {% from "govuk/components/radios/macro.njk" import govukRadios %}
 
-      {{ govukRadios({
-        formGroup: {
-        classes: "govuk-!-static-margin-bottom-0"
-        },
-        classes: "govuk-radios--small",
-        name: "changedName",
-        fieldset: {
-          legend: {
-            text: "Maps",
-            isPageHeading: true,
-            classes: "govuk-fieldset__legend--s govuk-!-static-margin-bottom-1"
-          }
-        },
-        items: [
-          {
-            value: "whole-holding",
-            text: "Whole holding",
-            checked: true
-          },
-          {
-            value: "indi-parcels",
-            text: "Individual land parcels"
-          }
-        ]
-      }) }}
+<div class="app-full-width-container">
+  <main>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-third">
+        <!-- Whole holding information -->
+        <div id="whole-holding-summary">
+          <h2 class="govuk-heading-s govuk-!-static-margin-bottom-1">Whole holding</h2>
+          <p class="govuk-body-s govuk-!-static-margin-bottom-1">
+            Total area (ha) <span id="sidebar-total-area">Loading</span>
+          </p>
+          <p class="govuk-body-s govuk-!-static-margin-bottom-2">
+            Total parcels <span id="sidebar-total-parcels">Loading</span>
+          </p>
+        </div>
 
-      {% from "govuk/components/button/macro.njk" import govukButton %}
+        <!-- Individual parcels information (hidden by default) -->
+        <div id="individual-parcels-summary" style="display: none;">
+          <h2 class="govuk-heading-s govuk-!-static-margin-bottom-1">Individual land parcels</h2>
+          <p class="govuk-body-s govuk-!-static-margin-bottom-1">
+            Selected area (ha) <span id="sidebar-selected-area">0</span>
+          </p>
+          <p class="govuk-body-s govuk-!-static-margin-bottom-2">
+            Parcels selected <span id="sidebar-selected-count">0 of 0</span>
+          </p>
+        </div>
 
-      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-      
-      <div id="land-parcels-section">
-        {% from "govuk/components/input/macro.njk" import govukInput %}
-        {{ govukInput({
-          id: "parcel-filter",
-          name: "parcelFilter",
-          classes: "govuk-input--width-10",
+        <!-- Single set of radio buttons -->
+        {% from "govuk/components/radios/macro.njk" import govukRadios %}
+        {{ govukRadios({
+          classes: "govuk-radios--small",
+          name: "selectMap",
           formGroup: {
-            classes: "govuk-!-margin-bottom-2"
+            classes: "govuk-!-static-margin-bottom-2"
           },
-          label: {
-            text: "Filter",
-            classes: "govuk-label--s"
-          }
+          items: [
+            {
+              value: "whole-holding",
+              text: "Whole holding",
+              checked: true
+            },
+            {
+              value: "indi-parcels",
+              text: "Individual land parcels"
+            }
+          ]
         }) }}
+
+        {% from "govuk/components/button/macro.njk" import govukButton %}
+        {{ govukButton({
+          text: "Download map",
+          classes: "govuk-!-static-margin-bottom-2"
+        }) }}
+
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
         
-        <div class="scrollable-checkbox-container" id="parcels-list">
-          <p class="govuk-body-s">Loading parcels...</p>
+        <div id="land-parcels-section">
+          {% from "govuk/components/input/macro.njk" import govukInput %}
+          {{ govukInput({
+            id: "parcel-filter",
+            name: "parcelFilter",
+            classes: "govuk-input--width-10",
+            formGroup: {
+              classes: "govuk-!-margin-bottom-2"
+            },
+            label: {
+              text: "Filter",
+              classes: "govuk-label--s"
+            }
+          }) }}
+          
+          <div class="scrollable-checkbox-container" id="parcels-list">
+            <p class="govuk-body-s">Loading parcels...</p>
+          </div>
+          <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
+        </div>
+
+        <div>
+          <h2 class="govuk-heading-s govuk-!-static-margin-bottom-1">Data</h2>
+          
+          <div class="scrollable-checkbox-container">
+            {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+
+            {{ govukCheckboxes({
+              formGroup: {
+              classes: "govuk-!-static-margin-bottom-0"
+              },
+              name: "additionalInfo",
+              classes: "govuk-checkboxes--small",
+              items: [
+                {
+                  value: "land-covers",
+                  text: "Land covers"
+                },
+                {
+                  value: "hedgerows",
+                  text: "Hedgerows"
+                }
+              ]
+            }) }}
+          </div>    
         </div>
         <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
       </div>
-
-      <div>
-        <h2 class="govuk-heading-s govuk-!-static-margin-bottom-1">Data</h2>
-        
-        <div class="scrollable-checkbox-container">
-          {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
-
-          {{ govukCheckboxes({
-            formGroup: {
-            classes: "govuk-!-static-margin-bottom-0"
-            },
-            name: "additionalInfo",
-            classes: "govuk-checkboxes--small",
-            items: [
-              {
-                value: "land-covers",
-                text: "Land covers"
-              },
-              {
-                value: "hedgerows",
-                text: "Hedgerows"
-              }
-            ]
-          }) }}
-        </div>    
-      </div>
-      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-    </div>
-
-    <!-- Map area -->
-    <div style="flex: 1; position: relative;">
-      <div id="map" style="width: 100%; height: 800px;"></div>
-      
-      <!-- Whole holding overlay -->
-      <div id="whole-holding-overlay" class="map-overlay">
-        <button class="map-overlay-close" aria-label="Hide panel">Hide</button>
-        <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Whole holding</h2>
-        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3">
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Total area (ha)</dt>
-            <dd class="govuk-summary-list__value" id="total-area">Loading...</dd>
+      <div class="govuk-grid-column-two-thirds">
+        <!-- Map area -->
+        <div style="position: relative;">
+          <div id="map" style="width: 100%; height: 800px;"></div>
+          
+          <!-- Search overlay (toggle-able) -->
+          <div id="search-overlay" class="map-overlay">
+            <button id="search-toggle" class="map-search-toggle" aria-label="Show search">
+              <img src="/public/images/search.svg" alt="" aria-hidden="true">
+            </button>
+            
+            <!-- Search input in overlay (hidden by default) -->
+            <div id="search-container" style="display: none;">
+              <form class="map-search-form" id="location-search-form">
+                <div class="map-search-wrapper-with-close">
+                  <input 
+                    class="govuk-input map-search-input-large" 
+                    id="location-search" 
+                    name="location-search" 
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Search your land">
+                  <button type="button" id="search-close" class="map-search-close" aria-label="Close search">×</button>
+                </div>
+              </form>
+              
+              <!-- Search results dropdown -->
+              <div id="search-results" class="map-search-results-large" style="display: none;">
+                <ul class="map-search-results-list" id="search-results-list">
+                  <!-- Results will be populated here -->
+                </ul>
+              </div>
+            </div>
           </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Total parcels</dt>
-            <dd class="govuk-summary-list__value" id="total-parcels">Loading...</dd>
-          </div>
-        </dl>
-        
-        {{ govukButton({
-          text: "Download map"
-        }) }}
-      </div>
-      
-      <!-- Individual parcels overlay -->
-      <div id="individual-parcels-overlay" class="map-overlay" style="display: none;">
-        <button class="map-overlay-close" aria-label="Hide panel">Hide</button>
-        
-        <!-- Search input in overlay -->
-        <form class="map-search-form" id="location-search-form">
-          <label class="govuk-label govuk-label--s govuk-!-margin-bottom-1" for="location-search">
-            Search
-          </label>
-          <div class="map-search-wrapper-inline">
-            <input 
-              class="govuk-input map-search-input-inline govuk-input--width-10" 
-              id="location-search" 
-              name="location-search" 
-              type="text"
-              autocomplete="off"
-              placeholder="">
-          </div>
-        </form>
-        
-        <!-- Search results dropdown -->
-        <div id="search-results" class="map-search-results-inline" style="display: none;">
-          <ul class="map-search-results-list" id="search-results-list">
-            <!-- Results will be populated here -->
-          </ul>
         </div>
-        
-        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-3 govuk-!-margin-top-3">
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Selected area (ha)</dt>
-            <dd class="govuk-summary-list__value" id="selected-area">0</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Parcels selected</dt>
-            <dd class="govuk-summary-list__value" id="selected-count">0 of 0</dd>
-          </div>
-        </dl>
-        
-        {{ govukButton({
-          text: "Download map"
-        }) }}
       </div>
     </div>
-  </div>
+  </main>
+</div>
+
 {% endblock %}
 
 {% block pageScripts %}
@@ -202,7 +194,7 @@
     // 50 parcels: 106172811
     // 33 parcels: 106332870
     // 29 parcels: 106200859
-    const SBI = '106332870'; // Test SBI 
+    const SBI = '106200212'; // Test SBI 
     let landParcelsData = null;
     let landCoversData = null;
     let hedgeControlData = null;
@@ -459,11 +451,11 @@
           });
           
           // Check what was actually clicked
-          const landCoverClicked = allFeatures.some(f => f.layer.id === 'land-covers-fill');
           const hedgeClicked = allFeatures.some(f => f.layer.id === 'hedge-control-line');
           
-          // If we clicked on a data layer, don't process parcel click
-          if (landCoverClicked || hedgeClicked) {
+          // Only block parcel selection if we clicked directly on a hedge
+          // Land covers should not block parcel selection
+          if (hedgeClicked) {
             return;
           }
           
@@ -519,11 +511,13 @@
               console.log('Selected parcels data updated successfully');
               
               // Update statistics in the overlay
+              // Update statistics in sidebar
               const totalArea = newFeatures.reduce((sum, f) => 
                 sum + parseFloat(f.properties.AREA_HA || 0), 0
               );
-              document.getElementById('selected-area').textContent = totalArea.toFixed(4);
-              document.getElementById('selected-count').textContent = 
+              // Update sidebar elements
+              document.getElementById('sidebar-selected-area').textContent = totalArea.toFixed(4);
+              document.getElementById('sidebar-selected-count').textContent = 
                 `${newFeatures.length} of ${landParcelsData.features.length}`;
               
               // Also update checkboxes to match
@@ -533,15 +527,18 @@
               }
             }
             
-            // Show popup
-            new maplibregl.Popup()
-              .setLngLat(e.lngLat)
-              .setHTML(`
-                <strong>Land parcel</strong><br>
-                ${props.SHEET_ID} ${props.PARCEL_ID}<br>
-                Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
-              `)
-              .addTo(map);
+            // Only show parcel popup if land covers layer is not visible
+            const landCoversVisible = map.getLayoutProperty('land-covers-fill', 'visibility') === 'visible';
+            if (!landCoversVisible) {
+              new maplibregl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(`
+                  <strong>Land parcel</strong><br>
+                  ${props.SHEET_ID} ${props.PARCEL_ID}<br>
+                  Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
+                `)
+                .addTo(map);
+            }
           }
         };
       }
@@ -759,11 +756,11 @@
       // Sort parcels by ID
       parcels.sort((a, b) => a.id.localeCompare(b.id));
 
-      // Calculate totals
+      // Calculate totals and update sidebar elements
       const totalArea = parcels.reduce((sum, p) => sum + parseFloat(p.area || 0), 0);
-      document.getElementById('total-area').textContent = totalArea.toFixed(4);
-      document.getElementById('total-parcels').textContent = parcels.length;
-      document.getElementById('selected-count').textContent = `0 of ${parcels.length}`;
+      document.getElementById('sidebar-total-area').textContent = totalArea.toFixed(4);
+      document.getElementById('sidebar-total-parcels').textContent = parcels.length;
+      document.getElementById('sidebar-selected-count').textContent = `0 of ${parcels.length}`;
 
       // Create checkboxes HTML
       let checkboxesHTML = '<div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">';
@@ -820,8 +817,9 @@
         const selectedArea = Array.from(selectedCheckboxes)
           .reduce((sum, cb) => sum + parseFloat(cb.dataset.area || 0), 0);
         
-        document.getElementById('selected-area').textContent = selectedArea.toFixed(4);
-        document.getElementById('selected-count').textContent = 
+        // Update sidebar elements
+        document.getElementById('sidebar-selected-area').textContent = selectedArea.toFixed(4);
+        document.getElementById('sidebar-selected-count').textContent = 
           `${selectedCheckboxes.length} of ${landParcelsData.features.length}`;
       }
     }
@@ -1073,26 +1071,54 @@
     });
 
     // Radio button functionality
-    const radios = document.querySelectorAll('input[name="changedName"]');
+    const radios = document.querySelectorAll('input[name="selectMap"]');
     const landParcelsSection = document.getElementById('land-parcels-section');
-    const wholeHoldingOverlay = document.getElementById('whole-holding-overlay');
-    const individualParcelsOverlay = document.getElementById('individual-parcels-overlay');
-    const closeButtons = document.querySelectorAll('.map-overlay-close');
+    const wholeHoldingSummary = document.getElementById('whole-holding-summary');
+    const individualParcelsSummary = document.getElementById('individual-parcels-summary');
     const filterInput = document.getElementById('parcel-filter');
     
     function toggleContent() {
-      const selectedValue = document.querySelector('input[name="changedName"]:checked')?.value;
+      const selectedValue = document.querySelector('input[name="selectMap"]:checked')?.value;
       
       if (selectedValue === 'indi-parcels') {
         landParcelsSection.style.display = 'block';
-        wholeHoldingOverlay.style.display = 'none';
-        individualParcelsOverlay.style.display = 'block';
+        wholeHoldingSummary.style.display = 'none';
+        individualParcelsSummary.style.display = 'block';
       } else {
         landParcelsSection.style.display = 'none';
-        wholeHoldingOverlay.style.display = 'block';
-        individualParcelsOverlay.style.display = 'none';
+        wholeHoldingSummary.style.display = 'block';
+        individualParcelsSummary.style.display = 'none';
       }
     }
+    
+    // Search toggle functionality
+    const searchToggle = document.getElementById('search-toggle');
+    const searchContainer = document.getElementById('search-container');
+    const searchClose = document.getElementById('search-close');
+    
+    function hideSearch() {
+      searchContainer.style.display = 'none';
+      searchToggle.style.display = 'flex';
+      searchToggle.setAttribute('aria-label', 'Show search');
+      searchInput.value = '';
+      searchResults.style.display = 'none';
+    }
+    
+    function showSearch() {
+      searchContainer.style.display = 'block';
+      searchToggle.style.display = 'none';
+      searchToggle.setAttribute('aria-label', 'Hide search');
+      setTimeout(() => searchInput.focus(), 100);
+    }
+    
+    if (searchToggle && searchContainer) {
+      searchToggle.addEventListener('click', showSearch);
+    }
+    
+    if (searchClose) {
+      searchClose.addEventListener('click', hideSearch);
+    }
+    
     
     function filterParcels() {
       const filterValue = filterInput.value.toLowerCase();
@@ -1112,27 +1138,6 @@
     
     radios.forEach(radio => {
       radio.addEventListener('change', toggleContent);
-    });
-    
-    closeButtons.forEach(button => {
-    button.addEventListener('click', function() {
-        const overlay = this.parentElement;
-        
-        if (overlay.classList.contains('map-overlay-collapsed')) {
-        // Expand the overlay
-        overlay.classList.remove('map-overlay-collapsed');
-        this.textContent = 'Hide';
-        this.setAttribute('aria-label', 'Hide panel');
-        } else {
-        // Collapse the overlay
-        overlay.classList.add('map-overlay-collapsed');
-        this.textContent = 'Show';
-        this.setAttribute('aria-label', 'Show panel');
-        }
-        
-        // Remove focus after click
-        this.blur();
-    });
     });
     
     // Debounced filter function
@@ -1310,6 +1315,14 @@
     margin-bottom: 30px;
   }
   
+  /* Two-column grid layout for parcel checkboxes */
+  #parcels-list .govuk-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 15px; /* Horizontal gap only */
+  }
+  
+  /* Make parcel checkboxes display inline in columns */
   .scrollable-checkbox-container .govuk-checkboxes__label {
     font-size: 1rem;
     line-height: 1.25;
@@ -1320,6 +1333,11 @@
     line-height: 1.25;
     padding-right: 0px;
     margin-top: -14px;
+  }
+  
+  /* Remove bottom margin from hints in parcels list for cleaner inline layout */
+  #parcels-list .govuk-checkboxes__hint {
+    margin-bottom: 0;
   }
   
   .govuk-radios__label {
@@ -1345,32 +1363,73 @@
   }
 
   /* Map search styles - inline in overlay */
+  /* Map search styles - larger input with close button */
   .map-search-form {
     margin-bottom: 0;
   }
 
-  .map-search-wrapper-inline {
+  .map-search-wrapper-with-close {
+    position: relative;
     margin-bottom: 10px;
   }
 
-  .map-search-input-inline {
+  .map-search-input-large {
     font-size: 1rem;
     line-height: 1.25;
+    padding: 13px 45px 13px 12px;
+    width: 100%;
+    min-width: 300px;
+    border: 2px solid #0b0c0c;
   }
 
-  .map-search-input-inline:focus {
+  .map-search-input-large:focus {
     outline: 3px solid #ffdd00;
     outline-offset: 0;
     box-shadow: none;
     border-color: #0b0c0c;
   }
 
-  .map-search-input-inline::placeholder {
+  .map-search-input-large::placeholder {
     font-size: 1rem;
     line-height: 1.25;
+    color: #505a5f;
   }
 
-  .map-search-results-inline {
+  .map-search-close {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 32px;
+    line-height: 1;
+    padding: 0;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    color: #0b0c0c;
+    font-family: "GDS Transport", arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .map-search-close:hover {
+    background-color: #f3f2f1;
+  }
+
+  .map-search-close:focus {
+    outline: none;
+  }
+
+  .map-search-close:focus-visible {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    background-color: #ffdd00;
+  }
+
+  .map-search-results-large {
     background-color: white;
     border: 2px solid #0b0c0c;
     border-top: none;
@@ -1378,7 +1437,6 @@
     overflow-y: auto;
     margin-bottom: 15px;
     margin-top: -10px;
-    max-width: 11.24em;
   }
 
   .map-search-results-list {
@@ -1426,15 +1484,11 @@
   }
 
   /* Map overlay styles */
+  /* Map overlay styles */
   .map-overlay {
     position: absolute;
     top: 10px;
     left: 10px;
-    background-color: white;
-    padding: 10px;
-    padding-top: 15px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    max-width: 275px;
     z-index: 10;
   }
 
@@ -1484,6 +1538,48 @@
     outline: 3px solid #ffdd00 !important;
     outline-offset: 0;
     box-shadow: inset 0 0 0 4px #0b0c0c !important;
+  }
+
+  /* Search toggle button */
+  .map-search-toggle {
+    background: white;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+    cursor: pointer;
+    padding: 10px;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+  }
+
+  .map-search-toggle img {
+    width: 24px;
+    height: 24px;
+    display: block;
+  }
+
+  .map-search-toggle:hover {
+    background-color: #f3f2f1;
+  }
+
+  .map-search-toggle:focus {
+    outline: none !important;
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .map-search-toggle:focus-visible {
+    outline: 3px solid #ffdd00 !important;
+    outline-offset: 0;
+    box-shadow: inset 0 0 0 4px #0b0c0c !important;
+  }
+
+  /* Search container spacing */
+  #search-container {
+    margin-top: 10px;
   }
 
   .govuk-button {
@@ -1591,15 +1687,16 @@
 .maplibregl-ctrl-group {
   background: white;
   border-radius: 0; /* Remove rounded corners */
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1);
   border: 2px solid rgba(0, 0, 0, 0.1);
 }
 
 .maplibregl-ctrl button {
-  width: 29px;
-  height: 29px;
+  width: 40px;
+  height: 40px;
   background-color: white;
   border: none;
+  padding: 10px;
 }
 
 .maplibregl-ctrl button:hover {
@@ -1616,34 +1713,34 @@
   box-shadow: inset 0 0 0 4px #0b0c0c;
 }
 
-/* Add borders between buttons */
-.maplibregl-ctrl button + button {
-  border-top: 1px solid #b1b4b6;
+/* Position navigation controls below map style toggle */
+.maplibregl-ctrl-top-right {
+  top: 59px !important; /* 45px (button height) + 4px (border) + 10px (gap) */
 }
 
-/* Map style toggle button - positioned with spacing below zoom controls */
+/* Map style toggle button - positioned above zoom controls */
 .map-style-toggle {
   position: absolute;
-  top: 78px; /* Position below zoom controls with 10px gap */
+  top: 10px; /* Position at top with same margin as zoom controls */
   right: 10px;
   z-index: 1;
   background: white;
-  border: 2px solid rgba(0, 0, 0, 0.1); /* Match maplibre controls */
+  border: 2px solid rgba(0, 0, 0, 0.1);
   border-radius: 0;
   cursor: pointer;
-  padding: 0;
-  width: 33px; /* Changed from 29px - includes border (29 + 2 + 2) */
-  height: 33px; /* Changed from 29px - includes border (29 + 2 + 2) */
+  padding: 10px;
+  width: 45px;
+  height: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Match maplibre controls */
-  box-sizing: border-box; /* Ensure border is included in dimensions */
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .map-style-toggle img {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: block;
 }
 
@@ -1653,7 +1750,7 @@
 
 .map-style-toggle:focus {
   outline: none !important;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 .map-style-toggle:focus-visible {
@@ -1669,6 +1766,16 @@
 
 #map.ready {
   opacity: 1;
+}
+
+/* Full-width layout styles */
+.govuk-header__container, .govuk-width-container, .app-full-width-container {
+  max-width: 100%; /* Makes the container full width */
+  padding: 0 15px; /* Adds a bit of padding on the sides for spacing on large screens */
+}
+
+.govuk-grid-column-one-third {
+  padding-left: 0;
 }
 </style>
 {% endblock %}

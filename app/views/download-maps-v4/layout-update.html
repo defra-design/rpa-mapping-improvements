@@ -1,7 +1,9 @@
 {% extends "layouts/main.html" %}
 
+{% set excludeBeforeContent = true %}
+
 {% block pageTitle %}
-  Get maps of your land – GOV.UK Prototype Kit
+  GOV.UK page template – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
 {% block head %}
@@ -18,134 +20,45 @@
   <script>document.body.classList.add('am-is-loading')</script>
 {% endblock %}
 
-{% block beforeContent %}
-  {{ govukBackLink({
-    text: "Back",
-    href: "javascript:window.history.back()"
-  }) }}
-{% endblock %}
+{% block content %}
 
-{% block content %} 
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
-
-    <h1 class="govuk-heading-l">
-      Get maps of your land
-    </h1>
-
-  </div>
-</div>
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-one-quarter">
-    <!-- MOVED UP: The content divs -->
- <div id="sticky-sidebar-container">
-    <div id="whole-holding">
+<div class="app-full-width-container">
+  <main>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-third">
       <h2 class="govuk-heading-m govuk-!-static-margin-bottom-1">Whole holding</h2>
-      <p class="govuk-!-static-margin-bottom-1">Total area (ha) 156.4460</p>
-      <p class="govuk-!-static-margin-bottom-1">Total parcels	33</p>
-    </div>
+      {% from "govuk/components/radios/macro.njk" import govukRadios %}
 
-    <!-- Hide this div by default using inline CSS -->
-    <div id="individual-land-parcels" style="display: none;"> 
-      <h2 class="govuk-heading-m govuk-!-static-margin-bottom-1">Individual land parcels</h2>
-      <p class="govuk-!-static-margin-bottom-1">Selected area (ha)	0</p>
-      <p class="govuk-!-static-margin-bottom-1">Parcels selected	0 of 33</p>
-    </div>
-    <!-- END MOVED CONTENT -->
-
-    {% from "govuk/components/radios/macro.njk" import govukRadios %}
-
-    {{ govukRadios({
-      classes: "govuk-radios--small",
-      name: "mapType",
-      formGroup: {
-        classes: "govuk-!-static-margin-bottom-1"
-      },
-      items: [
-        {
-          value: "wholeHolding",
-          text: "Whole holding",
-          checked: true, 
-          id: "radio-whole-holding" 
+      {{ govukRadios({
+        classes: "govuk-radios--small",
+        name: "mapType",
+        formGroup: {
+          classes: "govuk-!-static-margin-bottom-1"
         },
-        {
-          value: "IndividualLandParcels",
-          text: "Individual land parcels",
-          id: "radio-individual-parcels" 
-        }
-      ]
-    }) }}
-
-<hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-
-</div>
-    <!-- WRAPPED CONTAINER: Only for the FILTER checkboxes -->
-    <!-- It should be hidden by default (since "whole holding" is default) -->
-    <div id="filter-container" style="display: none;">
-
-      {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
-
-        {{ govukCheckboxes({
-          name: "filterLandParcels",
-          classes: "govuk-checkboxes--small",
-          fieldset: {
-            legend: {
-              text: "Filter",
-              isPageHeading: false,
-              classes: "govuk-fieldset__legend--m govuk-!-static-margin-bottom-1"
-            }
+        items: [
+          {
+            value: "wholeHolding",
+            text: "Whole holding",
+            checked: true, 
+            id: "radio-whole-holding" 
           },
-          formGroup: {
-          beforeInputs: {
-              html: "<input class='govuk-input' id='event-name' name='eventName' type='text'>"
-                  }
-          },
-          items: [
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } },
-            { value: "SK8287 1468", text: "SK8287 1468", hint: { text: "Total area (ha) 2.9195" } }
-          ]
-        }) }}
+          {
+            value: "IndividualLandParcels",
+            text: "Individual land parcels",
+            id: "radio-individual-parcels" 
+          }
+        ]
+      }) }}
+
+      </div>
+      <div class="govuk-grid-column-two-thirds">
+        <p>{{ data.VALUE }}</p>
+        <div id="map" data-zoom="12" data-center="[-2.968, 54.425]"></div>
+      </div>
     </div>
-    <!-- END WRAPPED CONTAINER -->
-<hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-    {{ govukCheckboxes({
-      name: "Data",
-      classes: "govuk-checkboxes--small",
-      fieldset: {
-        legend: {
-          text: "Data",
-          isPageHeading: true,
-          classes: "govuk-fieldset__legend--m govuk-!-static-margin-bottom-1"
-        }
-      },
-      items: [
-        { value: "land-covers", text: "Land covers" },
-        { value: "hedgerows", text: "Hedgerows" }
-      ]
-    }) }}
-
-    {% from "govuk/components/button/macro.njk" import govukButton %}
-    <!-- Download button is now outside the filter container -->
-    {{ govukButton({
-      text: "Download map"
-    }) }}
-
-  </div>
-  <div class="govuk-grid-column-three-quarters">
-    <p>{{ data.VALUE }}</p>
-    <div id="map" data-zoom="12" data-center="[-2.968, 54.425]"></div>
-  </div>
+  </main>
 </div>
+
 {% endblock %}
 
 {% block pageScripts %}
@@ -277,49 +190,17 @@
     })
 
   </script>
-  <!-- UI -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      
-      const wholeHoldingRadio = document.getElementById('radio-whole-holding');
-      const individualParcelsRadio = document.getElementById('radio-individual-parcels');
-      
-      const wholeHoldingDiv = document.getElementById('whole-holding');
-      const individualParcelsDiv = document.getElementById('individual-land-parcels');
-      
-      // Get the container element for the filters ONLY
-      const filterContainer = document.getElementById('filter-container');
 
-      function toggleMapDisplay() {
-        if (wholeHoldingRadio.checked) {
-          wholeHoldingDiv.style.display = 'block';
-          individualParcelsDiv.style.display = 'none';
-          filterContainer.style.display = 'none'; // Hide filters
-        } else if (individualParcelsRadio.checked) {
-          wholeHoldingDiv.style.display = 'none';
-          individualParcelsDiv.style.display = 'block';
-          filterContainer.style.display = 'block'; // Show filters
-        }
-      }
+<style>
+  .govuk-header__container, .govuk-width-container, .app-full-width-container {
+  max-width: 100%; /* Makes the container full width */
+  padding: 0 15px; /* Adds a bit of padding on the sides for spacing on large screens */
+  
+}
+.govuk-grid-column-one-third {
+  padding-left: 0;
+}
 
-      if (wholeHoldingRadio) {
-        wholeHoldingRadio.addEventListener('change', toggleMapDisplay);
-      }
-      if (individualParcelsRadio) {
-        individualParcelsRadio.addEventListener('change', toggleMapDisplay);
-      }
-      
-      // Run once on load
-      toggleMapDisplay(); 
-    });
-  </script>
-  <style>
-      .govuk-label, .govuk-checkboxes__hint, .govuk-radios__hint, p { font-size: 1rem; } 
-      .govuk-checkboxes__hint { margin-top: -14px; }
-      .govuk-checkboxes__label {margin-top: -6px;}
+</style>
 
-      #sticky-sidebar-container { position: sticky; top: 0; z-index: 10; background-color: #ffffff; }
-      #filter-container { max-height: 300px; overflow-y: auto; padding-right: 15px; /* Add some padding to make room for the scrollbar visually */ }
-
-  </style>
 {% endblock %}
