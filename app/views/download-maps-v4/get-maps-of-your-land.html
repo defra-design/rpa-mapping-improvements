@@ -44,7 +44,7 @@
       <div class="govuk-grid-column-one-third">
         <!-- Whole holding information -->
         <div id="whole-holding-summary">
-          <h2 class="govuk-heading-s govuk-!-static-margin-bottom-1">Whole holding</h2>
+          <h2 class="govuk-heading-m govuk-!-static-margin-bottom-1">Whole holding</h2>
           <p class="govuk-body-s govuk-!-static-margin-bottom-1">
             Total area (ha) <span id="sidebar-total-area">Loading</span>
           </p>
@@ -55,7 +55,7 @@
 
         <!-- Individual parcels information (hidden by default) -->
         <div id="individual-parcels-summary" style="display: none;">
-          <h2 class="govuk-heading-s govuk-!-static-margin-bottom-1">Individual land parcels</h2>
+          <h2 class="govuk-heading-m govuk-!-static-margin-bottom-1">Individual land parcels</h2>
           <p class="govuk-body-s govuk-!-static-margin-bottom-1">
             Selected area (ha) <span id="sidebar-selected-area">0</span>
           </p>
@@ -104,18 +104,18 @@
             },
             label: {
               text: "Filter",
-              classes: "govuk-label--s"
+              classes: "govuk-label--m"
             }
           }) }}
           
           <div class="scrollable-checkbox-container" id="parcels-list">
-            <p class="govuk-body-s">Loading parcels...</p>
+            <p class="govuk-body-s">Loading</p>
           </div>
           <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
         </div>
 
         <div>
-          <h2 class="govuk-heading-s govuk-!-static-margin-bottom-1">Data</h2>
+          <h2 class="govuk-heading-m govuk-!-static-margin-bottom-1">Data</h2>
           
           <div class="scrollable-checkbox-container">
             {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
@@ -778,7 +778,7 @@
               ${parcel.sheetId} ${parcel.parcelId}
             </label>
             <div class="govuk-hint govuk-checkboxes__hint">
-              Total area (ha) ${parseFloat(parcel.area).toFixed(4)}
+              ${parseFloat(parcel.area).toFixed(4)} (ha)
             </div>
           </div>
         `;
