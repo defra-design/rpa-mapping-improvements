@@ -104,7 +104,7 @@
             },
             label: {
               text: "Filter",
-              classes: "govuk-label--m"
+              classes: "govuk-label--m govuk-!-margin-bottom-1"
             }
           }) }}
           
@@ -146,8 +146,16 @@
         <div style="position: relative;">
           <div id="map" style="width: 100%; height: 800px;"></div>
           
-          <!-- Search overlay (toggle-able) -->
-          <div id="search-overlay" class="map-overlay">
+          <!-- Loading message -->
+          <div id="map-loading" class="map-loading-overlay">
+            <div class="map-loading-content">
+              <h2 class="govuk-heading-m">Loading your land data</h2>
+              <p class="govuk-body">Loading land parcels, land cover and hedgerow data...</p>
+            </div>
+          </div>
+          
+          <!-- Search overlay (toggle-able, hidden until map loads) -->
+          <div id="search-overlay" class="map-overlay" style="display: none;">
             <button id="search-toggle" class="map-search-toggle" aria-label="Show search">
               <img src="/public/images/search.svg" alt="" aria-hidden="true">
             </button>
@@ -421,8 +429,18 @@
           duration: 0  // Instant, no animation on initial load
         });
 
-        // Show the map now it's positioned correctly
+        // Show the map and hide loading overlay
         document.getElementById('map').classList.add('ready');
+        
+        // Hide loading overlay and show search toggle
+        const loadingOverlay = document.getElementById('map-loading');
+        const searchOverlay = document.getElementById('search-overlay');
+        if (loadingOverlay) {
+          loadingOverlay.style.display = 'none';
+        }
+        if (searchOverlay) {
+          searchOverlay.style.display = 'block';
+        }
       }
 
       // Optimized click handler - single query for all layers
@@ -1766,6 +1784,34 @@
 
 #map.ready {
   opacity: 1;
+}
+
+/* Map loading overlay */
+.map-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #f3f2f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.map-loading-content {
+  text-align: left;
+  padding: 30px;
+}
+
+.map-loading-content .govuk-heading-m {
+  margin-bottom: 15px;
+}
+
+.map-loading-content .govuk-body {
+  margin-bottom: 0;
+  color: #505a5f;
 }
 
 /* Full-width layout styles */
