@@ -81,8 +81,8 @@
   // ============================================
   const CONFIG = {
     WFS_DATA_URL: '{{ data.WFS_DATA_URL | safe }}',
-    WFS_HEDGEROWS_URL: '{{ data.WFS_HEDGEROWS_URL | safe }}',
-    WFS_LANDCOVERS_URL: '{{ data.WFS_LANDCOVERS_URL | safe }}',
+    WFS_HEDGE_CONTROL_URL: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
+    WFS_LAND_COVERS_URL: '{{ data.WFS_LAND_COVERS_URL | safe }}',
     VTS_OUTDOOR_URL: '{{ data.VTS_OUTDOOR_URL | safe }}',
     VTS_DARK_URL: '{{ data.VTS_DARK_URL | safe }}',
     VTS_BLACK_AND_WHITE_URL: '{{ data.VTS_BLACK_AND_WHITE_URL | safe }}',
@@ -92,8 +92,8 @@
   // For Heroku deployment without env vars, replace the lines above with actual URLs:
   // const CONFIG = {
   //   WFS_DATA_URL: 'https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels&srsname=EPSG:4326&outputFormat=application/json',
-  //   WFS_HEDGEROWS_URL: 'https://environment.data.gov.uk/data-services/RPA/HedgeControl/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:HedgeControl&srsname=EPSG:4326&outputFormat=application/json',
-  //   WFS_LANDCOVERS_URL: 'https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&srsname=EPSG:4326&outputFormat=application/json',
+  //   WFS_HEDGE_CONTROL_URL: 'https://environment.data.gov.uk/data-services/RPA/HedgeControl/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:HedgeControl&srsname=EPSG:4326&outputFormat=application/json',
+  //   WFS_LAND_COVERS_URL: 'https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&srsname=EPSG:4326&outputFormat=application/json',
   //   VTS_OUTDOOR_URL: 'https://api.os.uk/maps/vector/v1/vts?key=YOUR_KEY',
   //   VTS_DARK_URL: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?key=YOUR_KEY&srs=3857&style=Dark',
   //   VTS_BLACK_AND_WHITE_URL: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?key=YOUR_KEY&srs=3857&style=BlackAndWhite',
@@ -105,8 +105,8 @@
     WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
     GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
     PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}',
-    WFS_HEDGEROWS_URL: CONFIG.WFS_HEDGEROWS_URL,
-    WFS_LANDCOVERS_URL: CONFIG.WFS_LANDCOVERS_URL
+    WFS_HEDGE_CONTROL_URL: CONFIG.WFS_HEDGE_CONTROL_URL,
+    WFS_LAND_COVERS_URL: CONFIG.WFS_LAND_COVERS_URL
   }
 
   // The SBI and Parcel ID we want to display
@@ -391,7 +391,7 @@
               filter: window.targetParcelFeature 
                 ? ['==', ['get', 'REF_PARCEL_ID'], window.targetParcelFeature.properties.ID]
                 : ['==', ['get', 'REF_PARCEL_ID'], -1],
-              url: CONFIG.WFS_HEDGEROWS_URL,
+              url: CONFIG.WFS_HEDGE_CONTROL_URL,
               stroke: '#228B22',
               strokeWidth: 3,
               fill: 'transparent',
@@ -404,7 +404,7 @@
               filter: window.targetParcelFeature 
                 ? ['==', ['get', 'REFERENCE_PARCELS_ID'], window.targetParcelFeature.properties.ID]
                 : ['==', ['get', 'REFERENCE_PARCELS_ID'], -1],
-              url: CONFIG.WFS_LANDCOVERS_URL,
+              url: CONFIG.WFS_LAND_COVERS_URL,
               stroke: '#666666',
               strokeWidth: 1,
               fill: 'rgba(200,200,200,0.3)',
@@ -437,7 +437,7 @@
 
   // NEW: Function to fetch hedgerow data via API with bbox
   async function fetchHedgerowData(sbi, parcelId, bbox) {
-    const wfsBaseUrl = CONFIG.WFS_HEDGEROWS_URL;
+    const wfsBaseUrl = CONFIG.WFS_HEDGE_CONTROL_URL;
     
     // Use transformDataRequest exactly as the map does
     const transformed = transformDataRequest({ url: wfsBaseUrl }, bbox);
@@ -478,7 +478,7 @@
 
   // NEW: Function to fetch land cover data via API with bbox
   async function fetchLandCoverData(sbi, parcelId, bbox) {
-    const wfsBaseUrl = CONFIG.WFS_LANDCOVERS_URL;
+    const wfsBaseUrl = CONFIG.WFS_LAND_COVERS_URL;
     
     // Use transformDataRequest exactly as the map does
     const transformed = transformDataRequest({ url: wfsBaseUrl }, bbox);

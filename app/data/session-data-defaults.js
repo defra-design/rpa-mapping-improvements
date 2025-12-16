@@ -14,8 +14,8 @@ module.exports = {
   PARCEL_SERVICE_URL: process.env.PARCEL_SERVICE_URL,
   // WFS End points
   WFS_DATA_URL: process.env.WFS_DATA_URL,
-  WFS_HEDGEROWS_URL: process.env.WFS_HEDGEROWS_URL,
-  WFS_LANDCOVERS_URL: process.env.WFS_LANDCOVERS_URL,
+  WFS_HEDGE_CONTROL_URL: process.env.WFS_HEDGE_CONTROL_URL,
+  WFS_LAND_COVERS_URL: process.env.WFS_LAND_COVERS_URL,
   // OS API Key
   OS_API_KEY: process.env.OS_API_KEY
 }

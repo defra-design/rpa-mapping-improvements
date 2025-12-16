@@ -80,8 +80,8 @@
     WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
     GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
     PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}',
-    WFS_HEDGEROWS_URL: '{{ data.WFS_HEDGEROWS_URL | safe }}',
-    WFS_LANDCOVERS_URL: '{{ data.WFS_LANDCOVERS_URL | safe }}'
+    WFS_HEDGE_CONTROL_URL: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
+    WFS_LAND_COVERS_URL: '{{ data.WFS_LAND_COVERS_URL | safe }}'
   }
 
   // The SBI and Parcel ID we want to display
@@ -175,8 +175,7 @@
     
     const wfsUrl = '{{ data.WFS_DATA_URL | safe }}'
     const wfsWithFilter = `${wfsUrl}&CQL_FILTER=SBI='${sbi}'&outputFormat=application/json&srsName=EPSG:4326`;
-    const proxyBase = 'https://farming-data-7db3d1889632.herokuapp.com';
-    const proxyUrl = `${proxyBase}/wfs_geojson?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
+    const proxyUrl = `${env.WFS_SERVICE_URL}?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
     
     return fetch(proxyUrl)
       .then(response => {
@@ -367,7 +366,7 @@
               filter: window.targetParcelFeature 
                 ? ['==', ['get', 'REF_PARCEL_ID'], window.targetParcelFeature.properties.ID]
                 : ['==', ['get', 'REF_PARCEL_ID'], -1],
-              url: '{{ data.WFS_HEDGEROWS_URL | safe }}',
+              url: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
               stroke: '#228B22',
               strokeWidth: 3,
               fill: 'transparent',
@@ -380,7 +379,7 @@
               filter: window.targetParcelFeature 
                 ? ['==', ['get', 'REFERENCE_PARCELS_ID'], window.targetParcelFeature.properties.ID]
                 : ['==', ['get', 'REFERENCE_PARCELS_ID'], -1],
-              url: '{{ data.WFS_LANDCOVERS_URL | safe }}',
+              url: '{{ data.WFS_LAND_COVERS_URL | safe }}',
               stroke: '#666666',
               strokeWidth: 1,
               fill: 'rgba(200,200,200,0.3)',
@@ -413,7 +412,7 @@
 
   // NEW: Function to fetch hedgerow data via API with bbox
   async function fetchHedgerowData(sbi, parcelId, bbox) {
-    const wfsBaseUrl = '{{ data.WFS_HEDGEROWS_URL | safe }}'
+    const wfsBaseUrl = '{{ data.WFS_HEDGE_CONTROL_URL | safe }}'
     
     // Use transformDataRequest exactly as the map does
     const transformed = transformDataRequest({ url: wfsBaseUrl }, bbox);
@@ -454,7 +453,7 @@
 
   // NEW: Function to fetch land cover data via API with bbox
   async function fetchLandCoverData(sbi, parcelId, bbox) {
-    const wfsBaseUrl = '{{ data.WFS_LANDCOVERS_URL | safe }}' 
+    const wfsBaseUrl = '{{ data.WFS_LAND_COVERS_URL | safe }}' 
     
     // Use transformDataRequest exactly as the map does
     const transformed = transformDataRequest({ url: wfsBaseUrl }, bbox);
