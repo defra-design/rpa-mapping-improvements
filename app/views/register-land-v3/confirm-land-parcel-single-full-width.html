@@ -397,8 +397,6 @@
     
     // NEW: Wait for map to be fully loaded, then extract data from layers
     defraMap.on('map:ready', () => {
-      console.log('Map is ready');
-      
       // Fetch data immediately when map is ready
       extractAndDisplayLayerData();
     })
