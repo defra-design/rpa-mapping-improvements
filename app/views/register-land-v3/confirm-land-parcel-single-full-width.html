@@ -76,37 +76,12 @@
   <script src="/public/javascripts/searchCustomDatasets.js"></script>
   
   <script>
-  // ============================================
-  // CONFIGURATION - Update these URLs as needed
-  // ============================================
-  const CONFIG = {
-    WFS_DATA_URL: '{{ data.WFS_DATA_URL | safe }}',
-    WFS_HEDGEROWS_URL: '{{ data.WFS_HEDGEROWS_URL | safe }}',
-    WFS_LANDCOVERS_URL: '{{ data.WFS_LANDCOVERS_URL | safe }}',
-    VTS_OUTDOOR_URL: '{{ data.VTS_OUTDOOR_URL | safe }}',
-    VTS_DARK_URL: '{{ data.VTS_DARK_URL | safe }}',
-    VTS_BLACK_AND_WHITE_URL: '{{ data.VTS_BLACK_AND_WHITE_URL | safe }}',
-    PROXY_BASE: 'https://farming-data-7db3d1889632.herokuapp.com'
-  };
-  
-  // For Heroku deployment without env vars, replace the lines above with actual URLs:
-  // const CONFIG = {
-  //   WFS_DATA_URL: 'https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels&srsname=EPSG:4326&outputFormat=application/json',
-  //   WFS_HEDGEROWS_URL: 'https://environment.data.gov.uk/data-services/RPA/HedgeControl/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:HedgeControl&srsname=EPSG:4326&outputFormat=application/json',
-  //   WFS_LANDCOVERS_URL: 'https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&srsname=EPSG:4326&outputFormat=application/json',
-  //   VTS_OUTDOOR_URL: 'https://api.os.uk/maps/vector/v1/vts?key=YOUR_KEY',
-  //   VTS_DARK_URL: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?key=YOUR_KEY&srs=3857&style=Dark',
-  //   VTS_BLACK_AND_WHITE_URL: 'https://api.os.uk/maps/vector/v1/vts/resources/styles?key=YOUR_KEY&srs=3857&style=BlackAndWhite',
-  //   PROXY_BASE: 'https://farming-data-7db3d1889632.herokuapp.com'
-  // };
-  // ============================================
-
   window.env = {
     WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
     GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
     PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}',
-    WFS_HEDGEROWS_URL: CONFIG.WFS_HEDGEROWS_URL,
-    WFS_LANDCOVERS_URL: CONFIG.WFS_LANDCOVERS_URL
+    WFS_HEDGEROWS_URL: '{{ data.WFS_HEDGEROWS_URL | safe }}',
+    WFS_LANDCOVERS_URL: '{{ data.WFS_LANDCOVERS_URL | safe }}'
   }
 
   // The SBI and Parcel ID we want to display
@@ -198,9 +173,10 @@
       return Promise.resolve(null);
     }
     
-    const wfsUrl = CONFIG.WFS_DATA_URL;
+    const wfsUrl = '{{ data.WFS_DATA_URL | safe }}'
     const wfsWithFilter = `${wfsUrl}&CQL_FILTER=SBI='${sbi}'&outputFormat=application/json&srsName=EPSG:4326`;
-    const proxyUrl = `${CONFIG.PROXY_BASE}/wfs_geojson?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
+    const proxyBase = 'https://farming-data-7db3d1889632.herokuapp.com';
+    const proxyUrl = `${proxyBase}/wfs_geojson?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
     
     return fetch(proxyUrl)
       .then(response => {
@@ -313,7 +289,7 @@
           mapStyles: [{
             id: 'outdoor',
             label: 'Outdoor',
-            url: CONFIG.VTS_OUTDOOR_URL,
+            url: '{{ data.VTS_OUTDOOR_URL }}',
             thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
             logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
             logoAltText: 'Ordnance survey logo',
@@ -322,7 +298,7 @@
           }, {
             id: 'dark',
             label: 'Dark',
-            url: CONFIG.VTS_DARK_URL,
+            url: '{{ data.VTS_DARK_URL }}',
             mapColorScheme: 'dark',
             appColorScheme: 'dark',
             thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/dark-map-thumb.jpg',
@@ -332,7 +308,7 @@
           }, {
             id: 'black-and-white',
             label: 'Black/White',
-            url: CONFIG.VTS_BLACK_AND_WHITE_URL,
+            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
             thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/black-and-white-map-thumb.jpg',
             logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-black.svg',
             logoAltText: 'Ordnance survey logo',
@@ -354,7 +330,7 @@
               id: 'field-parcels',
               label: 'Field parcels',
               filter: ['!=', ['get', 'SBI'], TARGET_SBI],
-              url: CONFIG.WFS_DATA_URL,
+              url: '{{ data.WFS_DATA_URL | safe }}',
               stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
               strokeWidth: 2,
               fill: 'transparent',
@@ -365,7 +341,7 @@
               id: 'linked-parcels',
               label: 'Existing fields',
               filter: ['==', ['get', 'SBI'], TARGET_SBI],
-              url: CONFIG.WFS_DATA_URL,
+              url: '{{ data.WFS_DATA_URL | safe }}',
               stroke: '#0000ff',
               strokeWidth: 2,
               fill: 'rgba(0,0,255,0.1)',
@@ -378,7 +354,7 @@
               filter: window.targetParcelFeature 
                 ? ['==', ['get', 'ID'], window.targetParcelFeature.properties.ID]
                 : ['==', ['get', 'ID'], -1], // Filter that matches nothing if no parcel selected
-              url: CONFIG.WFS_DATA_URL,
+              url: '{{ data.WFS_DATA_URL | safe }}',
               stroke: '#ff0000',
               strokeWidth: 2,
               fill: 'rgba(255,0,0,0.1)',
@@ -391,7 +367,7 @@
               filter: window.targetParcelFeature 
                 ? ['==', ['get', 'REF_PARCEL_ID'], window.targetParcelFeature.properties.ID]
                 : ['==', ['get', 'REF_PARCEL_ID'], -1],
-              url: CONFIG.WFS_HEDGEROWS_URL,
+              url: '{{ data.WFS_HEDGEROWS_URL | safe }}',
               stroke: '#228B22',
               strokeWidth: 3,
               fill: 'transparent',
@@ -404,7 +380,7 @@
               filter: window.targetParcelFeature 
                 ? ['==', ['get', 'REFERENCE_PARCELS_ID'], window.targetParcelFeature.properties.ID]
                 : ['==', ['get', 'REFERENCE_PARCELS_ID'], -1],
-              url: CONFIG.WFS_LANDCOVERS_URL,
+              url: '{{ data.WFS_LANDCOVERS_URL | safe }}',
               stroke: '#666666',
               strokeWidth: 1,
               fill: 'rgba(200,200,200,0.3)',
@@ -437,7 +413,7 @@
 
   // NEW: Function to fetch hedgerow data via API with bbox
   async function fetchHedgerowData(sbi, parcelId, bbox) {
-    const wfsBaseUrl = CONFIG.WFS_HEDGEROWS_URL;
+    const wfsBaseUrl = '{{ data.WFS_HEDGEROWS_URL | safe }}'
     
     // Use transformDataRequest exactly as the map does
     const transformed = transformDataRequest({ url: wfsBaseUrl }, bbox);
@@ -478,7 +454,7 @@
 
   // NEW: Function to fetch land cover data via API with bbox
   async function fetchLandCoverData(sbi, parcelId, bbox) {
-    const wfsBaseUrl = CONFIG.WFS_LANDCOVERS_URL;
+    const wfsBaseUrl = '{{ data.WFS_LANDCOVERS_URL | safe }}' 
     
     // Use transformDataRequest exactly as the map does
     const transformed = transformDataRequest({ url: wfsBaseUrl }, bbox);
