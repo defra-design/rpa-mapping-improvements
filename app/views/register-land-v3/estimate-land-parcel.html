@@ -1,7 +1,7 @@
 {% extends "layouts/main.html" %}
 
 {% block pageTitle %}
-  DefraMap page template – GOV.UK Prototype Kit
+  Find the land you want to register – GOV.UK Prototype Kit
 {% endblock %}
 
 {% block head %}
@@ -29,55 +29,51 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
     <h1 class="govuk-heading-l">
-    <span class="govuk-caption-l">AR FIELDING</span>
+      <span class="govuk-caption-l">AR FIELDING</span>
       Find the land you want to register 
     </h1>
     <p class="govuk-body">To find a land parcel either use the:</p>
-        <ul class="govuk-list govuk-list--bullet">
-            <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
-            <li>map search to enter a location, for example, the nearest city, town or postcode</li>
-        </ul>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
+      <li>map search to enter a location, for example, the nearest city, town or postcode</li>
+      <li>click on a parcel to select it and view its details</li>
+    </ul>
   </div>
 </div>
 
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
-    <p>{{ data.VALUE }}</p>
     <div id="map" data-zoom="15" data-center="[-2.968, 54.425]"></div>
-
+    
     <br>
-
+    
     <div id="parcel-data-container"></div>
 
     <form method="post">
-
-    {{ govukButton({
-      text: "Continue"
-    }) }}
-
+      {{ govukButton({
+        text: "Continue"
+      }) }}
     </form>
-
   </div>
 </div>
 {% endblock %}
   
-  {% block pageScripts %}
-  <!-- Defra library scripts -->
-  <script src="/plugin-assets/%40defra%2Fdefra-map/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/providers/maplibre/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/providers/open-names/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/map-styles/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/zoom-controls/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/interact/dist/umd/index.js"></script>
-  <script src="/public/javascripts/request.js"></script>
-  <script src="/public/javascripts/searchCustomDatasets.js"></script>
-  
-  <script>
-  console.log('Script block is running!');
-  console.log('WFS_DATA_URL:', '{{ data.WFS_DATA_URL | safe }}');
+{% block pageScripts %}
+<!-- Defra library scripts -->
+<script src="/plugin-assets/%40defra%2Fdefra-map/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/providers/maplibre/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/providers/open-names/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/map-styles/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/zoom-controls/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/interact/dist/umd/index.js"></script>
+<script src="/public/javascripts/request.js"></script>
+<script src="/public/javascripts/searchCustomDatasets.js"></script>
+
+<script>
+  console.log('Script initializing...');
 
   window.env = {
     WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
@@ -85,6 +81,57 @@
     PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
   }
 
+  // Store all fetched parcel data globally
+  let allParcelData = [];
+
+  // Set up fetch interception to capture parcel data
+  (function setupFetchInterception() {
+    const originalFetch = window.fetch;
+    let dataFetched = false;
+    
+    window.fetch = function(...args) {
+      const url = args[0];
+      
+      if (typeof url === 'string' && url.includes('LandParcels') && !dataFetched) {
+        console.log('Intercepted parcel data request');
+        
+        return originalFetch.apply(this, args).then(response => {
+          return response.clone().json().then(data => {
+            
+            if (data.features && data.features.length > 0) {
+              dataFetched = true;
+              allParcelData = data.features;
+              console.log('Stored parcels:', allParcelData.length);
+              
+              // Display list of visible parcels
+              displayParcelList();
+            }
+            
+            return response;
+          });
+        });
+      }
+      
+      return originalFetch.apply(this, args);
+    };
+  })();
+
+  // Create the interact plugin instance
+  const interactPlugin = defra.interactPlugin({
+    dataLayers: [{
+      layerId: 'field-parcels',
+      idProperty: 'ID',
+      selectedFeatureStyle: { 
+        stroke: { outdoor: '#ff0000', dark: '#00ff00' }, 
+        strokeWidth: 3, 
+        fill: 'rgba(255, 0, 0, 0.2)' 
+      }
+    }],
+    markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
+    selectionMode: 'auto',
+  });
+
+  // Create the map
   const defraMap = new defra.DefraMap('map', {
     mapProvider: defra.maplibreProvider(),
     reverseGeocodeProvider: defra.openNamesProvider({
@@ -145,39 +192,15 @@
         layers: [{
           id: 'field-parcels',
           label: 'Field parcels',
-          filter: ['!=', ['get', 'SBI'], '106223377'],
           url: '{{ data.WFS_DATA_URL | safe }}',
           stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
           strokeWidth: 2,
-          // strokeDashArray: [1, 2],
           fill: 'transparent',
-          minZoom: 15,
-          maxZoom: 24
-        },{
-          id: 'linked-parcels',
-          label: 'Existing fields',
-          filter: ['==', ['get', 'SBI'], '106223377'],
-          url: '{{ data.WFS_DATA_URL | safe }}',
-          stroke: '#0000ff',
-          strokeWidth: 2,
-          fill: 'rgba(0,0,255,0.1)',
           minZoom: 15,
           maxZoom: 24
         }]
       }),
-      defra.interactPlugin({
-        dataLayers: [{
-          layerId: 'field-parcels',
-          idProperty: 'ID',
-          selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
-        },{
-          layerId: 'linked-parcels',
-          idProperty: 'ID',
-          selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
-        }],
-        markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
-        selectionMode: 'auto',
-      }),
+      interactPlugin,
       defra.searchPlugin({
         osNamesURL: '/api/geocode-proxy?query={query}',
         customDatasets: searchCustomDatasets,
@@ -190,199 +213,82 @@
         units: 'metric'
       })
     ]
-  })
+  });
 
-  // Try polling for the canvas element and checking for a map reference
-  let pollAttempts = 0;
-  const maxAttempts = 20;
-  
-  const pollForMap = setInterval(function() {
-    pollAttempts++;
-    console.log('Poll attempt', pollAttempts);
-    
-    const mapContainer = document.getElementById('map');
-    const canvas = mapContainer.querySelector('.maplibregl-canvas');
-    
-    if (canvas) {
-      console.log('Canvas found, checking for map...');
-      
-      // Check various possible locations where the map might be stored
-      if (canvas._map) {
-        console.log('Found map on canvas._map');
-        clearInterval(pollForMap);
-        setupDataExtraction(canvas._map);
-        return;
-      }
-      
-      // Check parent elements
-      let parent = canvas.parentElement;
-      while (parent && parent !== mapContainer) {
-        if (parent._map) {
-          console.log('Found map on parent element');
-          clearInterval(pollForMap);
-          setupDataExtraction(parent._map);
-          return;
-        }
-        parent = parent.parentElement;
-      }
-      
-      // Check if the map container itself has a reference
-      if (mapContainer._maplibreMap) {
-        console.log('Found map on container._maplibreMap');
-        clearInterval(pollForMap);
-        setupDataExtraction(mapContainer._maplibreMap);
-        return;
-      }
-      
-      // Check for any property that looks like a map
-      for (let key in mapContainer) {
-        let prop = mapContainer[key];
-        if (prop && typeof prop === 'object' && typeof prop.getSource === 'function') {
-          console.log('Found map on container.' + key);
-          clearInterval(pollForMap);
-          setupDataExtraction(prop);
-          return;
-        }
-      }
-    }
-    
-    if (pollAttempts >= maxAttempts) {
-      console.log('Gave up looking for map after', maxAttempts, 'attempts');
-      clearInterval(pollForMap);
-      
-      // Last resort: try to intercept data when sources load
-      console.log('Trying alternative approach - monitoring source data events');
-      monitorSourceDataEvents();
-    }
-  }, 500);
-
-  function monitorSourceDataEvents() {
-  // This is a fallback - we'll try to intercept the fetch requests directly
-  console.log('Setting up fetch interception...');
-  
-  let dataDisplayed = false; // Flag to track if we've already displayed data
-  
-  const originalFetch = window.fetch;
-  window.fetch = function(...args) {
-    const url = args[0];
-    
-    if (typeof url === 'string' && url.includes('LandParcels') && !dataDisplayed) {
-      console.log('Intercepted parcel data request:', url);
-      
-      return originalFetch.apply(this, args).then(response => {
-        return response.clone().json().then(data => {
-          console.log('Intercepted parcel data:', data);
-          
-          if (data.features && data.features.length > 0 && !dataDisplayed) {
-            dataDisplayed = true; // Set flag to prevent future displays
-            
-            const fieldParcels = data.features.filter(
-              feature => feature.properties.SBI !== '106223377'
-            );
-            
-            const linkedParcels = data.features.filter(
-              feature => feature.properties.SBI === '106223377'
-            );
-            
-            console.log('Field parcels:', fieldParcels.length);
-            console.log('Linked parcels:', linkedParcels.length);
-            
-            displayParcelData(fieldParcels, linkedParcels);
-            
-            // Restore original fetch to stop intercepting
-            window.fetch = originalFetch;
-            console.log('Data displayed, interception stopped');
-          }
-          
-          return response;
-        });
-      });
-    }
-    
-    return originalFetch.apply(this, args);
-  };
-}
-
-  function setupDataExtraction(map) {
-    console.log('Setting up data extraction with map:', map);
-    
-    if (map.loaded && map.loaded()) {
-      console.log('Map already loaded, extracting data now...');
-      extractData(map);
-    } else {
-      console.log('Waiting for map to load...');
-      map.on('load', function() {
-        console.log('Map load event fired');
-        setTimeout(function() {
-          extractData(map);
-        }, 2000);
-      });
-    }
-  }
-
-  function extractData(map) {
-    console.log('Extracting data from map...');
-    
-    try {
-      const style = map.getStyle();
-      console.log('Map style:', style);
-      console.log('Available sources:', Object.keys(style.sources));
-      
-      const fieldParcelsSource = map.getSource('field-parcels-source');
-      const linkedParcelsSource = map.getSource('linked-parcels-source');
-      
-      console.log('Field parcels source:', fieldParcelsSource);
-      console.log('Linked parcels source:', linkedParcelsSource);
-      
-      if (fieldParcelsSource && fieldParcelsSource._data) {
-        const allFeatures = fieldParcelsSource._data.features || [];
-        
-        const fieldParcels = allFeatures.filter(
-          feature => feature.properties.SBI !== '106223377'
-        );
-        
-        const linkedParcels = allFeatures.filter(
-          feature => feature.properties.SBI === '106223377'
-        );
-        
-        console.log('Field parcels:', fieldParcels.length);
-        console.log('Linked parcels:', linkedParcels.length);
-        
-        displayParcelData(fieldParcels, linkedParcels);
-      } else {
-        console.log('No data in sources yet');
-      }
-    } catch (error) {
-      console.error('Error extracting data:', error);
-    }
-  }
-
-  function displayParcelData(fieldParcels, linkedParcels) {
+  // Function to display list of visible parcels
+  function displayParcelList() {
     const container = document.getElementById('parcel-data-container');
-    console.log('Container element:', container);
     
     if (!container) {
       console.error('Could not find parcel-data-container element');
       return;
     }
     
+    const totalArea = allParcelData.reduce((sum, parcel) => {
+      return sum + (parseFloat(parcel.properties.AREA_HA) || 0);
+    }, 0);
+    
+    // Sort parcels by ID for easier reading
+    const sortedParcels = [...allParcelData].sort((a, b) => {
+      const aRef = `${a.properties.SHEET_ID || ''} ${a.properties.PARCEL_ID || ''}`.trim();
+      const bRef = `${b.properties.SHEET_ID || ''} ${b.properties.PARCEL_ID || ''}`.trim();
+      return aRef.localeCompare(bRef);
+    });
+    
     container.innerHTML = `
-      <div class="govuk-grid-row">
-        <div class="govuk-grid-column-one-half">
-          <h3 class="govuk-heading-s">Field parcels</h3>
-          <p class="govuk-body">Total: ${fieldParcels.length}</p>
+      <h2 class="govuk-heading-m">Visible land parcels</h2>
+      
+      <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Total parcels in view</dt>
+          <dd class="govuk-summary-list__value">${allParcelData.length}</dd>
         </div>
-        <div class="govuk-grid-column-one-half">
-          <h3 class="govuk-heading-s">Existing fields (linked)</h3>
-          <p class="govuk-body">Total: ${linkedParcels.length}</p>
-          <ul class="govuk-list govuk-list--bullet">
-            ${linkedParcels.map(parcel => `
-              <li>${parcel.properties.PARCEL_ID || parcel.properties.id || 'Unknown ID'}</li>
-            `).join('')}
-          </ul>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Total area</dt>
+          <dd class="govuk-summary-list__value">${totalArea.toFixed(2)} ha</dd>
         </div>
-      </div>
+      </dl>
+      
+      <details class="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">
+            View all parcel IDs
+          </span>
+        </summary>
+        <div class="govuk-details__text">
+          <table class="govuk-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">Parcel ID</th>
+                <th scope="col" class="govuk-table__header">Area (ha)</th>
+                <th scope="col" class="govuk-table__header">SBI</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              ${sortedParcels.map(parcel => {
+                const sheetId = parcel.properties.SHEET_ID || '';
+                const parcelId = parcel.properties.PARCEL_ID || '';
+                const combinedRef = (sheetId && parcelId) ? `${sheetId} ${parcelId}` : 'N/A';
+                const area = parcel.properties.AREA_HA ? parseFloat(parcel.properties.AREA_HA).toFixed(4) : 'N/A';
+                const sbi = parcel.properties.SBI || 'N/A';
+                
+                return `
+                  <tr class="govuk-table__row">
+                    <td class="govuk-table__cell">${combinedRef}</td>
+                    <td class="govuk-table__cell">${area}</td>
+                    <td class="govuk-table__cell">${sbi}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      
+      <p class="govuk-body govuk-!-margin-top-4">Click on a parcel on the map to view its details.</p>
     `;
   }
+
+  console.log('Map initialization complete');
 </script>
 {% endblock %}

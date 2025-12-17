@@ -13,6 +13,8 @@
         Check your answers
       </h1>
 
+<!-- <p>{{ data | dump }}</p> -->
+
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 <!-- Check if the 'parcels' array exists and has items -->
@@ -79,7 +81,7 @@
             text: "Land parcel"
           },
           value: {
-            html: "<div class='parcel-map-container' data-parcel-index='" + loop.index0 + "'><img src='" + (parcel.mapScreenshot or '') + "' alt='Map showing land parcel " + loop.index + "' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%; border: 1px solid #b1b4b6;'></div>"
+            html: "<div class='parcel-map-container' data-parcel-index='" + loop.index0 + "'><img src='" + (parcel.mapScreenshot or '') + "' alt='Map showing land parcel " + loop.index + "' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%;'></div>"
           },
           actions: {
             items: [

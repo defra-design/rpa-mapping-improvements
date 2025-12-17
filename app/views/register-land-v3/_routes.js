@@ -17,7 +17,7 @@ router.post("/register-land-v3/know-parcel-id", function (req, res) {
     
     // Just store the ID and redirect to confirm page
     if (userEnteredId && userEnteredId.trim() !== '') {
-      res.redirect("confirm-land-parcel-single-full-width");
+      res.redirect("confirm-land-parcel");
     } else {
       // No ID entered, redirect back
       res.redirect("know-parcel-id");
@@ -30,7 +30,7 @@ router.post("/register-land-v3/know-parcel-id", function (req, res) {
 });
 
 // Confirm land parcel - NOW saves the parcel with screenshot
-router.post("/register-land-v3/confirm-land-parcel-single-full-width", function (req, res) {
+router.post("/register-land-v3/confirm-land-parcel", function (req, res) {
   
   // Initialize the parcels array if it doesn't exist
   if (!req.session.data['parcels']) {
@@ -65,7 +65,7 @@ router.post("/register-land-v3/confirm-land-parcel-single-full-width", function 
 });
 
 // GET route for editing an existing parcel
-router.get("/register-land-v3/confirm-land-parcel-single-full-width", function (req, res) {
+router.get("/register-land-v3/confirm-land-parcel", function (req, res) {
   const parcelIndex = req.query.parcelIndex;
   
   // If editing an existing parcel, pre-populate the form
@@ -79,7 +79,7 @@ router.get("/register-land-v3/confirm-land-parcel-single-full-width", function (
   }
   
   // Let the default rendering happen
-  res.render('register-land-v3/confirm-land-parcel-single-full-width');
+  res.render('register-land-v3/confirm-land-parcel');
 });
 
 // Find or estimate parcel ID
