@@ -1,0 +1,78 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Question page template – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+  text: "Back",
+  href: "javascript:window.history.back()"
+}) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <!-- <h1 class="govuk-heading-l"></h1> -->
+
+      <form class="form" method="post">
+
+        {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+        {{ govukRadios({
+          name: "signIn",
+          fieldset: {
+            legend: {
+              text: "Customer has found the land they want to register, what do they do now?",
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          hint: {
+            text: "What do you want to do with the land you've found?"
+          },
+          items: [
+            {
+              value: "no-parcel-id",
+              text: "Land parcel does not exist",
+              hint: {
+                text: "Customer has found some land that doesn't have a parcel ID, they'll need to upload a map."
+              }
+            },
+            {
+              value: "found-parcel-id",
+              text: "Existing land parcel",
+              hint: {
+                text: "Customer has found an existing land parcel with an ID, customer asked to confirm they've found the correct parcel they want to register."
+              }
+            },
+            {
+              value: "changes-to-found-parcel",
+              text: "Existing land parcel, but want to make changes",
+              hint: {
+                text: "Customer has found an existing land parcel with an ID, but they only want to register part of the parcel, they'll need to upload a map."
+              }
+            },
+            {
+              value: "back-to-map",
+              text: "None of the above, go back to map",
+              hint: {
+                text: "Customer wants to return to map"
+              }
+            }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+      </form>
+
+    </div>
+  </div>
+
+{% endblock %}

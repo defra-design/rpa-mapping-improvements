@@ -84,7 +84,26 @@ router.get("/register-land-v3/confirm-land-parcel", function (req, res) {
 
 // Find or estimate parcel ID
 router.post("/register-land-v3/estimate-land-parcel", function (req, res) {
-  res.redirect("upload-land-parcel-map");
+  res.redirect("estimate-land-parcel-confirm");
+});
+
+// Confirm find or estimate parcel ID
+// router.post("/register-land-v3/estimate-land-parcel-confirm", function (req, res) {
+//   res.redirect("upload-land-parcel-map");
+// });
+
+router.post('/register-land-v3/estimate-land-parcel-confirm', function (request, res) {
+
+  var country = request.session.data['signIn']
+  if (country == "no-parcel-id") {
+    res.redirect("upload-land-parcel-map")
+  } else if (country == "found-parcel-id") {
+    res.redirect("date-to-link-parcel-to-business")
+  } else if (country == "changes-to-found-parcel") {
+    res.redirect("upload-land-parcel-map")
+  } else {
+    res.redirect("estimate-land-parcel")
+  }
 });
 
 // Upload land parcel map

@@ -118,17 +118,18 @@
 
   // Create the interact plugin instance
   const interactPlugin = defra.interactPlugin({
-    dataLayers: [{
-      layerId: 'field-parcels',
-      idProperty: 'ID',
-      selectedFeatureStyle: { 
-        stroke: { outdoor: '#ff0000', dark: '#00ff00' }, 
-        strokeWidth: 3, 
-        fill: 'rgba(255, 0, 0, 0.2)' 
-      }
-    }],
+    dataLayers: [],
+    // dataLayers: [{
+    //   layerId: 'field-parcels',
+    //   idProperty: 'ID',
+    //   selectedFeatureStyle: { 
+    //     stroke: { outdoor: '#ff0000', dark: '#00ff00' }, 
+    //     strokeWidth: 3, 
+    //     fill: 'rgba(255, 0, 0, 0.2)' 
+    //   }
+    // }],
     markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
-    selectionMode: 'auto',
+    interactionMode: 'marker',
   });
 
   // Create the map
@@ -187,19 +188,19 @@
           attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
         }]
       }),
-      defra.dataLayersMLPlugin({
-        transformRequest: transformDataRequest,
-        layers: [{
-          id: 'field-parcels',
-          label: 'Field parcels',
-          url: '{{ data.WFS_DATA_URL | safe }}',
-          stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
-          strokeWidth: 2,
-          fill: 'transparent',
-          minZoom: 15,
-          maxZoom: 24
-        }]
-      }),
+      // defra.dataLayersMLPlugin({
+      //   transformRequest: transformDataRequest,
+      //   layers: [{
+      //     id: 'field-parcels',
+      //     label: 'Field parcels',
+      //     url: '{{ data.WFS_DATA_URL | safe }}',
+      //     stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
+      //     strokeWidth: 2,
+      //     fill: 'transparent',
+      //     minZoom: 15,
+      //     maxZoom: 24
+      //   }]
+      // }),
       interactPlugin,
       defra.searchPlugin({
         osNamesURL: '/api/geocode-proxy?query={query}',
