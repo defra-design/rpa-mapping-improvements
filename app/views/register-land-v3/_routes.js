@@ -6,39 +6,118 @@
 const govukPrototypeKit = require('govuk-prototype-kit')
 const router = govukPrototypeKit.requests.setupRouter()
 
-
-router.post("/register-land-v3/know-parcel-id", function (req, res) {
+router.get("/register-land-v3/know-parcel-id", async function (req, res) {
+  // ALWAYS prevent bfcache to ensure back button triggers a fresh GET
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
   
-  if (req.session.data["knowParcelID"] == "yes") {
-    
-    // Store the parcel ID but don't create the parcel object yet
-    // We'll create it after the map screenshot is captured on the confirm page
-    const userEnteredId = req.session.data['parcel-id'];
-    
-    // Just store the ID and redirect to confirm page
-    if (userEnteredId && userEnteredId.trim() !== '') {
-      res.redirect("confirm-land-parcel");
-    } else {
-      // No ID entered, redirect back
-      res.redirect("know-parcel-id");
+  // Get error and value from session if they exist (from a redirect after POST error)
+  const radioError = req.session.data['know-parcel-id-radio-error'];
+  const inputError = req.session.data['know-parcel-id-input-error'];
+  const value = req.session.data['know-parcel-id-value'];
+  const knowParcelID = req.session.data['knowParcelID'];
+  
+  // Clear them from session after reading
+  delete req.session.data['know-parcel-id-radio-error'];
+  delete req.session.data['know-parcel-id-input-error'];
+  delete req.session.data['know-parcel-id-value'];
+  
+  // Only keep knowParcelID if there's an error (so the form can show what was selected)
+  // Otherwise clear it so the form starts fresh
+  if (!radioError && !inputError) {
+    delete req.session.data['knowParcelID'];
+  }
+  
+  return res.render('register-land-v3/know-parcel-id', {
+    value: value || '',
+    radioError: radioError || null,
+    inputError: inputError || null,
+    knowParcelID: knowParcelID
+  })
+})
+
+router.post("/register-land-v3/know-parcel-id", async function (req, res) {
+  // Check if a radio option was selected
+  if (!req.session.data['knowParcelID']) {
+    req.session.data['know-parcel-id-radio-error'] = { text: 'Select Yes if you know the Parcel Id' };
+    return res.redirect('/register-land-v3/know-parcel-id');
+  }
+
+  if (req.session.data['knowParcelID'] == 'yes') {
+    const userEnteredId = req.body['parcel-id']?.trim()
+
+    // Check if parcel ID was entered
+    if (!userEnteredId) {
+      req.session.data['know-parcel-id-input-error'] = { text: 'Enter the parcel ID' };
+      req.session.data['know-parcel-id-value'] = '';
+      return res.redirect('/register-land-v3/know-parcel-id');
     }
+
+    // Not valid parcelId format
+    const validParcelId = /^[A-Z]{2}\s?\d{4}\s?\d{4}$/i
+    if (!validParcelId.test(userEnteredId)) {
+      req.session.data['know-parcel-id-input-error'] = { text: 'Parcel ID is not a valid format' };
+      req.session.data['know-parcel-id-value'] = userEnteredId;
+      return res.redirect('/register-land-v3/know-parcel-id');
+    }
+
+    const url = `${process.env.PARCEL_SERVICE_URL}/${userEnteredId}`
+    const response = await fetch(url)
+    const data = await response.json()
+    const parcelId = data.properties?.ngc
+
+    // Not an existing parcel
+    if (!parcelId) {
+      req.session.data['know-parcel-id-input-error'] = { text: 'Parcel ID doesn\'t exist' };
+      req.session.data['know-parcel-id-value'] = userEnteredId;
+      return res.redirect('/register-land-v3/know-parcel-id');
+    }
+
+    // Valid existing parcelId
+    req.session.data['parcel-id'] = parcelId;
+    return res.redirect('confirm-land-parcel')
     
   } else {
-    // Redirect to the alternative journey (estimate land parcel)
-    res.redirect("estimate-land-parcel");
+    return res.redirect('estimate-land-parcel')
   }
-});
+})
+
+// GET route for editing an existing parcel
+router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
+  const parcelId = req.session.data['parcel-id'];
+  const url = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`
+  const response = await fetch(url)
+  const data = await response.json()
+
+  // Should this be here?
+  req.session.data['parcel-bounds'] = data?.bounds;
+
+  // If editing an existing parcel, pre-populate the form
+  if (parcelId !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelId]) {
+    // Pre-populate the parcel ID
+    req.session.data['parcel-bounds'] = data?.bounds;
+  }
+  
+  // Let the default rendering happen
+  res.render('register-land-v3/confirm-land-parcel', {
+    parcelId: req.session.data['parcel-id'],
+    parcelBounds: req.session.data['parcel-bounds']
+  })
+})
 
 // Confirm land parcel - NOW saves the parcel with screenshot
 router.post("/register-land-v3/confirm-land-parcel", function (req, res) {
   
   // Initialize the parcels array if it doesn't exist
   if (!req.session.data['parcels']) {
-    req.session.data['parcels'] = [];
+    req.session.data['parcels'] = []
   }
   
   // Get the parcel ID and map screenshot from the form
-  const parcelId = req.session.data['parcel-id'];
+  const parcelId = req.session.data['parcel-id']
   const mapScreenshot = req.body.mapScreenshot; // This comes from the hidden form field
   
   // Create the parcel object with the screenshot
@@ -46,55 +125,51 @@ router.post("/register-land-v3/confirm-land-parcel", function (req, res) {
     id: parcelId,
     registeredDate: 'today',
     mapScreenshot: mapScreenshot || '/public/images/land-parcel-placeholder.png' // Fallback if screenshot fails
-  };
-  
-  // Check if we're editing an existing parcel
-  const parcelIndex = req.query.parcelIndex;
-  
-  if (parcelIndex !== undefined && req.session.data['parcels'][parcelIndex]) {
+  }
+
+  if (parcelId !== undefined && req.session.data['parcels'][parcelId]) {
     // Update existing parcel
-    req.session.data['parcels'][parcelIndex] = newParcel;
-    console.log('Updated parcel at index:', parcelIndex);
+    req.session.data['parcels'][parcelId] = newParcel
+    console.log('Updated parcel at index:', parcelId)
   } else {
     // Add new parcel
-    req.session.data['parcels'].push(newParcel);
-    console.log('Added new parcel. Total parcels:', req.session.data['parcels'].length);
+    req.session.data['parcels'].push(newParcel)
+    console.log('Added new parcel. Total parcels:', req.session.data['parcels'].length)
   }
   
-  res.redirect("date-to-link-parcel-to-business");
-});
-
-// GET route for editing an existing parcel
-router.get("/register-land-v3/confirm-land-parcel", function (req, res) {
-  const parcelIndex = req.query.parcelIndex;
-  
-  // If editing an existing parcel, pre-populate the form
-  if (parcelIndex !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelIndex]) {
-    const parcel = req.session.data['parcels'][parcelIndex];
-    
-    // Pre-populate the parcel ID
-    req.session.data['parcel-id'] = parcel.id;
-    
-    console.log('Loading parcel for editing:', parcel.id);
-  }
-  
-  // Let the default rendering happen
-  res.render('register-land-v3/confirm-land-parcel');
-});
+  res.redirect("date-to-link-parcel-to-business")
+})
 
 // Find or estimate parcel ID
-router.post("/register-land-v3/estimate-land-parcel", function (req, res) {
+router.post("/register-land-v3/estimate-land-parcel", async function (req, res) {
+  const coords = JSON.parse(req.body.coords)
+  const url = `${process.env.PARCEL_BY_COORD_SERVICE_URL}?lon=${coords[0]}&lat=${coords[1]}`
+  const response = await fetch(url)
+  const data = await response.json()
+  
+  // Do you need these inthe session state?
+  req.session.data['parcel-id'] = data.properties?.ngc;
+  req.session.data['parcel-bounds'] = data?.bounds;
+
   res.redirect("estimate-land-parcel-confirm");
 });
+
+// New get route for estimate-land-parcel-confirm
+router.get('/register-land-v3/estimate-land-parcel-confirm', function (req, res) {
+  res.render('register-land-v3/estimate-land-parcel-confirm', {
+    parcelId: req.session.data['parcel-id'],
+    parcelBounds: req.session.data['parcel-bounds']
+  })
+})
 
 // Confirm find or estimate parcel ID
 // router.post("/register-land-v3/estimate-land-parcel-confirm", function (req, res) {
 //   res.redirect("upload-land-parcel-map");
 // });
 
-router.post('/register-land-v3/estimate-land-parcel-confirm', function (request, res) {
+router.post('/register-land-v3/estimate-land-parcel-confirm', function (req, res) {
 
-  var country = request.session.data['signIn']
+  var country = req.session.data['signIn']
   if (country == "no-parcel-id") {
     res.redirect("upload-land-parcel-map")
   } else if (country == "found-parcel-id") {

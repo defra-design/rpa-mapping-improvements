@@ -4,6 +4,16 @@
   Question page template – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
+{% block head %}
+  <link href="/public/stylesheets/application.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/map-styles/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/interact/dist/css/index.css" rel="stylesheet" type="text/css">
+{% endblock %}
+
 {% block beforeContent %}
   {{ govukBackLink({
   text: "Back",
@@ -19,7 +29,6 @@
       <!-- <h1 class="govuk-heading-l"></h1> -->
 
       <form class="form" method="post">
-
         {% from "govuk/components/radios/macro.njk" import govukRadios %}
 
         {{ govukRadios({
@@ -72,7 +81,122 @@
 
       </form>
 
+      <p>=== Server side parcel by coordinate query ===</p>
+
+      <p>
+        {% if parcelId %}
+        Found existing parcel: {{ parcelId }}
+        {% else %}
+        No existing parcel
+        {% endif %}
+      </p>
+
+      <div id="map" />
     </div>
   </div>
 
+{% endblock %}
+
+{% block pageScripts %}
+<!-- Defra library scripts -->
+<script src="/plugin-assets/%40defra%2Fdefra-map/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/providers/maplibre/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/providers/open-names/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/map-styles/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/zoom-controls/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Fdefra-map/plugins/interact/dist/umd/index.js"></script>
+<script src="/public/javascripts/request.js"></script>
+<script src="/public/javascripts/searchCustomDatasets.js"></script>
+
+<script>
+  window.env = {
+    WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
+    GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
+    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
+  }
+
+  const TARGET_PARCEL_ID = '{{ parcelId }}'
+  const TARGET_PARCEL_BOUNDS = [{{ parcelBounds }}]
+
+  console.log(TARGET_PARCEL_ID)
+  console.log(TARGET_PARCEL_BOUNDS)
+
+  // Create the map
+  if (TARGET_PARCEL_ID) {
+    const defraMap = new defra.DefraMap('map', {
+      mapProvider: defra.maplibreProvider(),
+      reverseGeocodeProvider: defra.openNamesProvider({
+        url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
+      }),
+      behaviour: 'inline',
+      minZoom: 6,
+      maxZoom: 18,
+      bounds: TARGET_PARCEL_BOUNDS,
+      containerHeight: '650px',
+      transformRequest: transformTileRequest,
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [{
+            id: 'outdoor',
+            label: 'Outdoor',
+            url: '{{ data.VTS_OUTDOOR_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
+            backgroundColor: '#f5f5f0'
+          }, {
+            id: 'dark',
+            label: 'Dark',
+            url: '{{ data.VTS_DARK_URL }}',
+            mapColorScheme: 'dark',
+            appColorScheme: 'dark',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/dark-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-white.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'black-and-white',
+            label: 'Black/White',
+            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/black-and-white-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-black.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'satellite',
+            label: 'Satellite',
+            url: '/satellite-style.json',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+          }]
+        }),
+        defra.dataLayersMLPlugin({
+          layers: [ {
+              id: 'field-parcels',
+              label: 'Field parcels',
+              filter: ['==', ['get', 'ngc'], TARGET_PARCEL_ID],
+              tiles: ['{{ data.PARCEL_TILE_SERVICE_URL | safe }}'],
+              sourceLayer: 'field_parcels_filtered',
+              stroke: '#ff0000',
+              strokeWidth: 2,
+              fill: 'transparent',
+              minZoom: 10,
+              maxZoom: 24
+            }]
+          }),
+        defra.zoomControlsPlugin(),
+        defra.scaleBarPlugin({
+          units: 'metric'
+        })
+      ]
+    })
+  }
+
+  </script>
 {% endblock %}

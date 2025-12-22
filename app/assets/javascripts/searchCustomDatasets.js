@@ -95,7 +95,7 @@ const buildParcelRequest = (query) => {
   const sanitisedQuery = query.replace(/ /g,'')
 
   return {
-    url: env.PARCEL_SERVICE_URL.replace('{query}', encodeURIComponent(sanitisedQuery)),
+    url: `${env.PARCEL_SERVICE_URL}/${encodeURIComponent(sanitisedQuery)}`,
     options: {
       method: 'GET'
     }

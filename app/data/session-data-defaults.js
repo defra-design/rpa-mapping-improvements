@@ -7,15 +7,10 @@ module.exports = {
   // OS Names API 
   OS_NAMES_URL: process.env.OS_NAMES_URL,
   OS_NEAREST_URL: process.env.OS_NEAREST_URL,
-  // Gridref services
+  // Data services
   GRIDREF_SERVICE_URL: process.env.GRIDREF_SERVICE_URL,
-  // WFS Conversion
-  WFS_SERVICE_URL: process.env.WFS_SERVICE_URL,
+  PARCEL_TILE_SERVICE_URL: process.env.PARCEL_TILE_SERVICE_URL,
   PARCEL_SERVICE_URL: process.env.PARCEL_SERVICE_URL,
-  // WFS End points
-  WFS_DATA_URL: process.env.WFS_DATA_URL,
-  WFS_HEDGE_CONTROL_URL: process.env.WFS_HEDGE_CONTROL_URL,
-  WFS_LAND_COVERS_URL: process.env.WFS_LAND_COVERS_URL,
   // OS API Key
   OS_API_KEY: process.env.OS_API_KEY
 }

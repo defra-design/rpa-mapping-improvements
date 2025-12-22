@@ -47,7 +47,8 @@
     <form method="post">
 
     {{ govukButton({
-      text: "Save and continue"
+      text: "Save and continue",
+      classes: "govuk-!-margin-top-4"
     }) }}
 
     </form>
@@ -72,16 +73,15 @@
   
   <script>
   window.env = {
-    WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
+    PARCEL_TILE_SERVICE_URL: '{{ data.PARCEL_TILE_SERVICE_URL | safe }}',
     GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
-    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}',
-    WFS_HEDGE_CONTROL_URL: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
-    WFS_LAND_COVERS_URL: '{{ data.WFS_LAND_COVERS_URL | safe }}'
+    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
   }
 
   // The SBI and Parcel ID we want to display
   const TARGET_SBI = '106332870';
-  const TARGET_PARCEL_ID = '{{ data["parcel-id"] }}';
+  const TARGET_PARCEL_ID = '{{ parcelId }}';
+  const TARGET_PARCEL_BOUNDS = [{{ parcelBounds }}];
 
   // Store the target parcel feature globally
   let targetParcelFeature = null;
@@ -206,24 +206,26 @@
   }
 
   // Fetch the specific parcel and create the map
-  if (TARGET_PARCEL_ID && TARGET_PARCEL_ID.trim() !== '') {
-    fetchSpecificParcel(TARGET_SBI, TARGET_PARCEL_ID).then(data => {
-      let mapCenter = [-2.968, 54.425];
-      let mapZoom = 15;
+  // if (TARGET_PARCEL_ID && TARGET_PARCEL_ID.trim() !== '') {
+  //   fetchSpecificParcel(TARGET_SBI, TARGET_PARCEL_ID).then(data => {
+  //     let mapCenter = [-2.968, 54.425];
+  //     let mapZoom = 15;
       
-      if (data && data.features && data.features.length > 0) {
-        const center = calculateCenter(data.features);
+  //     if (data && data.features && data.features.length > 0) {
+  //       const center = calculateCenter(data.features);
         
-        if (center) {
-          mapCenter = center;
-        }
-      }
+  //       if (center) {
+  //         mapCenter = center;
+  //       }
+  //     }
       
-      createMap();
-    });
-  } else {
-    createMap();
-  }
+  //     createMap();
+  //   });
+  // } else {
+  //   createMap();
+  // }
+
+  createMap()
 
   // Set up fetch interception
   let dataDisplayed = false;
@@ -259,17 +261,17 @@
       interactionMode: 'select',
       multiSelect: true
     })
-        
+    
     const defraMap = new defra.DefraMap('map', {
       mapProvider: defra.maplibreProvider(),
       reverseGeocodeProvider: defra.openNamesProvider({
         url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
       }),
-      behaviour: 'hybrid',
+      behaviour: 'inline',
       mapLabel: 'Ambleside',
       minZoom: 6,
       maxZoom: 18,
-      bounds,
+      bounds: TARGET_PARCEL_BOUNDS,
       containerHeight: '650px',
       transformRequest: transformTileRequest,
       hasExitButton: true,
@@ -323,64 +325,65 @@
             {
               id: 'field-parcels',
               label: 'Field parcels',
-              filter: ['!=', ['get', 'SBI'], TARGET_SBI],
-              url: '{{ data.WFS_DATA_URL | safe }}',
-              stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
-              strokeWidth: 2,
-              fill: 'transparent',
-              minZoom: 15,
-              maxZoom: 24
-            },
-            {
-              id: 'linked-parcels',
-              label: 'Existing fields',
-              filter: ['==', ['get', 'SBI'], TARGET_SBI],
-              url: '{{ data.WFS_DATA_URL | safe }}',
-              stroke: '#0000ff',
-              strokeWidth: 2,
-              fill: 'rgba(0,0,255,0.1)',
-              minZoom: 15,
-              maxZoom: 24
-            },
-            {
-              id: 'selected-parcel',
-              label: 'Selected parcels',
-              filter: window.targetParcelFeature 
-                ? ['==', ['get', 'ID'], window.targetParcelFeature.properties.ID]
-                : ['==', ['get', 'ID'], -1], // Filter that matches nothing if no parcel selected
-              url: '{{ data.WFS_DATA_URL | safe }}',
+              filter: ['==', ['get', 'ngc'], TARGET_PARCEL_ID],
+              tiles: ['{{ data.PARCEL_TILE_SERVICE_URL | safe }}'],
+              sourceLayer: 'field_parcels_filtered',
               stroke: '#ff0000',
               strokeWidth: 2,
-              fill: 'rgba(255,0,0,0.1)',
-              minZoom: 15,
-              maxZoom: 24
-            },
-            {
-              id: 'hedgerows',
-              label: 'Hedgerows',
-              filter: window.targetParcelFeature 
-                ? ['==', ['get', 'REF_PARCEL_ID'], window.targetParcelFeature.properties.ID]
-                : ['==', ['get', 'REF_PARCEL_ID'], -1],
-              url: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
-              stroke: '#228B22',
-              strokeWidth: 3,
               fill: 'transparent',
               minZoom: 15,
               maxZoom: 24
             },
-            {
-              id: 'land-covers',
-              label: 'Land covers',
-              filter: window.targetParcelFeature 
-                ? ['==', ['get', 'REFERENCE_PARCELS_ID'], window.targetParcelFeature.properties.ID]
-                : ['==', ['get', 'REFERENCE_PARCELS_ID'], -1],
-              url: '{{ data.WFS_LAND_COVERS_URL | safe }}',
-              stroke: '#666666',
-              strokeWidth: 1,
-              fill: 'rgba(200,200,200,0.3)',
-              minZoom: 15,
-              maxZoom: 24
-            }
+            // {
+            //   id: 'linked-parcels',
+            //   label: 'Existing fields',
+            //   filter: ['==', ['get', 'SBI'], TARGET_SBI],
+            //   url: '{{ data.WFS_DATA_URL | safe }}',
+            //   stroke: '#0000ff',
+            //   strokeWidth: 2,
+            //   fill: 'rgba(0,0,255,0.1)',
+            //   minZoom: 15,
+            //   maxZoom: 24
+            // },
+            // {
+            //   id: 'selected-parcel',
+            //   label: 'Selected parcels',
+            //   filter: window.targetParcelFeature 
+            //     ? ['==', ['get', 'ID'], window.targetParcelFeature.properties.ID]
+            //     : ['==', ['get', 'ID'], -1], // Filter that matches nothing if no parcel selected
+            //   url: '{{ data.WFS_DATA_URL | safe }}',
+            //   stroke: '#ff0000',
+            //   strokeWidth: 2,
+            //   fill: 'rgba(255,0,0,0.1)',
+            //   minZoom: 15,
+            //   maxZoom: 24
+            // },
+            // {
+            //   id: 'hedgerows',
+            //   label: 'Hedgerows',
+            //   filter: window.targetParcelFeature 
+            //     ? ['==', ['get', 'REF_PARCEL_ID'], window.targetParcelFeature.properties.ID]
+            //     : ['==', ['get', 'REF_PARCEL_ID'], -1],
+            //   url: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
+            //   stroke: '#228B22',
+            //   strokeWidth: 3,
+            //   fill: 'transparent',
+            //   minZoom: 15,
+            //   maxZoom: 24
+            // },
+            // {
+            //   id: 'land-covers',
+            //   label: 'Land covers',
+            //   filter: window.targetParcelFeature 
+            //     ? ['==', ['get', 'REFERENCE_PARCELS_ID'], window.targetParcelFeature.properties.ID]
+            //     : ['==', ['get', 'REFERENCE_PARCELS_ID'], -1],
+            //   url: '{{ data.WFS_LAND_COVERS_URL | safe }}',
+            //   stroke: '#666666',
+            //   strokeWidth: 1,
+            //   fill: 'rgba(200,200,200,0.3)',
+            //   minZoom: 15,
+            //   maxZoom: 24
+            // }
           ]
         }),
         defra.zoomControlsPlugin(),

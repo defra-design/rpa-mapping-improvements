@@ -50,8 +50,11 @@
     <div id="parcel-data-container"></div>
 
     <form method="post">
+      <input id="coords" name="coords" type="hidden"/>
       {{ govukButton({
-        text: "Continue"
+        id: "continue-btn",
+        text: "Continue",
+        disabled: true
       }) }}
     </form>
   </div>
@@ -138,8 +141,7 @@
     reverseGeocodeProvider: defra.openNamesProvider({
       url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
     }),
-    behaviour: 'hybrid',
-    mapLabel: 'Ambleside',
+    behaviour: 'inline',
     minZoom: 6,
     maxZoom: 18,
     containerHeight: '650px',
@@ -188,19 +190,6 @@
           attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
         }]
       }),
-      // defra.dataLayersMLPlugin({
-      //   transformRequest: transformDataRequest,
-      //   layers: [{
-      //     id: 'field-parcels',
-      //     label: 'Field parcels',
-      //     url: '{{ data.WFS_DATA_URL | safe }}',
-      //     stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
-      //     strokeWidth: 2,
-      //     fill: 'transparent',
-      //     minZoom: 15,
-      //     maxZoom: 24
-      //   }]
-      // }),
       interactPlugin,
       defra.searchPlugin({
         osNamesURL: '/api/geocode-proxy?query={query}',
@@ -215,6 +204,14 @@
       })
     ]
   });
+
+  defraMap.on('interact:markerchange', (e) => {
+    const coords = document.querySelector('#coords')
+    coords.value = JSON.stringify(e.coords)
+    const continueButton = document.querySelector('#continue-btn')
+    continueButton.removeAttribute('aria-disabled')
+    continueButton.removeAttribute('disabled')
+  })
 
   // Function to display list of visible parcels
   function displayParcelList() {
