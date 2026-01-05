@@ -184,33 +184,24 @@
             </div>
           </div>
           
-          <!-- Map legend (hidden by default) -->
-          <div id="map-legend" class="map-legend" style="display: none;">
-            <h3 class="govuk-heading-s govuk-!-margin-bottom-1">Land cover</h3>
-            <p class="govuk-body-s govuk-!-margin-bottom-2">Parcels are coloured by their predominant land cover type.</p>
-            <div class="map-legend-items">
-              <div class="map-legend-item">
-                <span class="map-legend-color" style="background-color: #00703c;"></span>
-                <span class="map-legend-label">Permanent Grassland</span>
-              </div>
-              <div class="map-legend-item">
-                <span class="map-legend-color" style="background-color: #d4351c;"></span>
-                <span class="map-legend-label">Arable Land</span>
-              </div>
-              <div class="map-legend-item">
-                <span class="map-legend-color" style="background-color: #005a30;"></span>
-                <span class="map-legend-label">Woodland</span>
-              </div>
-              <div class="map-legend-item">
-                <span class="map-legend-color" style="background-color: #505a5f;"></span>
-                <span class="map-legend-label">Metalled track</span>
-              </div>
-              <div class="map-legend-item">
-                <span class="map-legend-color" style="background-color: #b58840;"></span>
-                <span class="map-legend-label">Track - Natural Surface</span>
+          <!-- Legend overlay (toggle-able, hidden until land covers enabled) -->
+          <div id="legend-overlay" class="map-overlay" style="display: none;">
+            <button id="legend-toggle" class="map-legend-toggle" aria-label="Show legend">
+              <img src="/public/images/list.svg" alt="" aria-hidden="true">
+            </button>
+            
+            <!-- Legend content (hidden by default) -->
+            <div id="legend-container" class="map-legend" style="display: none;">
+              <button type="button" id="legend-close" class="map-legend-close" aria-label="Close legend">×</button>
+              <h3 class="govuk-heading-m govuk-!-margin-bottom-2">Key</h3>
+              <div id="legend-content">
+                <!-- Will be populated dynamically by JavaScript -->
+                <p class="govuk-body-s">No features to display</p>
               </div>
             </div>
-          </div>
+          <!-- End legend container -->
+        </div>
+        <!-- End legend overlay -->
         </div>
       </div>
     </div>
@@ -269,10 +260,7 @@
     // Search marker
     let searchMarker = null;
 
-    // Add navigation controls
-    map.addControl(new maplibregl.NavigationControl({
-    showCompass: false  // Hide the compass button
-    }), 'top-right');
+    // Custom zoom controls will be added in HTML instead of MapLibre default
 
     // Add scale control
     map.addControl(new maplibregl.ScaleControl({
@@ -462,14 +450,27 @@
         // Show the map and hide loading overlay
         document.getElementById('map').classList.add('ready');
         
-        // Hide loading overlay and show search toggle
+        // Hide loading overlay and show search toggle and legend toggle
         const loadingOverlay = document.getElementById('map-loading');
         const searchOverlay = document.getElementById('search-overlay');
+        const legendOverlay = document.getElementById('legend-overlay');
+        
         if (loadingOverlay) {
           loadingOverlay.style.display = 'none';
         }
         if (searchOverlay) {
           searchOverlay.style.display = 'block';
+          searchOverlay.style.position = 'absolute';
+          searchOverlay.style.top = '10px';
+          searchOverlay.style.left = '10px';
+          searchOverlay.style.zIndex = '15'; // Higher than legend overlay
+        }
+        if (legendOverlay) {
+          legendOverlay.style.display = 'block';
+          legendOverlay.style.position = 'absolute';
+          legendOverlay.style.top = '64px'; // Increased gap to 20px to match map controls
+          legendOverlay.style.left = '10px';
+          legendOverlay.style.zIndex = '10';
         }
       }
 
@@ -581,7 +582,7 @@
               new maplibregl.Popup()
                 .setLngLat(e.lngLat)
                 .setHTML(`
-                  <strong>Land parcel</strong><br>
+                  <h3 class="govuk-heading-m govuk-!-margin-bottom-1">Land parcel</h3>
                   ${props.SHEET_ID} ${props.PARCEL_ID}<br>
                   Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
                 `)
@@ -667,7 +668,7 @@
             new maplibregl.Popup()
             .setLngLat(e.lngLat)
             .setHTML(`
-                <strong>Land cover</strong><br>
+                <h3 class="govuk-heading-m govuk-!-margin-bottom-1">Land cover</h3>
                 ${props.DESCRIPTION || 'N/A'}<br>
                 Land parcel ${props.SHEET_ID || ''} ${props.PARCEL_ID || ''}<br>
                 Total area (ha) ${parseFloat(props.AREA_HA || 0).toFixed(4)}<br>
@@ -995,10 +996,104 @@
 
       // Function to toggle legend visibility
       function toggleLegend(show) {
-        const legend = document.getElementById('map-legend');
-        if (legend) {
-          legend.style.display = show ? 'block' : 'none';
+        const legendOverlay = document.getElementById('legend-overlay');
+        if (legendOverlay) {
+          // Always show the legend overlay (toggle button), but update content
+          legendOverlay.style.display = 'block';
+          
+          // Update legend content based on whether land covers are enabled
+          updateLegendContent(show);
         }
+      }
+      
+      // Function to populate legend with actual land cover types
+      function updateLegendContent(landCoversEnabled) {
+        const legendContent = document.getElementById('legend-content');
+        if (!legendContent) return;
+        
+        if (!landCoversEnabled || !landCoversData) {
+          // Show "no features" message
+          legendContent.innerHTML = '<p class="govuk-body">No features to display</p>';
+          return;
+        }
+        
+        // Get predominant land covers from colored parcels
+        const predominantLandCovers = new Map(); // Map of land use -> color
+        
+        landParcelsData.features.forEach(parcel => {
+          const matchingLandCovers = landCoversData.features.filter(lc => 
+            lc.properties.SHEET_ID === parcel.properties.SHEET_ID &&
+            lc.properties.PARCEL_ID === parcel.properties.PARCEL_ID
+          );
+          
+          if (matchingLandCovers.length > 0) {
+            const largestLandCover = matchingLandCovers.reduce((largest, current) => {
+              const largestArea = parseFloat(largest.properties.AREA_HA || 0);
+              const currentArea = parseFloat(current.properties.AREA_HA || 0);
+              return currentArea > largestArea ? current : largest;
+            });
+            
+            const landUse = largestLandCover.properties.DESCRIPTION;
+            const color = landCoverColors[landUse] || landCoverColors['default'];
+            predominantLandCovers.set(landUse, color);
+          }
+        });
+        
+        // Build legend HTML
+        if (predominantLandCovers.size === 0) {
+          legendContent.innerHTML = '<p class="govuk-body">No land cover data available</p>';
+          return;
+        }
+        
+        let html = '<div class="map-legend-items">';
+        
+        // Sort by land use name for consistency
+        const sortedLandCovers = Array.from(predominantLandCovers.entries()).sort((a, b) => 
+          a[0].localeCompare(b[0])
+        );
+        
+        sortedLandCovers.forEach(([landUse, color]) => {
+          html += `
+            <div class="map-legend-item">
+              <span class="map-legend-color" style="background-color: ${color};"></span>
+              <span class="map-legend-label">${landUse}</span>
+            </div>
+          `;
+        });
+        
+        html += '</div>';
+        html += '<p class="govuk-body-s govuk-!-margin-top-2 govuk-!-margin-bottom-0">Parcels are coloured by their predominant land cover type.</p>';
+        legendContent.innerHTML = html;
+      }
+      
+      // Legend toggle functionality
+      function showLegend() {
+        const legendContainer = document.getElementById('legend-container');
+        const legendToggle = document.getElementById('legend-toggle');
+        if (legendContainer && legendToggle) {
+          legendContainer.style.display = 'block';
+          legendToggle.style.display = 'none';
+        }
+      }
+      
+      function hideLegend() {
+        const legendContainer = document.getElementById('legend-container');
+        const legendToggle = document.getElementById('legend-toggle');
+        if (legendContainer && legendToggle) {
+          legendContainer.style.display = 'none';
+          legendToggle.style.display = 'block';
+        }
+      }
+      
+      const legendToggle = document.getElementById('legend-toggle');
+      const legendClose = document.getElementById('legend-close');
+      
+      if (legendToggle) {
+        legendToggle.addEventListener('click', showLegend);
+      }
+      
+      if (legendClose) {
+        legendClose.addEventListener('click', hideLegend);
       }
       
       checkboxes.forEach(checkbox => {
@@ -1342,6 +1437,26 @@
     // Add to map container
     document.getElementById('map').appendChild(styleToggle);
       
+      // Create custom zoom controls
+      const zoomControls = document.createElement('div');
+      zoomControls.className = 'custom-zoom-controls';
+      
+      const zoomIn = document.createElement('button');
+      zoomIn.className = 'custom-zoom-button';
+      zoomIn.setAttribute('aria-label', 'Zoom in');
+      zoomIn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      zoomIn.addEventListener('click', () => map.zoomIn());
+      
+      const zoomOut = document.createElement('button');
+      zoomOut.className = 'custom-zoom-button';
+      zoomOut.setAttribute('aria-label', 'Zoom out');
+      zoomOut.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      zoomOut.addEventListener('click', () => map.zoomOut());
+      
+      zoomControls.appendChild(zoomIn);
+      zoomControls.appendChild(zoomOut);
+      document.getElementById('map').appendChild(zoomControls);
+      
       let currentStyle = 'streets';
       styleToggle.addEventListener('click', () => {
         // Store current view before switching
@@ -1616,6 +1731,8 @@
     overflow-y: auto;
     margin-bottom: 15px;
     margin-top: -10px;
+    position: relative;
+    z-index: 20; /* Higher than legend overlay (z-index: 10) */
   }
 
   .map-search-results-list {
@@ -1665,9 +1782,6 @@
   /* Map overlay styles */
   /* Map overlay styles */
   .map-overlay {
-    position: absolute;
-    top: 10px;
-    left: 10px;
     z-index: 10;
   }
 
@@ -1686,19 +1800,18 @@
   
   /* Map legend styles */
   .map-legend {
-    position: absolute;
-    bottom: 30px;
-    left: 10px;
     background-color: white;
-    padding: 15px;
+    padding: 10px;
+    padding-top: 10px; /* Remove extra padding since heading and close are aligned at top */
     border: 2px solid rgba(0, 0, 0, 0.1);
     box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1);
-    z-index: 10;
-    min-width: 200px;
+    width: 275px; /* 270px + 30px padding = 300px to match search input */
+    position: relative; /* For close button positioning */
   }
 
-  .map-legend .govuk-heading-s {
-    margin-bottom: 10px;
+  .map-legend .govuk-heading-m {
+    margin-top: 0;
+    padding-right: 40px; /* Space for close button */
   }
 
   .map-legend-items {
@@ -1716,14 +1829,16 @@
   .map-legend-color {
     width: 20px;
     height: 20px;
-    border: 1px solid #0b0c0c;
+    border: none; /* Remove border */
     flex-shrink: 0;
   }
 
   .map-legend-label {
-    font-size: 0.875rem;
+    font-size: 1rem; /* Changed from 0.875rem to 1rem */
     line-height: 1.25;
     color: #0b0c0c;
+    font-family: "GDS Transport", arial, sans-serif;
+    font-weight: 400;
   }
   
     .map-overlay-close {
@@ -1763,28 +1878,28 @@
 
   /* Search toggle button */
   .map-search-toggle {
-    background: white;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    border-radius: 0;
+    background: white !important;
+    border: 2px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 0 !important;
     cursor: pointer;
-    padding: 10px;
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
+    padding: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1) !important;
+    box-sizing: border-box !important;
   }
 
   .map-search-toggle img {
-    width: 24px;
-    height: 24px;
-    display: block;
+    width: 24px !important;
+    height: 24px !important;
+    display: block !important;
   }
 
   .map-search-toggle:hover {
-    background-color: #f3f2f1;
+    background-color: #f3f2f1 !important;
   }
 
   .map-search-toggle:focus {
@@ -1794,13 +1909,107 @@
 
   .map-search-toggle:focus-visible {
     outline: 3px solid #ffdd00 !important;
-    outline-offset: 0;
+    outline-offset: 0 !important;
     box-shadow: inset 0 0 0 4px #0b0c0c !important;
   }
 
-  /* Search container spacing */
+  /* Search container positioning - absolute so it appears at same position as toggle */
   #search-container {
-    margin-top: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-top: 0;
+  }
+
+  /* Legend toggle button */
+  .map-legend-toggle {
+    background: white !important;
+    border: 2px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 0 !important;
+    cursor: pointer;
+    padding: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1) !important;
+    box-sizing: border-box !important;
+  }
+
+  .map-legend-toggle img {
+    width: 24px !important;
+    height: 24px !important;
+    display: block !important;
+  }
+
+  .map-legend-toggle:hover {
+    background-color: #f3f2f1 !important;
+  }
+
+  .map-legend-toggle:focus {
+    outline: none !important;
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .map-legend-toggle:focus-visible {
+    outline: 3px solid #ffdd00 !important;
+    outline-offset: 0 !important;
+    box-shadow: inset 0 0 0 4px #0b0c0c !important;
+  }
+
+  /* Search overlay positioning */
+  #search-overlay {
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    z-index: 15; /* Higher than legend overlay so search results appear on top */
+  }
+
+  /* Legend overlay positioning - below search toggle */
+  #legend-overlay {
+    position: absolute !important;
+    top: 64px !important; /* 40px search button + 4px border + 20px gap (increased to match map controls) */
+    left: 10px !important;
+    z-index: 10;
+  }
+
+  /* Legend container positioning - absolute so it appears at same position as toggle */
+  #legend-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-top: 0;
+  }
+
+  /* Legend close button - matches popup close button */
+  .map-legend-close {
+    position: absolute;
+    top: 10px; /* Aligned with padding */
+    right: 4px; /* Aligned with padding */
+    background: none;
+    border: none;
+    font-size: 34px; /* Match popup close button */
+    line-height: 1;
+    padding: 0;
+    width: 30px; /* Match popup close button */
+    height: 30px; /* Match popup close button */
+    cursor: pointer;
+    color: #0b0c0c;
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .map-legend-close:hover {
+    background-color: #f3f2f1;
+  }
+
+  .map-legend-close:focus {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    box-shadow: inset 0 0 0 4px #0b0c0c;
   }
 
   .govuk-button {
@@ -1904,41 +2113,6 @@
     margin: 0;
   }
 
-/* Style MapLibre controls to match GOV.UK */
-.maplibregl-ctrl-group {
-  background: white;
-  border-radius: 0; /* Remove rounded corners */
-  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1);
-  border: 2px solid rgba(0, 0, 0, 0.1);
-}
-
-.maplibregl-ctrl button {
-  width: 40px;
-  height: 40px;
-  background-color: white;
-  border: none;
-  padding: 10px;
-}
-
-.maplibregl-ctrl button:hover {
-  background-color: #f3f2f1; /* GOV.UK grey hover */
-}
-
-.maplibregl-ctrl button:focus {
-  outline: none;
-}
-
-.maplibregl-ctrl button:focus-visible {
-  outline: 3px solid #ffdd00;
-  outline-offset: 0;
-  box-shadow: inset 0 0 0 4px #0b0c0c;
-}
-
-/* Position navigation controls below map style toggle */
-.maplibregl-ctrl-top-right {
-  top: 59px !important; /* 45px (button height) + 4px (border) + 10px (gap) */
-}
-
 /* Map style toggle button - positioned above zoom controls */
 .map-style-toggle {
   position: absolute;
@@ -1949,9 +2123,9 @@
   border: 2px solid rgba(0, 0, 0, 0.1);
   border-radius: 0;
   cursor: pointer;
-  padding: 10px;
-  width: 45px;
-  height: 45px;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1978,6 +2152,59 @@
   outline: 3px solid #ffdd00 !important;
   outline-offset: 0;
   box-shadow: inset 0 0 0 4px #0b0c0c !important;
+}
+
+/* Custom zoom controls */
+.custom-zoom-controls {
+  position: absolute;
+  top: 64px; /* 40px style toggle + 4px border + 20px gap (increased from 10px) */
+  right: 10px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0;
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1);
+}
+
+.custom-zoom-button {
+  background: white;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 36px; /* Reduced from 40px so total with 2px border = 40px */
+  height: 36px; /* Reduced from 40px so total with 2px border = 40px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  color: #0b0c0c;
+}
+
+.custom-zoom-button:first-child {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.custom-zoom-button svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}
+
+.custom-zoom-button:hover {
+  background-color: #f3f2f1;
+}
+
+.custom-zoom-button:focus {
+  outline: none;
+}
+
+.custom-zoom-button:focus-visible {
+  outline: 3px solid #ffdd00;
+  outline-offset: 0;
+  box-shadow: inset 0 0 0 4px #0b0c0c;
 }
 
 #map {
