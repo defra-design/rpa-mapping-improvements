@@ -64,7 +64,8 @@ router.post("/register-land-v3/know-parcel-id", async function (req, res) {
       return res.redirect('/register-land-v3/know-parcel-id');
     }
 
-    const url = `${process.env.PARCEL_SERVICE_URL}/${userEnteredId}`
+    const formattedParcelId = userEnteredId.replaceAll(' ','').toUpperCase()
+    const url = `${process.env.PARCEL_SERVICE_URL}/${formattedParcelId}`
     const response = await fetch(url)
     const data = await response.json()
     const parcelId = data.properties?.ngc
@@ -91,9 +92,10 @@ router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
   const url = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`
   const response = await fetch(url)
   const data = await response.json()
+  console.log(data)
 
   // Should this be here?
-  req.session.data['parcel-bounds'] = data?.bounds;
+  //req.session.data['parcel-bounds'] = data?.bounds;
 
   // If editing an existing parcel, pre-populate the form
   if (parcelId !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelId]) {
@@ -107,6 +109,55 @@ router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
     parcelBounds: req.session.data['parcel-bounds']
   })
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Confirm land parcel - NOW saves the parcel with screenshot
 router.post("/register-land-v3/confirm-land-parcel", function (req, res) {

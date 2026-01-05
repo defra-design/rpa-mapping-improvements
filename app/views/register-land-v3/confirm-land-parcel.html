@@ -80,11 +80,14 @@
   window.env = {
     PARCEL_TILE_SERVICE_URL: '{{ data.PARCEL_TILE_SERVICE_URL | safe }}',
     GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
-    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
+    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}',
+    WFS_DATA_URL: '{{ data.WFS_DATA_URL | safe }}',
+    WFS_HEDGE_CONTROL_URL: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
+    WFS_LAND_COVERS_URL: '{{ data.WFS_LAND_COVERS_URL | safe }}'
   }
 
   // The SBI and Parcel ID we want to display
-  const TARGET_SBI = '106332870';
+  const TARGET_SBI = '106325052';
   const TARGET_PARCEL_ID = '{{ parcelId }}';
   const TARGET_PARCEL_BOUNDS = [{{ parcelBounds }}];
 
