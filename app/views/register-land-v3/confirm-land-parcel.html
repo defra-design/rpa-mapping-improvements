@@ -32,6 +32,12 @@
     <span class="govuk-caption-l">AR FIELDING</span>
       Confirm land parcel 
     </h1>
+    <p class="govuk-body">To find a land parcel either use the:</p>
+        <ul class="govuk-list govuk-list--bullet">
+            <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
+            <li>map search to enter a location, for example, the nearest city, town or postcode</li>
+        </ul>
+        <!-- <p>{{ data | dump }}</p> -->
   </div>
 </div>
 <div class="govuk-grid-row">
@@ -47,8 +53,7 @@
     <form method="post">
 
     {{ govukButton({
-      text: "Save and continue",
-      classes: "govuk-!-margin-top-4"
+      text: "Continue"
     }) }}
 
     </form>
