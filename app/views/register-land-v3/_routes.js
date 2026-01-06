@@ -88,25 +88,35 @@ router.post("/register-land-v3/know-parcel-id", async function (req, res) {
 
 // // GET route for editing an existing parcel
 router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
+  // Parcel service
   const parcelId = req.session.data['parcel-id'];
   const url = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`
   const response = await fetch(url)
   const data = await response.json()
-  console.log(data)
+
+  // Meta data
+  const metaDataUrl = `https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&cql_filter=SBI=${data?.properties?.sbi}&srsname=EPSG:4326&outputFormat=application/json`
+  const metaDataResponse = await fetch(metaDataUrl)
+  const metaData = await metaDataResponse.json()
+
+  const sheetId = data?.properties?.ngc.slice(0, 6)
+  const fieldRef = data?.properties?.ngc.slice(-4)
+  const landCovers = metaData.features.filter(f => f.properties.SHEET_ID === sheetId && f.properties.PARCEL_ID === fieldRef).map(f => f.properties)
 
   // Should this be here?
   req.session.data['parcel-bounds'] = data?.bounds;
 
   // If editing an existing parcel, pre-populate the form
-  if (parcelId !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelId]) {
-    // Pre-populate the parcel ID
-    req.session.data['parcel-bounds'] = data?.bounds;
-  }
+  // if (parcelId !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelId]) {
+  //   // Pre-populate the parcel ID
+  //   req.session.data['parcel-bounds'] = data?.bounds;
+  // }
   
   // Let the default rendering happen
   res.render('register-land-v3/confirm-land-parcel', {
     parcelId: req.session.data['parcel-id'],
-    parcelBounds: req.session.data['parcel-bounds']
+    parcelBounds: req.session.data['parcel-bounds'],
+    landCovers
   })
 })
 
