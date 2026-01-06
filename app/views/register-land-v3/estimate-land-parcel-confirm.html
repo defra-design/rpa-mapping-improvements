@@ -1,7 +1,7 @@
 {% extends "layouts/main.html" %}
 
 {% block pageTitle %}
-  Question page template – {{ serviceName }} – GOV.UK Prototype Kit
+  Confirm estimated land parcel – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
 {% block head %}
@@ -25,9 +25,43 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+        {% if parcelId %}
+          <h1 class="govuk-heading-l">You have chosen to register an existing land parcel {{ parcelId }}</h1>
+        {% else %}
+          <h1 class="govuk-heading-l">There is no existing parcel ID for the land you have chosen to register</h1>
+        {% endif %}
+      
+    </div>
+  </div>
 
-      <!-- <h1 class="govuk-heading-l"></h1> -->
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
 
+
+
+
+
+      <!-- <p>=== Server side parcel by coordinate query ===</p> -->
+
+      <!-- <p>
+        {% if parcelId %}
+        Found existing parcel: {{ parcelId }}
+        {% else %}
+        No existing parcel
+        {% endif %}
+      </p> -->
+
+      <div id="map"></div>
+
+      <br>
+
+    </div>
+  </div>
+
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        {% if parcelId %}
       <form class="form" method="post">
         {% from "govuk/components/radios/macro.njk" import govukRadios %}
 
@@ -36,21 +70,14 @@
           fieldset: {
             legend: {
               text: "Customer has found the land they want to register, what do they do now?",
-              isPageHeading: true,
-              classes: "govuk-fieldset__legend--l"
+              isPageHeading: false,
+              classes: "govuk-fieldset__legend--m"
             }
           },
           hint: {
             text: "What do you want to do with the land you've found?"
           },
           items: [
-            {
-              value: "no-parcel-id",
-              text: "Land parcel does not exist",
-              hint: {
-                text: "Customer has found some land that doesn't have a parcel ID, they'll need to upload a map."
-              }
-            },
             {
               value: "found-parcel-id",
               text: "Existing land parcel",
@@ -80,18 +107,49 @@
         }) }}
 
       </form>
-
-      <p>=== Server side parcel by coordinate query ===</p>
-
-      <p>
-        {% if parcelId %}
-        Found existing parcel: {{ parcelId }}
         {% else %}
-        No existing parcel
-        {% endif %}
-      </p>
+      <form class="form" method="post">
+        {% from "govuk/components/radios/macro.njk" import govukRadios %}
 
-      <div id="map" />
+        {{ govukRadios({
+          name: "signIn",
+          fieldset: {
+            legend: {
+              text: "Customer has found the land they want to register, what do they do now?",
+              isPageHeading: false,
+              classes: "govuk-fieldset__legend--m"
+            }
+          },
+          hint: {
+            text: "What do you want to do with the land you've found?"
+          },
+          items: [
+            {
+              value: "no-parcel-id",
+              text: "Land parcel does not exist",
+              hint: {
+                text: "Customer has found some land that doesn't have a parcel ID, they'll need to upload a map."
+              }
+            },
+            {
+              value: "back-to-map",
+              text: "None of the above, go back to map",
+              hint: {
+                text: "Customer wants to return to map"
+              }
+            }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+      </form>
+        {% endif %}
+
+
+
     </div>
   </div>
 
@@ -196,6 +254,78 @@
         })
       ]
     })
+  } else {
+    const defraMap = new defra.DefraMap('map', {
+      mapProvider: defra.maplibreProvider(),
+      reverseGeocodeProvider: defra.openNamesProvider({
+        url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
+      }),
+      behaviour: 'inline',
+      minZoom: 6,
+      maxZoom: 18,
+      bounds: TARGET_PARCEL_BOUNDS,
+      containerHeight: '650px',
+      transformRequest: transformTileRequest,
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [{
+            id: 'outdoor',
+            label: 'Outdoor',
+            url: '{{ data.VTS_OUTDOOR_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
+            backgroundColor: '#f5f5f0'
+          }, {
+            id: 'dark',
+            label: 'Dark',
+            url: '{{ data.VTS_DARK_URL }}',
+            mapColorScheme: 'dark',
+            appColorScheme: 'dark',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/dark-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-white.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'black-and-white',
+            label: 'Black/White',
+            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/black-and-white-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-black.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'satellite',
+            label: 'Satellite',
+            url: '/satellite-style.json',
+            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+          }]
+        }),
+        defra.dataLayersMLPlugin({
+          layers: [ {
+              id: 'field-parcels',
+              label: 'Field parcels',
+              filter: ['==', ['get', 'ngc'], TARGET_PARCEL_ID],
+              tiles: ['{{ data.PARCEL_TILE_SERVICE_URL | safe }}'],
+              sourceLayer: 'field_parcels_filtered',
+              stroke: '#ff0000',
+              strokeWidth: 2,
+              fill: 'transparent',
+              minZoom: 10,
+              maxZoom: 24
+            }]
+          }),
+        defra.zoomControlsPlugin(),
+        defra.scaleBarPlugin({
+          units: 'metric'
+        })
+      ]
+    })
+
   }
 
   </script>
