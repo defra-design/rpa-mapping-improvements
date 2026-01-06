@@ -37,7 +37,6 @@
             <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
             <li>map search to enter a location, for example, the nearest city, town or postcode</li>
         </ul>
-        <!-- <p>{{ data | dump }}</p> -->
   </div>
 </div>
 <div class="govuk-grid-row">
@@ -80,13 +79,20 @@
   window.env = {
     PARCEL_TILE_SERVICE_URL: '{{ data.PARCEL_TILE_SERVICE_URL | safe }}',
     GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
-    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
+    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}',
+    WFS_DATA_URL: '{{ data.WFS_DATA_URL | safe }}',
+    WFS_HEDGE_CONTROL_URL: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
+    WFS_LAND_COVERS_URL: '{{ data.WFS_LAND_COVERS_URL | safe }}'
   }
 
-  // The SBI and Parcel ID we want to display
-  const TARGET_SBI = '106325052';
+  // Server-provided data
+  const TARGET_SBI = '{{ sbi }}';
   const TARGET_PARCEL_ID = '{{ parcelId }}';
-  const TARGET_PARCEL_BOUNDS = [{{ parcelBounds }}];
+  const PARCEL_PROPERTIES = {{ parcelProperties | dump | safe }};
+  
+  console.log('Target SBI:', TARGET_SBI);
+  console.log('Target Parcel ID:', TARGET_PARCEL_ID);
+  console.log('Parcel Properties:', PARCEL_PROPERTIES);
 
   // Store the target parcel feature globally
   let targetParcelFeature = null;
@@ -133,150 +139,65 @@
     ];
   }
 
-  function calculateCenter(features) {
-    let totalLng = 0, totalLat = 0, count = 0;
-    
-    features.forEach(feature => {
-      if (feature.geometry && feature.geometry.coordinates) {
-        const coords = feature.geometry.type === 'Polygon' 
-          ? feature.geometry.coordinates[0] 
-          : feature.geometry.coordinates;
-        
-        coords.forEach(coord => {
-          totalLng += coord[0];
-          totalLat += coord[1];
-          count++;
-        });
+  // Fetch parcel geometry from PARCEL_SERVICE_URL
+  async function fetchParcelGeometry(parcelId) {
+    try {
+      const url = `${window.env.PARCEL_SERVICE_URL}/${parcelId}`;
+      console.log('Fetching parcel geometry from:', url);
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    });
-    
-    return count > 0 ? [totalLng / count, totalLat / count] : null;
-  }
-
-  function parseParcelID(parcelId) {
-    const cleaned = parcelId.replace(/\s+/g, '');
-    const match = cleaned.match(/^([A-Z]{2}\d{4})(\d+)$/i);
-    
-    if (match) {
-      return {
-        sheetId: match[1].toUpperCase(),
-        parcelId: match[2]
+      
+      const data = await response.json();
+      console.log('Parcel geometry data:', data);
+      
+      // Store as a feature
+      targetParcelFeature = {
+        type: 'Feature',
+        properties: {
+          ID: data.properties.ngc,
+          SBI: data.properties.sbi,
+          AREA_HA: data.properties.area_ha,
+          ...data.properties
+        },
+        geometry: data.geometry
       };
+      
+      window.targetParcelFeature = targetParcelFeature;
+      console.log('Target parcel feature set:', targetParcelFeature);
+      
+      return targetParcelFeature;
+    } catch (error) {
+      console.error('Error fetching parcel geometry:', error);
+      return null;
     }
-    
-    return null;
   }
 
-  function fetchSpecificParcel(sbi, parcelId) {
-    const parsed = parseParcelID(parcelId);
-    if (!parsed) {
-      return Promise.resolve(null);
+  // Create map with parcel data
+  async function initializeMap() {
+    // Fetch the parcel geometry first
+    const parcel = await fetchParcelGeometry(TARGET_PARCEL_ID);
+    
+    if (!parcel) {
+      console.error('Could not load parcel data');
+      return;
     }
     
-    const wfsUrl = '{{ data.WFS_DATA_URL | safe }}'
-    const wfsWithFilter = `${wfsUrl}&CQL_FILTER=SBI='${sbi}'&outputFormat=application/json&srsName=EPSG:4326`;
-    const proxyUrl = `${env.WFS_SERVICE_URL}?wfs_url=${encodeURIComponent(wfsWithFilter)}`;
+    const bounds = getBounds(parcel.geometry);
+    console.log('Parcel bounds:', bounds);
     
-    return fetch(proxyUrl)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        if (data.features && data.features.length > 0) {
-          const matchingParcel = data.features.find(feature => 
-            feature.properties.SHEET_ID === parsed.sheetId && 
-            feature.properties.PARCEL_ID === parsed.parcelId
-          );
-          
-          if (matchingParcel) {
-            targetParcelFeature = matchingParcel;
-            window.targetParcelFeature = targetParcelFeature;
-            
-            return {
-              type: 'FeatureCollection',
-              features: [matchingParcel]
-            };
-          }
-        }
-        
-        return null;
-      })
-      .catch(error => {
-        console.error('Error fetching parcel:', error);
-        return null;
-      });
-  }
-
-  // Fetch the specific parcel and create the map
-  // if (TARGET_PARCEL_ID && TARGET_PARCEL_ID.trim() !== '') {
-  //   fetchSpecificParcel(TARGET_SBI, TARGET_PARCEL_ID).then(data => {
-  //     let mapCenter = [-2.968, 54.425];
-  //     let mapZoom = 15;
-      
-  //     if (data && data.features && data.features.length > 0) {
-  //       const center = calculateCenter(data.features);
-        
-  //       if (center) {
-  //         mapCenter = center;
-  //       }
-  //     }
-      
-  //     createMap();
-  //   });
-  // } else {
-  //   createMap();
-  // }
-
-  createMap()
-
-  // Set up fetch interception
-  let dataDisplayed = false;
-  const originalFetch = window.fetch;
-  
-  window.fetch = function(...args) {
-    const url = args[0];
-    
-    if (typeof url === 'string' && url.includes('LandParcels') && !dataDisplayed) {
-      dataDisplayed = true;
-    }
-    
-    return originalFetch.apply(this, args);
-  };
-
-  function createMap() {
-    // Check if we have a target parcel, otherwise use default bounds
-    const bounds = window.targetParcelFeature 
-      ? getBounds(window.targetParcelFeature.geometry)
-      : [-3.5, 53.5, -2.5, 54.5]; // Default bounds for general area
-
-    const interactPlugin = defra.interactPlugin({
-      dataLayers: [{
-        layerId: 'field-parcels',
-        idProperty: 'ID',
-        selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
-      },{
-        layerId: 'linked-parcels',
-        idProperty: 'ID',
-        selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
-      }],
-      markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
-      interactionMode: 'select',
-      multiSelect: true
-    })
-    
+    // Create the map
     const defraMap = new defra.DefraMap('map', {
       mapProvider: defra.maplibreProvider(),
       reverseGeocodeProvider: defra.openNamesProvider({
         url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
       }),
-      behaviour: 'inline',
-      mapLabel: 'Ambleside',
+      behaviour: 'hybrid',
       minZoom: 6,
       maxZoom: 18,
-      bounds: TARGET_PARCEL_BOUNDS,
+      bounds,
       containerHeight: '650px',
       transformRequest: transformTileRequest,
       hasExitButton: true,
@@ -307,14 +228,6 @@
             logoAltText: 'Ordnance survey logo',
             attribution: 'Test'
           }, {
-            id: 'black-and-white',
-            label: 'Black/White',
-            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/black-and-white-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-black.svg',
-            logoAltText: 'Ordnance survey logo',
-            attribution: 'Test'
-          }, {
             id: 'satellite',
             label: 'Satellite',
             url: '/satellite-style.json',
@@ -330,65 +243,56 @@
             {
               id: 'field-parcels',
               label: 'Field parcels',
-              filter: ['==', ['get', 'ngc'], TARGET_PARCEL_ID],
-              tiles: ['{{ data.PARCEL_TILE_SERVICE_URL | safe }}'],
-              sourceLayer: 'field_parcels_filtered',
-              stroke: '#ff0000',
+              filter: ['!=', ['get', 'SBI'], TARGET_SBI],
+              url: '{{ data.WFS_DATA_URL | safe }}',
+              stroke: { outdoor: '#b1b4b6', dark: '#28a197', aerial: 'rgba(40,161,151,0.8)', 'black-and-white': '#28a197' },
               strokeWidth: 2,
               fill: 'transparent',
               minZoom: 15,
               maxZoom: 24
             },
-            // {
-            //   id: 'linked-parcels',
-            //   label: 'Existing fields',
-            //   filter: ['==', ['get', 'SBI'], TARGET_SBI],
-            //   url: '{{ data.WFS_DATA_URL | safe }}',
-            //   stroke: '#0000ff',
-            //   strokeWidth: 2,
-            //   fill: 'rgba(0,0,255,0.1)',
-            //   minZoom: 15,
-            //   maxZoom: 24
-            // },
-            // {
-            //   id: 'selected-parcel',
-            //   label: 'Selected parcels',
-            //   filter: window.targetParcelFeature 
-            //     ? ['==', ['get', 'ID'], window.targetParcelFeature.properties.ID]
-            //     : ['==', ['get', 'ID'], -1], // Filter that matches nothing if no parcel selected
-            //   url: '{{ data.WFS_DATA_URL | safe }}',
-            //   stroke: '#ff0000',
-            //   strokeWidth: 2,
-            //   fill: 'rgba(255,0,0,0.1)',
-            //   minZoom: 15,
-            //   maxZoom: 24
-            // },
-            // {
-            //   id: 'hedgerows',
-            //   label: 'Hedgerows',
-            //   filter: window.targetParcelFeature 
-            //     ? ['==', ['get', 'REF_PARCEL_ID'], window.targetParcelFeature.properties.ID]
-            //     : ['==', ['get', 'REF_PARCEL_ID'], -1],
-            //   url: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
-            //   stroke: '#228B22',
-            //   strokeWidth: 3,
-            //   fill: 'transparent',
-            //   minZoom: 15,
-            //   maxZoom: 24
-            // },
-            // {
-            //   id: 'land-covers',
-            //   label: 'Land covers',
-            //   filter: window.targetParcelFeature 
-            //     ? ['==', ['get', 'REFERENCE_PARCELS_ID'], window.targetParcelFeature.properties.ID]
-            //     : ['==', ['get', 'REFERENCE_PARCELS_ID'], -1],
-            //   url: '{{ data.WFS_LAND_COVERS_URL | safe }}',
-            //   stroke: '#666666',
-            //   strokeWidth: 1,
-            //   fill: 'rgba(200,200,200,0.3)',
-            //   minZoom: 15,
-            //   maxZoom: 24
-            // }
+            {
+              id: 'linked-parcels',
+              label: 'Existing fields',
+              filter: ['==', ['get', 'SBI'], TARGET_SBI],
+              url: '{{ data.WFS_DATA_URL | safe }}',
+              stroke: '#0000ff',
+              strokeWidth: 2,
+              fill: 'rgba(0,0,255,0.1)',
+              minZoom: 15,
+              maxZoom: 24
+            },
+            {
+              id: 'selected-parcel',
+              label: 'Selected parcel',
+              filter: ['==', ['get', 'ID'], TARGET_PARCEL_ID],
+              url: '{{ data.WFS_DATA_URL | safe }}',
+              stroke: '#ff0000',
+              strokeWidth: 3,
+              fill: 'rgba(255,0,0,0.2)',
+              minZoom: 15,
+              maxZoom: 24
+            },
+            {
+              id: 'hedgerows',
+              label: 'Hedgerows',
+              url: '{{ data.WFS_HEDGE_CONTROL_URL | safe }}',
+              stroke: '#228B22',
+              strokeWidth: 3,
+              fill: 'transparent',
+              minZoom: 15,
+              maxZoom: 24
+            },
+            {
+              id: 'land-covers',
+              label: 'Land covers',
+              url: '{{ data.WFS_LAND_COVERS_URL | safe }}',
+              stroke: '#666666',
+              strokeWidth: 1,
+              fill: 'rgba(200,200,200,0.3)',
+              minZoom: 15,
+              maxZoom: 24
+            }
           ]
         }),
         defra.zoomControlsPlugin(),
@@ -398,22 +302,18 @@
       ]
     });
     
-    // NEW: Wait for map to be fully loaded, then extract data from layers
+    // Wait for map to be ready, then fetch and display related data
     defraMap.on('map:ready', () => {
-      // Fetch data immediately when map is ready
+      console.log('Map is ready');
       extractAndDisplayLayerData();
-    })
+    });
 
-    defraMap.on('interact:selectionchange', (e) => {
-      console.log(e)
-    })
-    
     window.defraMapInstance = defraMap;
   }
 
-  // NEW: Function to fetch hedgerow data via API with bbox
+  // Function to fetch hedgerow data via API with bbox
   async function fetchHedgerowData(sbi, parcelId, bbox) {
-    const wfsBaseUrl = '{{ data.WFS_HEDGE_CONTROL_URL | safe }}'
+    const wfsBaseUrl = '{{ data.WFS_HEDGE_CONTROL_URL | safe }}';
     
     // Use transformDataRequest exactly as the map does
     const transformed = transformDataRequest({ url: wfsBaseUrl }, bbox);
@@ -452,9 +352,9 @@
     }
   }
 
-  // NEW: Function to fetch land cover data via API with bbox
+  // Function to fetch land cover data via API with bbox
   async function fetchLandCoverData(sbi, parcelId, bbox) {
-    const wfsBaseUrl = '{{ data.WFS_LAND_COVERS_URL | safe }}' 
+    const wfsBaseUrl = '{{ data.WFS_LAND_COVERS_URL | safe }}';
     
     // Use transformDataRequest exactly as the map does
     const transformed = transformDataRequest({ url: wfsBaseUrl }, bbox);
@@ -493,7 +393,7 @@
     }
   }
 
-  // NEW: Function to fetch and display data using API with bbox
+  // Function to fetch and display data using API with bbox
   async function extractAndDisplayLayerData() {
     if (!targetParcelFeature) {
       console.log('Parcel not ready yet');
@@ -502,7 +402,7 @@
     
     const parcelID = targetParcelFeature.properties.ID;
     const bounds = getBounds(targetParcelFeature.geometry);
-    const bbox = bounds.join(','); // Convert [minLon, minLat, maxLon, maxLat] to "minLon,minLat,maxLon,maxLat"
+    const bbox = bounds.join(',');
     
     console.log('Fetching hedgerow and land cover data with bbox:', bbox);
     
@@ -519,7 +419,7 @@
       hedgerowHTML = `${hedgerowData.count} (${hedgerowData.totalLength}m total)`;
     }
     
-    // Build land cover HTML - use line breaks for multiple items
+    // Build land cover HTML
     let landCoverHTML = 'None';
     if (landCoverData.features.length > 0) {
       const coverItems = landCoverData.features.map(feature => {
@@ -534,9 +434,6 @@
     const container = document.getElementById('parcel-data-container');
     if (container && targetParcelFeature) {
       const props = targetParcelFeature.properties;
-      const sheetId = props.SHEET_ID || 'N/A';
-      const parcelId = props.PARCEL_ID || 'N/A';
-      const combinedRef = sheetId !== 'N/A' && parcelId !== 'N/A' ? `${sheetId} ${parcelId}` : 'N/A';
       
       container.innerHTML = `
         <h2 class="govuk-heading-m govuk-!-margin-top-6">Land parcel</h2>
@@ -545,11 +442,11 @@
           <tbody class="govuk-table__body">
             <tr class="govuk-table__row">
               <th scope="row" class="govuk-table__header" style="width: 25%">ID</th>
-              <td class="govuk-table__cell">${combinedRef}</td>
+              <td class="govuk-table__cell">${TARGET_PARCEL_ID}</td>
             </tr>
             <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">Area (ha)</th>
-              <td class="govuk-table__cell">${props.AREA_HA ? parseFloat(props.AREA_HA).toFixed(4) : 'N/A'}</td>
+              <th scope="row" class="govuk-table__header">Description</th>
+              <td class="govuk-table__cell">${PARCEL_PROPERTIES.description || 'N/A'}</td>
             </tr>
             <tr class="govuk-table__row">
               <th scope="row" class="govuk-table__header">Hedgerows</th>
@@ -564,5 +461,8 @@
       `;
     }
   }
+
+  // Initialize the map when page loads
+  initializeMap();
 </script>
 {% endblock %}

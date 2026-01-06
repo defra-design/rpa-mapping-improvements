@@ -86,7 +86,7 @@ router.post("/register-land-v3/know-parcel-id", async function (req, res) {
   }
 })
 
-// GET route for editing an existing parcel
+// // GET route for editing an existing parcel
 router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
   const parcelId = req.session.data['parcel-id'];
   const url = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`
@@ -95,7 +95,7 @@ router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
   console.log(data)
 
   // Should this be here?
-  //req.session.data['parcel-bounds'] = data?.bounds;
+  req.session.data['parcel-bounds'] = data?.bounds;
 
   // If editing an existing parcel, pre-populate the form
   if (parcelId !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelId]) {
@@ -109,6 +109,40 @@ router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
     parcelBounds: req.session.data['parcel-bounds']
   })
 })
+
+// router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
+//   const parcelId = req.session.data['parcel-id'];
+  
+//   try {
+//     // Only fetch parcel properties - this works without bbox
+//     const parcelUrl = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`;
+//     const parcelResponse = await fetch(parcelUrl);
+//     const parcelData = await parcelResponse.json();
+    
+//     const sbi = parcelData?.properties?.sbi;
+    
+//     if (!sbi) {
+//       throw new Error('SBI not found for this parcel');
+//     }
+    
+//     console.log('SBI:', sbi);
+//     console.log('NGC:', parcelData?.properties?.ngc);
+    
+//     // Render - client-side will fetch WFS data
+//     res.render('register-land-v3/confirm-land-parcel', {
+//       parcelId: parcelId,
+//       parcelProperties: parcelData?.properties,
+//       sbi: sbi
+//     });
+    
+//   } catch (error) {
+//     console.error('Error fetching parcel data:', error);
+//     res.render('register-land-v3/confirm-land-parcel', {
+//       error: 'Unable to load parcel data. Please try again.',
+//       parcelId: parcelId
+//     });
+//   }
+// });
 
 
 
