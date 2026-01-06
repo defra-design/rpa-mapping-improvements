@@ -87,72 +87,115 @@ router.post("/register-land-v3/know-parcel-id", async function (req, res) {
 })
 
 // // GET route for editing an existing parcel
-router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
-  // Parcel service
-  const parcelId = req.session.data['parcel-id'];
-  const url = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`
-  const response = await fetch(url)
-  const data = await response.json()
-
-  // Meta data
-  const metaDataUrl = `https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&cql_filter=SBI=${data?.properties?.sbi}&srsname=EPSG:4326&outputFormat=application/json`
-  const metaDataResponse = await fetch(metaDataUrl)
-  const metaData = await metaDataResponse.json()
-
-  const sheetId = data?.properties?.ngc.slice(0, 6)
-  const fieldRef = data?.properties?.ngc.slice(-4)
-  const landCovers = metaData.features.filter(f => f.properties.SHEET_ID === sheetId && f.properties.PARCEL_ID === fieldRef).map(f => f.properties)
-
-  // Should this be here?
-  req.session.data['parcel-bounds'] = data?.bounds;
-
-  // If editing an existing parcel, pre-populate the form
-  // if (parcelId !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelId]) {
-  //   // Pre-populate the parcel ID
-  //   req.session.data['parcel-bounds'] = data?.bounds;
-  // }
-  
-  // Let the default rendering happen
-  res.render('register-land-v3/confirm-land-parcel', {
-    parcelId: req.session.data['parcel-id'],
-    parcelBounds: req.session.data['parcel-bounds'],
-    landCovers
-  })
-})
-
 // router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
+//   // Parcel service
 //   const parcelId = req.session.data['parcel-id'];
+//   const url = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`
+//   const response = await fetch(url)
+//   const data = await response.json()
+//   console.log(data)
+
+//   // Meta data
+//   const metaDataUrl = `https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&cql_filter=SBI=${data?.properties?.sbi}&srsname=EPSG:4326&outputFormat=application/json`
+//   const metaDataResponse = await fetch(metaDataUrl)
+//   const metaData = await metaDataResponse.json()
+
+//   const sheetId = data?.properties?.ngc.slice(0, 6)
+//   const fieldRef = data?.properties?.ngc.slice(-4)
+//   const landCovers = metaData.features.filter(f => f.properties.SHEET_ID === sheetId && f.properties.PARCEL_ID === fieldRef).map(f => f.properties)
+//   console.log(landCovers)
+
+//   // Should this be here?
+//   req.session.data['parcel-bounds'] = data?.bounds;
+
+//   // If editing an existing parcel, pre-populate the form
+//   // if (parcelId !== undefined && req.session.data['parcels'] && req.session.data['parcels'][parcelId]) {
+//   //   // Pre-populate the parcel ID
+//   //   req.session.data['parcel-bounds'] = data?.bounds;
+//   // }
   
-//   try {
-//     // Only fetch parcel properties - this works without bbox
-//     const parcelUrl = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`;
-//     const parcelResponse = await fetch(parcelUrl);
-//     const parcelData = await parcelResponse.json();
+//   // Let the default rendering happen
+//   res.render('register-land-v3/confirm-land-parcel', {
+//     parcelId: req.session.data['parcel-id'],
+//     parcelBounds: req.session.data['parcel-bounds'],
+//     landCovers
+//   })
+// })
+
+router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
+  const parcelId = req.session.data['parcel-id'];
+  
+  try {
+    // 1. Fetch parcel service data
+    const url = `${process.env.PARCEL_SERVICE_URL}/${parcelId}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log('Parcel data:', data);
     
-//     const sbi = parcelData?.properties?.sbi;
+    const sbi = data?.properties?.sbi;
+    const ngc = data?.properties?.ngc;
+    const sheetId = ngc?.slice(0, 6);
+    const fieldRef = ngc?.slice(-4);
     
-//     if (!sbi) {
-//       throw new Error('SBI not found for this parcel');
-//     }
+    // 2. Fetch land covers
+    const landCoversUrl = `https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&cql_filter=SBI=${sbi}&srsname=EPSG:4326&outputFormat=application/json`;
+    const landCoversResponse = await fetch(landCoversUrl);
+    const landCoversData = await landCoversResponse.json();
     
-//     console.log('SBI:', sbi);
-//     console.log('NGC:', parcelData?.properties?.ngc);
+    // Filter land covers for this specific parcel
+    const landCovers = landCoversData.features
+      .filter(f => f.properties.SHEET_ID === sheetId && f.properties.PARCEL_ID === fieldRef)
+      .map(f => f.properties);
     
-//     // Render - client-side will fetch WFS data
-//     res.render('register-land-v3/confirm-land-parcel', {
-//       parcelId: parcelId,
-//       parcelProperties: parcelData?.properties,
-//       sbi: sbi
-//     });
+    console.log('Land covers:', landCovers);
     
-//   } catch (error) {
-//     console.error('Error fetching parcel data:', error);
-//     res.render('register-land-v3/confirm-land-parcel', {
-//       error: 'Unable to load parcel data. Please try again.',
-//       parcelId: parcelId
-//     });
-//   }
-// });
+    // 3. Fetch hedgerows
+    const hedgerowsUrl = `https://environment.data.gov.uk/data-services/RPA/HedgeControl/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:HedgeControl&cql_filter=SBI=${sbi}&srsname=EPSG:4326&outputFormat=application/json`;
+    const hedgerowsResponse = await fetch(hedgerowsUrl);
+    const hedgerowsData = await hedgerowsResponse.json();
+    
+    // Filter hedgerows for this specific parcel
+    const hedgerows = hedgerowsData.features
+      .filter(f => f.properties.REF_PARCEL_SHEET_ID === sheetId && f.properties.REF_PARCEL_PARCEL_ID === fieldRef)
+      .map(f => f.properties);
+    
+    console.log('Hedgerows:', hedgerows);
+    
+    // Calculate total hedgerow length
+    const totalHedgerowLength = hedgerows.reduce((sum, hedge) => {
+      return sum + (parseFloat(hedge.LENGTH) || 0);
+    }, 0);
+    
+    console.log('Total hedgerow length:', totalHedgerowLength.toFixed(2), 'metres');
+    
+    // Store parcel bounds in session
+    req.session.data['parcel-bounds'] = data?.bounds;
+    
+    // Render the page
+    res.render('register-land-v3/confirm-land-parcel', {
+      parcelId: req.session.data['parcel-id'],
+      parcelBounds: req.session.data['parcel-bounds'],
+      sbi: sbi,
+      landCovers: landCovers,
+      hedgerows: hedgerows,
+      totalHedgerowLength: totalHedgerowLength.toFixed(2)
+    });
+    
+  } catch (error) {
+    console.error('Error in confirm-land-parcel route:', error);
+    
+    // Render error state
+    res.render('register-land-v3/confirm-land-parcel', {
+      parcelId: req.session.data['parcel-id'],
+      error: 'Unable to load parcel data. Please try again.',
+      sbi: '',
+      landCovers: [],
+      hedgerows: [],
+      totalHedgerowLength: '0.00'
+    });
+  }
+});
+
 
 
 
