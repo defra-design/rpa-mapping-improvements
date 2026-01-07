@@ -51,6 +51,7 @@
 
     <form method="post">
       <input id="coords" name="coords" type="hidden"/>
+      <input id="zoom" name="zoom" type="hidden"/>
       {{ govukButton({
         id: "continue-btn",
         text: "Continue",
@@ -204,6 +205,19 @@
       })
     ]
   });
+
+  defraMap.on('map:ready', (e) => {
+    const map = e.map
+    const zoomInput = document.querySelector('#zoom')
+    zoomInput.value = map.getZoom()
+    console.log(map)
+    console.log(zoomInput.value)
+    map.on('zoom', () => {
+      const zoom = map.getZoom()
+      zoomInput.value = JSON.stringify(e.zoom)
+    })
+  })
+
 
   defraMap.on('interact:markerchange', (e) => {
     const coords = document.querySelector('#coords')

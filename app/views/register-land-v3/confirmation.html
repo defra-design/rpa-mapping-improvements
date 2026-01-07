@@ -6,6 +6,29 @@
   Register land request submitted – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
 {% block content %}
 
   <div class="govuk-grid-row">

@@ -4,6 +4,31 @@
   Confirm land parcel – GOV.UK Prototype Kit
 {% endblock %}
 
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+
+
 {% block head %}
   <link href="/public/stylesheets/application.css" rel="stylesheet" type="text/css">
   <link href="/plugin-assets/%40defra%2Fdefra-map/dist/css/index.css" rel="stylesheet" type="text/css">

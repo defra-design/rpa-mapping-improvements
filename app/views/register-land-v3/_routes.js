@@ -246,41 +246,77 @@ router.get("/register-land-v3/confirm-land-parcel", async function (req, res) {
 
 
 
-// Confirm land parcel - NOW saves the parcel with screenshot
-router.post("/register-land-v3/confirm-land-parcel", function (req, res) {
+// // Confirm land parcel - NOW saves the parcel with screenshot
+// router.post("/register-land-v3/confirm-land-parcel", function (req, res) {
   
+//   // Initialize the parcels array if it doesn't exist
+//   if (!req.session.data['parcels']) {
+//     req.session.data['parcels'] = []
+//   }
+  
+//   // Get the parcel ID and map screenshot from the form
+//   const parcelId = req.session.data['parcel-id']
+//   const mapScreenshot = req.body.mapScreenshot; // This comes from the hidden form field
+  
+//   // Create the parcel object with the screenshot
+//   const newParcel = {
+//     id: parcelId,
+//     registeredDate: 'today',
+//     mapScreenshot: mapScreenshot || '/public/images/land-parcel-placeholder.png' // Fallback if screenshot fails
+//   }
+
+//   if (parcelId !== undefined && req.session.data['parcels'][parcelId]) {
+//     // Update existing parcel
+//     req.session.data['parcels'][parcelId] = newParcel
+//     console.log('Updated parcel at index:', parcelId)
+//   } else {
+//     // Add new parcel
+//     req.session.data['parcels'].push(newParcel)
+//     console.log('Added new parcel. Total parcels:', req.session.data['parcels'].length)
+//   }
+  
+//   res.redirect("date-to-link-parcel-to-business")
+// })
+
+
+router.post("/register-land-v3/confirm-land-parcel", function (req, res) {
   // Initialize the parcels array if it doesn't exist
   if (!req.session.data['parcels']) {
-    req.session.data['parcels'] = []
+    req.session.data['parcels'] = [];
   }
   
-  // Get the parcel ID and map screenshot from the form
-  const parcelId = req.session.data['parcel-id']
-  const mapScreenshot = req.body.mapScreenshot; // This comes from the hidden form field
+  // Get the parcel ID from the form
+  const parcelId = req.session.data['parcel-id'];
   
-  // Create the parcel object with the screenshot
+  // Create the parcel object
   const newParcel = {
     id: parcelId,
     registeredDate: 'today',
-    mapScreenshot: mapScreenshot || '/public/images/land-parcel-placeholder.png' // Fallback if screenshot fails
-  }
-
+    isEstimated: false
+  };
+  
   if (parcelId !== undefined && req.session.data['parcels'][parcelId]) {
     // Update existing parcel
-    req.session.data['parcels'][parcelId] = newParcel
-    console.log('Updated parcel at index:', parcelId)
+    req.session.data['parcels'][parcelId] = newParcel;
+    console.log('Updated parcel at index:', parcelId);
   } else {
     // Add new parcel
-    req.session.data['parcels'].push(newParcel)
-    console.log('Added new parcel. Total parcels:', req.session.data['parcels'].length)
+    req.session.data['parcels'].push(newParcel);
+    console.log('Added new parcel. Total parcels:', req.session.data['parcels'].length);
   }
   
-  res.redirect("date-to-link-parcel-to-business")
-})
+  res.redirect("date-to-link-parcel-to-business");
+});
+
+
+
+
 
 // Find or estimate parcel ID
 router.post("/register-land-v3/estimate-land-parcel", async function (req, res) {
+  console.log(req.body)
   const coords = JSON.parse(req.body.coords)
+  const zoom = req.body.zoom
   const url = `${process.env.PARCEL_BY_COORD_SERVICE_URL}?lon=${coords[0]}&lat=${coords[1]}`
   const response = await fetch(url)
   const data = await response.json()
@@ -288,6 +324,8 @@ router.post("/register-land-v3/estimate-land-parcel", async function (req, res) 
   // Do you need these inthe session state?
   req.session.data['parcel-id'] = data.properties?.ngc;
   req.session.data['parcel-bounds'] = data?.bounds;
+  req.session.data['estimate-coords'] = coords;
+  req.session.data['estimate-zoom'] = zoom;
 
   res.redirect("estimate-land-parcel-confirm");
 });
@@ -296,31 +334,172 @@ router.post("/register-land-v3/estimate-land-parcel", async function (req, res) 
 router.get('/register-land-v3/estimate-land-parcel-confirm', function (req, res) {
   res.render('register-land-v3/estimate-land-parcel-confirm', {
     parcelId: req.session.data['parcel-id'],
-    parcelBounds: req.session.data['parcel-bounds']
+    parcelBounds: req.session.data['parcel-bounds'],
+    coords: req.session.data['estimate-coords'],
+    zoom: req.session.data['estimate-zoom']
+    
   })
 })
 
-// Confirm find or estimate parcel ID
-// router.post("/register-land-v3/estimate-land-parcel-confirm", function (req, res) {
-//   res.redirect("upload-land-parcel-map");
+
+
+// router.post('/register-land-v3/estimate-land-parcel-confirm', function (req, res) {
+
+//   var country = req.session.data['signIn']
+//   if (country == "no-parcel-id") {
+//     res.redirect("upload-land-parcel-map")
+//   } else if (country == "found-parcel-id") {
+//     res.redirect("date-to-link-parcel-to-business")
+//   } else if (country == "changes-to-found-parcel") {
+//     res.redirect("upload-land-parcel-map")
+//   } else {
+//     res.redirect("estimate-land-parcel")
+//   }
+// });
+
+// router.post('/register-land-v3/estimate-land-parcel-confirm', function (req, res) {
+//   var country = req.session.data['signIn']
+  
+//   if (country == "no-parcel-id") {
+//     // Initialize the parcels array if it doesn't exist
+//     if (!req.session.data['parcels']) {
+//       req.session.data['parcels'] = [];
+//     }
+    
+//     // Create dummy estimated parcel ID
+//     const estimatedParcelId = 'EST' + Date.now();
+    
+//     const newParcel = {
+//       id: estimatedParcelId,
+//       registeredDate: 'today',
+//       isEstimated: true,
+//       bounds: req.session.data['parcel-bounds'],
+//       // fileUpload: 'test-file.pdf'  // Add this for testing
+//     };
+    
+//     req.session.data['parcels'].push(newParcel);
+//     req.session.data['parcel-id'] = estimatedParcelId;
+//     console.log('Added estimated parcel. Total parcels:', req.session.data['parcels'].length);
+    
+//     res.redirect("upload-land-parcel-map")
+//   } else if (country == "found-parcel-id") {
+//     // Initialize the parcels array if it doesn't exist
+//     if (!req.session.data['parcels']) {
+//       req.session.data['parcels'] = [];
+//     }
+    
+//     const parcelId = req.session.data['parcel-id'];
+//     const parcelBounds = req.session.data['parcel-bounds'];
+    
+//     const newParcel = {
+//       id: parcelId,
+//       registeredDate: 'today',
+//       isEstimated: false,
+//       bounds: parcelBounds
+//     };
+    
+//     req.session.data['parcels'].push(newParcel);
+//     console.log('Added found parcel. Total parcels:', req.session.data['parcels'].length);
+    
+//     res.redirect("date-to-link-parcel-to-business")
+//   } else if (country == "changes-to-found-parcel") {
+//     res.redirect("upload-land-parcel-map")
+//   } else {
+//     res.redirect("estimate-land-parcel")
+//   }
 // });
 
 router.post('/register-land-v3/estimate-land-parcel-confirm', function (req, res) {
-
   var country = req.session.data['signIn']
+  
   if (country == "no-parcel-id") {
+    // Initialize the parcels array if it doesn't exist
+    if (!req.session.data['parcels']) {
+      req.session.data['parcels'] = [];
+    }
+    
+    // Create dummy estimated parcel ID
+    const estimatedParcelId = 'EST' + Date.now();
+    
+    const newParcel = {
+      id: estimatedParcelId,
+      registeredDate: 'today',
+      isEstimated: true,
+      bounds: req.session.data['parcel-bounds']
+    };
+    
+    req.session.data['parcels'].push(newParcel);
+    req.session.data['parcel-id'] = estimatedParcelId;
+    console.log('Added estimated parcel. Total parcels:', req.session.data['parcels'].length);
+    
     res.redirect("upload-land-parcel-map")
   } else if (country == "found-parcel-id") {
+    // Initialize the parcels array if it doesn't exist
+    if (!req.session.data['parcels']) {
+      req.session.data['parcels'] = [];
+    }
+    
+    const parcelId = req.session.data['parcel-id'];
+    const parcelBounds = req.session.data['parcel-bounds'];
+    
+    const newParcel = {
+      id: parcelId,
+      registeredDate: 'today',
+      isEstimated: false,
+      bounds: parcelBounds
+    };
+    
+    req.session.data['parcels'].push(newParcel);
+    console.log('Added found parcel. Total parcels:', req.session.data['parcels'].length);
+    
     res.redirect("date-to-link-parcel-to-business")
   } else if (country == "changes-to-found-parcel") {
+    // Initialize the parcels array if it doesn't exist
+    if (!req.session.data['parcels']) {
+      req.session.data['parcels'] = [];
+    }
+    
+    // Add the found parcel but mark it as needing changes
+    const parcelId = req.session.data['parcel-id'];
+    const parcelBounds = req.session.data['parcel-bounds'];
+    
+    const newParcel = {
+      id: parcelId,
+      registeredDate: 'today',
+      isEstimated: false,
+      needsChanges: true, // Flag to indicate user wants to upload their own map
+      bounds: parcelBounds
+    };
+    
+    req.session.data['parcels'].push(newParcel);
+    console.log('Added parcel with changes needed. Total parcels:', req.session.data['parcels'].length);
+    
     res.redirect("upload-land-parcel-map")
   } else {
     res.redirect("estimate-land-parcel")
   }
 });
 
+// // Upload land parcel map
+// router.post("/register-land-v3/upload-land-parcel-map", function (req, res) {
+//   res.redirect("date-to-link-parcel-to-business");
+// });
+
 // Upload land parcel map
 router.post("/register-land-v3/upload-land-parcel-map", function (req, res) {
+  const parcelId = req.session.data['parcel-id'];
+  const fileUpload = req.session.data['fileUpload'];
+  
+  // Find the parcel in the array and update it with the file upload
+  if (req.session.data['parcels'] && parcelId) {
+    const parcelIndex = req.session.data['parcels'].findIndex(p => p.id === parcelId);
+    
+    if (parcelIndex !== -1) {
+      req.session.data['parcels'][parcelIndex].fileUpload = fileUpload;
+      console.log('Added file upload to parcel:', parcelId);
+    }
+  }
+  
   res.redirect("date-to-link-parcel-to-business");
 });
 

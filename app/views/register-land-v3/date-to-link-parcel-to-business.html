@@ -4,6 +4,29 @@
   Enter the date you want to link the land parcel to your business – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
 {% block content %}
 
   <div class="govuk-grid-row">
@@ -38,7 +61,7 @@
               }) }}
       </form>
 
-
+<!-- <p>{{ data | dump }}</p> -->
 
     </div>
   </div>

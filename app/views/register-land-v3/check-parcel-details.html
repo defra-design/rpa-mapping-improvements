@@ -4,6 +4,29 @@
   Check parcel details before submitting – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds-from-desktop">
@@ -13,16 +36,98 @@
         Check your answers
       </h1>
 
-<!-- <p>{{ data | dump }}</p> -->
+
 
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
-
 <!-- Check if the 'parcels' array exists and has items -->
+<!-- <p>DEBUG: parcels exists: {{ data['parcels'] }}</p>
+<p>DEBUG: parcels length: {{ data['parcels'].length }}</p> -->
+
 {% if data['parcels'] and data['parcels'].length %}
-
-  <!-- Loop through each parcel object in the 'parcels' array -->
+<!-- Loop through each parcel object in the 'parcels' array -->
   {% for parcel in data['parcels'] %}
-
+    <!-- <p>DEBUG: Processing parcel {{ loop.index }}: {{ parcel | dump }}</p>
+    <p>DEBUG: fileUpload value: {{ parcel.fileUpload }}</p> -->
+    
+    {% set summaryRows = [
+      {
+        key: {
+          text: "Parcel ID"
+        },
+        value: {
+          html: parcel.id 
+        },
+        actions: {
+          items: [
+            {
+              href: "confirm-land-parcel-single?parcelIndex=" + loop.index0,
+              text: "Change",
+              visuallyHiddenText: "parcel ID for land parcel " + loop.index
+            }
+          ]
+        }
+      },
+      {
+        key: {
+          text: "Registered date"
+        },
+        value: {
+          html: "today" | govukDate
+        },
+        actions: {
+          items: [
+            {
+              href: "#",
+              text: "Change",
+              visuallyHiddenText: "registered date for land parcel " + loop.index
+            }
+          ]
+        }
+      },
+      {
+        key: {
+          text: "Land parcel"
+        },
+        value: {
+          html: "<div class='parcel-map-container' data-parcel-index='" + loop.index0 + "'><img src='/public/images/land-parcel-placeholder.png' alt='Map showing land parcel " + loop.index + "' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%;'></div>"
+        },
+        actions: {
+          items: [
+            {
+              href: "confirm-land-parcel-single?parcelIndex=" + loop.index0,
+              text: "Change",
+              visuallyHiddenText: "map of land parcel " + loop.index
+            }
+          ]
+        },
+        classes: "govuk-summary-list__row--align-top"
+      }
+    ] %}
+    
+    <!-- <p>DEBUG: summaryRows before concat: {{ summaryRows.length }}</p> -->
+    
+    {% if parcel.fileUpload %}
+      <!-- <p>DEBUG: fileUpload exists, adding row</p> -->
+      {% set summaryRows = summaryRows.concat([{
+        key: {
+          text: "File upload"
+        },
+        value: {
+          html: parcel.fileUpload
+        },
+        actions: {
+          items: [
+            {
+              href: "#",
+              text: "Change",
+              visuallyHiddenText: "file upload for land parcel " + loop.index
+            }
+          ]
+        }
+      }]) %}
+      <!-- <p>DEBUG: summaryRows after concat: {{ summaryRows.length }}</p> -->
+    {% endif %}
+    
     {{ govukSummaryList({
       card: {
         title: {
@@ -35,73 +140,17 @@
               text: "Delete parcel",
               visuallyHiddenText: "parcel " + loop.index,
               attributes: {
-              'data-bypass': 'true'
-          }
+                'data-bypass': 'true'
+              }
             }
           ]
         }
       },
-      rows: [
-        {
-          key: {
-            text: "Parcel ID"
-          },
-          value: {
-            html: parcel.id 
-          },
-          actions: {
-            items: [
-              {
-                href: "confirm-land-parcel-single?parcelIndex=" + loop.index0,
-                text: "Change",
-                visuallyHiddenText: "parcel ID for land parcel " + loop.index
-              }
-            ]
-          }
-        },
-        {
-          key: {
-            text: "Registered date"
-          },
-          value: {
-            html: "today" | govukDate
-          },
-          actions: {
-            items: [
-              {
-                href: "#",
-                text: "Change",
-                visuallyHiddenText: "registered date for land parcel " + loop.index
-              }
-            ]
-          }
-        },
-        {
-          key: {
-            text: "Land parcel"
-          },
-          value: {
-            html: "<div class='parcel-map-container' data-parcel-index='" + loop.index0 + "'><img src='" + (parcel.mapScreenshot or '') + "' alt='Map showing land parcel " + loop.index + "' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%;'></div>"
-          },
-          actions: {
-            items: [
-              {
-                href: "confirm-land-parcel-single?parcelIndex=" + loop.index0,
-                text: "Change",
-                visuallyHiddenText: "map of land parcel " + loop.index
-              }
-            ]
-          },
-      classes: "govuk-summary-list__row--align-top"
-        }
-      ]
+      rows: summaryRows
     }) }}
-
   {% endfor %}
-<!-- End of loop -->
-
 {% else %}
-  <p class="govuk-body">You have not added any parcels.</p>
+<p class="govuk-body">You have not added any parcels.</p>
 {% endif %}
 
 
@@ -137,7 +186,7 @@
         }) }}
 
     </form>
-
+<!-- <p>{{ data | dump }}</p> -->
     </div>
   </div>
 {% endblock %}
@@ -151,26 +200,4 @@
 }
 </style>
 
-<script>
-  // Debug: Check if screenshots are in the data
-  window.addEventListener('DOMContentLoaded', function() {
-    const mapContainers = document.querySelectorAll('.parcel-map-container');
-    
-    console.log('Number of parcels:', mapContainers.length);
-    
-    mapContainers.forEach((container, index) => {
-      const img = container.querySelector('img');
-      if (img) {
-        const hasSrc = img.src && img.src !== window.location.href && img.src !== '';
-        console.log(`Parcel ${index + 1} screenshot:`, hasSrc ? 'Present (' + img.src.length + ' chars)' : 'Missing');
-        
-        // Hide broken image icon if no src
-        if (!hasSrc) {
-          img.style.display = 'none';
-          container.innerHTML = '<p class="govuk-body">Map preview not available</p>';
-        }
-      }
-    });
-  });
-</script>
 {% endblock %}

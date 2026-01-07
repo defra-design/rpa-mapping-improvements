@@ -148,7 +148,7 @@
       </form>
         {% endif %}
 
-
+      <!-- <p>{{ data | dump }}</p> -->
 
     </div>
   </div>
@@ -255,6 +255,7 @@
       ]
     })
   } else {
+    const coords = [{{ coords }}]
     const defraMap = new defra.DefraMap('map', {
       mapProvider: defra.maplibreProvider(),
       reverseGeocodeProvider: defra.openNamesProvider({
@@ -263,7 +264,9 @@
       behaviour: 'inline',
       minZoom: 6,
       maxZoom: 18,
-      bounds: TARGET_PARCEL_BOUNDS,
+      zoom: {{ zoom }},
+      center: coords,
+      //bounds: TARGET_PARCEL_BOUNDS,
       containerHeight: '650px',
       transformRequest: transformTileRequest,
       plugins: [
@@ -325,7 +328,9 @@
         })
       ]
     })
-
+    defraMap.on('map:ready', () => {
+      defraMap.addMarker('pin', coords)
+    })
   }
 
   </script>
