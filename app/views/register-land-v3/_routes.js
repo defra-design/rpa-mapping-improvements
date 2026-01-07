@@ -411,6 +411,29 @@ router.get('/register-land-v3/estimate-land-parcel-confirm', function (req, res)
 
 router.post('/register-land-v3/estimate-land-parcel-confirm', function (req, res) {
   var country = req.session.data['signIn']
+
+// Function to generate a realistic estimated parcel ID
+function generateEstimatedParcelId() {
+  // Common UK Ordnance Survey grid squares
+  const osGridSquares = [
+    'NY', 'SD', 'TQ', 'SJ', 'SE', 'SK', 'SO', 'SP', 'ST', 'SU', 'SZ', 'TA', 'TF', 'TG', 'TL', 'TM',
+    'TR', 'TV', 'NC', 'ND', 'NF', 'NG', 'NH', 'NJ', 'NK', 'NL', 'NM', 'NN', 'NO', 'NR', 'NS', 'NT',
+    'NU', 'NW', 'NX', 'NZ', 'OV', 'SC', 'SH', 'SM', 'SN', 'SR', 'SS', 'SX', 'SY', 'HT', 'HU', 'HW',
+    'HX', 'HY', 'HZ', 'NA', 'NB'
+  ];
+  
+  // Pick a random grid square
+  const letters = osGridSquares[Math.floor(Math.random() * osGridSquares.length)];
+  
+  // Generate random 4 numbers for OS sheet reference
+  const sheetNumbers = Math.floor(1000 + Math.random() * 9000);
+  
+  // Generate random 4 numbers for National Grid field number
+  const fieldNumbers = Math.floor(1000 + Math.random() * 9000);
+  
+  // Combine: XX#### #### (e.g., "NY7117 9787")
+  return `${letters}${sheetNumbers} ${fieldNumbers}`;
+}
   
   if (country == "no-parcel-id") {
     // Initialize the parcels array if it doesn't exist
@@ -419,7 +442,10 @@ router.post('/register-land-v3/estimate-land-parcel-confirm', function (req, res
     }
     
     // Create dummy estimated parcel ID
-    const estimatedParcelId = 'EST' + Date.now();
+    //const estimatedParcelId = 'EST' + Date.now();
+
+    // Create realistic estimated parcel ID
+    const estimatedParcelId = generateEstimatedParcelId();
     
     const newParcel = {
       id: estimatedParcelId,

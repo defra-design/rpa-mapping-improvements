@@ -11,10 +11,8 @@
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">AR FIELDING</span>
-        Upload a map for land parcel {{ data['id'] or "RD6920 2871" }}
+        Upload a map for land parcel {{ data['parcel-id'] or "RD6920 2871" }}
       </h1>
-
-      <!-- <p>{{ data | dump }}</p> -->
 
       <p>Upload a map that shows the land you want to register. For guidance see <a href="#">Creating a sketch map to register land or update digital maps</a>.</p>
 
@@ -53,6 +51,8 @@
             text: "Continue"
         }) }}
       </form>
+
+      <!-- <p>{{ data | dump }}</p> -->
 
     </div>
   </div>
