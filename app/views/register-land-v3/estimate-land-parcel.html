@@ -210,11 +210,9 @@
     const map = e.map
     const zoomInput = document.querySelector('#zoom')
     zoomInput.value = map.getZoom()
-    console.log(map)
-    console.log(zoomInput.value)
     map.on('zoom', () => {
       const zoom = map.getZoom()
-      zoomInput.value = JSON.stringify(e.zoom)
+      zoomInput.value = zoom
     })
   })
 
