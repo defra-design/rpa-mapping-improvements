@@ -4,6 +4,29 @@
   Find the land you want to register – GOV.UK Prototype Kit
 {% endblock %}
 
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
 {% block head %}
   <link href="/public/stylesheets/application.css" rel="stylesheet" type="text/css">
   <link href="/plugin-assets/%40defra%2Fdefra-map/dist/css/index.css" rel="stylesheet" type="text/css">
@@ -36,7 +59,7 @@
     <ul class="govuk-list govuk-list--bullet">
       <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
       <li>map search to enter a location, for example, the nearest city, town or postcode</li>
-      <li>click on a parcel to select it and view its details</li>
+      <!-- <li>click on a parcel to select it and view its details</li> -->
     </ul>
   </div>
 </div>

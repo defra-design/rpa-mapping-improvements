@@ -4,6 +4,29 @@
   Confirm estimated land parcel – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
 {% block head %}
   <link href="/public/stylesheets/application.css" rel="stylesheet" type="text/css">
   <link href="/plugin-assets/%40defra%2Fdefra-map/dist/css/index.css" rel="stylesheet" type="text/css">
@@ -26,9 +49,17 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
         {% if parcelId %}
-          <h1 class="govuk-heading-l">You have chosen to register an existing land parcel {{ parcelId }}</h1>
+          <h1 class="govuk-heading-l">You have selected land parcel {{ parcelId }}</h1>
         {% else %}
-          <h1 class="govuk-heading-l">There is no existing parcel ID for the land you have chosen to register</h1>
+          <h1 class="govuk-heading-l">Continue to upload a map of this area</h1>
+
+          <p>You need to upload a map that shows the area you want to register as a parcel.</p>
+
+          <p>This is because this area has never been registered as a land parcel before and so does not have a parcel ID.</p>
+
+          <p>We will give you an estimated parcel ID which you can use as a reference until we confirm the official parcel ID. We will give you the official parcel ID when we process your registration details.</p>
+
+          <p>Read the guidance on <a href="#">Creating a sketch map to register land or update digital maps</a>.</p>
         {% endif %}
       
     </div>
@@ -69,34 +100,31 @@
           name: "signIn",
           fieldset: {
             legend: {
-              text: "Customer has found the land they want to register, what do they do now?",
+              text: "Do you want to register this parcel?",
               isPageHeading: false,
               classes: "govuk-fieldset__legend--m"
             }
           },
           hint: {
-            text: "What do you want to do with the land you've found?"
+            text: "Select one option"
           },
           items: [
             {
               value: "found-parcel-id",
-              text: "Existing land parcel",
-              hint: {
-                text: "Customer has found an existing land parcel with an ID, customer asked to confirm they've found the correct parcel they want to register."
-              }
+              text: "Yes"
             },
             {
               value: "changes-to-found-parcel",
-              text: "Existing land parcel, but want to make changes",
+              text: "Yes with some changes",
               hint: {
-                text: "Customer has found an existing land parcel with an ID, but they only want to register part of the parcel, they'll need to upload a map."
+                text: "Upload a map with changes, for example to the size or shape"
               }
             },
             {
               value: "back-to-map",
-              text: "None of the above, go back to map",
+              text: "No",
               hint: {
-                text: "Customer wants to return to map"
+                text: "Go back to the map search"
               }
             }
           ]
@@ -115,27 +143,24 @@
           name: "signIn",
           fieldset: {
             legend: {
-              text: "Customer has found the land they want to register, what do they do now?",
+              text: "Do you want to continue registering and upload a map of the parcel?",
               isPageHeading: false,
               classes: "govuk-fieldset__legend--m"
             }
           },
           hint: {
-            text: "What do you want to do with the land you've found?"
+            text: "Select one option"
           },
           items: [
             {
               value: "no-parcel-id",
-              text: "Land parcel does not exist",
-              hint: {
-                text: "Customer has found some land that doesn't have a parcel ID, they'll need to upload a map."
-              }
+              text: "Yes"
             },
             {
               value: "back-to-map",
-              text: "None of the above, go back to map",
+              text: "No",
               hint: {
-                text: "Customer wants to return to map"
+                text: "Go back to the map search and choose a different area"
               }
             }
           ]
