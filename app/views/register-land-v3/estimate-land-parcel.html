@@ -66,7 +66,7 @@
 
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
-    <div id="map" data-zoom="15" data-center="[-2.968, 54.425]"></div>
+    <div id="map" data-zoom="6" data-center="[-3.3767542,52.4433567]"></div>
     
     <br>
     
@@ -249,76 +249,76 @@
   })
 
   // Function to display list of visible parcels
-  function displayParcelList() {
-    const container = document.getElementById('parcel-data-container');
+  // function displayParcelList() {
+  //   const container = document.getElementById('parcel-data-container');
     
-    if (!container) {
-      console.error('Could not find parcel-data-container element');
-      return;
-    }
+  //   if (!container) {
+  //     console.error('Could not find parcel-data-container element');
+  //     return;
+  //   }
     
-    const totalArea = allParcelData.reduce((sum, parcel) => {
-      return sum + (parseFloat(parcel.properties.AREA_HA) || 0);
-    }, 0);
+  //   const totalArea = allParcelData.reduce((sum, parcel) => {
+  //     return sum + (parseFloat(parcel.properties.AREA_HA) || 0);
+  //   }, 0);
     
-    // Sort parcels by ID for easier reading
-    const sortedParcels = [...allParcelData].sort((a, b) => {
-      const aRef = `${a.properties.SHEET_ID || ''} ${a.properties.PARCEL_ID || ''}`.trim();
-      const bRef = `${b.properties.SHEET_ID || ''} ${b.properties.PARCEL_ID || ''}`.trim();
-      return aRef.localeCompare(bRef);
-    });
+  //   // Sort parcels by ID for easier reading
+  //   const sortedParcels = [...allParcelData].sort((a, b) => {
+  //     const aRef = `${a.properties.SHEET_ID || ''} ${a.properties.PARCEL_ID || ''}`.trim();
+  //     const bRef = `${b.properties.SHEET_ID || ''} ${b.properties.PARCEL_ID || ''}`.trim();
+  //     return aRef.localeCompare(bRef);
+  //   });
     
-    container.innerHTML = `
-      <h2 class="govuk-heading-m">Visible land parcels</h2>
+  //   container.innerHTML = `
+  //     <h2 class="govuk-heading-m">Visible land parcels</h2>
       
-      <dl class="govuk-summary-list">
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Total parcels in view</dt>
-          <dd class="govuk-summary-list__value">${allParcelData.length}</dd>
-        </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Total area</dt>
-          <dd class="govuk-summary-list__value">${totalArea.toFixed(2)} ha</dd>
-        </div>
-      </dl>
+  //     <dl class="govuk-summary-list">
+  //       <div class="govuk-summary-list__row">
+  //         <dt class="govuk-summary-list__key">Total parcels in view</dt>
+  //         <dd class="govuk-summary-list__value">${allParcelData.length}</dd>
+  //       </div>
+  //       <div class="govuk-summary-list__row">
+  //         <dt class="govuk-summary-list__key">Total area</dt>
+  //         <dd class="govuk-summary-list__value">${totalArea.toFixed(2)} ha</dd>
+  //       </div>
+  //     </dl>
       
-      <details class="govuk-details">
-        <summary class="govuk-details__summary">
-          <span class="govuk-details__summary-text">
-            View all parcel IDs
-          </span>
-        </summary>
-        <div class="govuk-details__text">
-          <table class="govuk-table">
-            <thead class="govuk-table__head">
-              <tr class="govuk-table__row">
-                <th scope="col" class="govuk-table__header">Parcel ID</th>
-                <th scope="col" class="govuk-table__header">Area (ha)</th>
-                <th scope="col" class="govuk-table__header">SBI</th>
-              </tr>
-            </thead>
-            <tbody class="govuk-table__body">
-              ${sortedParcels.map(parcel => {
-                const sheetId = parcel.properties.SHEET_ID || '';
-                const parcelId = parcel.properties.PARCEL_ID || '';
-                const combinedRef = (sheetId && parcelId) ? `${sheetId} ${parcelId}` : 'N/A';
-                const area = parcel.properties.AREA_HA ? parseFloat(parcel.properties.AREA_HA).toFixed(4) : 'N/A';
-                const sbi = parcel.properties.SBI || 'N/A';
+  //     <details class="govuk-details">
+  //       <summary class="govuk-details__summary">
+  //         <span class="govuk-details__summary-text">
+  //           View all parcel IDs
+  //         </span>
+  //       </summary>
+  //       <div class="govuk-details__text">
+  //         <table class="govuk-table">
+  //           <thead class="govuk-table__head">
+  //             <tr class="govuk-table__row">
+  //               <th scope="col" class="govuk-table__header">Parcel ID</th>
+  //               <th scope="col" class="govuk-table__header">Area (ha)</th>
+  //               <th scope="col" class="govuk-table__header">SBI</th>
+  //             </tr>
+  //           </thead>
+  //           <tbody class="govuk-table__body">
+  //             ${sortedParcels.map(parcel => {
+  //               const sheetId = parcel.properties.SHEET_ID || '';
+  //               const parcelId = parcel.properties.PARCEL_ID || '';
+  //               const combinedRef = (sheetId && parcelId) ? `${sheetId} ${parcelId}` : 'N/A';
+  //               const area = parcel.properties.AREA_HA ? parseFloat(parcel.properties.AREA_HA).toFixed(4) : 'N/A';
+  //               const sbi = parcel.properties.SBI || 'N/A';
                 
-                return `
-                  <tr class="govuk-table__row">
-                    <td class="govuk-table__cell">${combinedRef}</td>
-                    <td class="govuk-table__cell">${area}</td>
-                    <td class="govuk-table__cell">${sbi}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      </details>
-    `;
-  }
+  //               return `
+  //                 <tr class="govuk-table__row">
+  //                   <td class="govuk-table__cell">${combinedRef}</td>
+  //                   <td class="govuk-table__cell">${area}</td>
+  //                   <td class="govuk-table__cell">${sbi}</td>
+  //                 </tr>
+  //               `;
+  //             }).join('')}
+  //           </tbody>
+  //         </table>
+  //       </div>
+  //     </details>
+  //   `;
+  // }
 
   console.log('Map initialization complete');
 </script>

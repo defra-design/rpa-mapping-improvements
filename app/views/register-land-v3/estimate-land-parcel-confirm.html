@@ -53,11 +53,7 @@
         {% else %}
           <h1 class="govuk-heading-l">Continue to upload a map of this area</h1>
 
-          <p>You need to upload a map that shows the area you want to register as a parcel.</p>
-
-          <p>This is because this area has never been registered as a land parcel before and so does not have a parcel ID.</p>
-
-          <p>We will give you an estimated parcel ID which you can use as a reference until we confirm the official parcel ID. We will give you the official parcel ID when we process your registration details.</p>
+          <p>You need to upload a map that shows the area you want to register as a parcel. This is because this area has never been registered as a land parcel before and so does not have a parcel ID.</p>
 
           <p>Read the guidance on <a href="https://www.gov.uk/guidance/creating-a-sketch-map-to-register-land-or-update-your-digital-maps" class="govuk-link" rel="noreferrer noopener" target="_blank">Creating a sketch map to register land or update digital maps. (opens in new tab)</a></p>
 
@@ -85,7 +81,7 @@
 
       <div id="map"></div>
 
-      <br>
+      <br/>
 
     </div>
   </div>
@@ -136,7 +132,13 @@
         }) }}
 
       </form>
+
         {% else %}
+
+      <h2 class="govuk-heading-m">Estimated parcel ID</h2>
+
+      <p>We will give you an estimated parcel ID which you can use as a reference until we confirm the official parcel ID. We will give you the official parcel ID when we process your registration details.</p>
+
       <form class="form" method="post">
         {% from "govuk/components/radios/macro.njk" import govukRadios %}
 

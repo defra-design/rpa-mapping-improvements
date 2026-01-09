@@ -46,6 +46,8 @@
 {% if data['parcels'] and data['parcels'].length %}
 <!-- Loop through each parcel object in the 'parcels' array -->
   {% for parcel in data['parcels'] %}
+{% set imageNumber = (loop.index0 % 4) + 1 %}
+{% set imagePath = '/public/images/land-parcel-placeholder-' + imageNumber + '.png' %}
     <!-- <p>DEBUG: Processing parcel {{ loop.index }}: {{ parcel | dump }}</p>
     <p>DEBUG: fileUpload value: {{ parcel.fileUpload }}</p> -->
     
@@ -60,9 +62,9 @@
         actions: {
           items: [
             {
-              href: "confirm-land-parcel-single?parcelIndex=" + loop.index0,
+              href: "#",
               text: "Change",
-              visuallyHiddenText: "parcel ID for land parcel " + loop.index
+              visuallyHiddenText: "parcel ID for land parcel"
             }
           ]
         }
@@ -89,14 +91,14 @@
           text: "Land parcel"
         },
         value: {
-          html: "<div class='parcel-map-container' data-parcel-index='" + loop.index0 + "'><img src='/public/images/land-parcel-placeholder.png' alt='Map showing land parcel " + loop.index + "' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%;'></div>"
+          html: "<div class='parcel-map-container' data-parcel-index='" + loop.index0 + "'><img src='" + imagePath + "' alt='Map showing land parcel " + loop.index + "' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%;'></div>"
         },
         actions: {
           items: [
             {
-              href: "confirm-land-parcel-single?parcelIndex=" + loop.index0,
+              href: "#",
               text: "Change",
-              visuallyHiddenText: "map of land parcel " + loop.index
+              visuallyHiddenText: "map of land parcel"
             }
           ]
         },
@@ -106,26 +108,24 @@
     
     <!-- <p>DEBUG: summaryRows before concat: {{ summaryRows.length }}</p> -->
     
-    {% if parcel.fileUpload %}
-      <!-- <p>DEBUG: fileUpload exists, adding row</p> -->
+    {% if parcel.fileUpload or parcel.isEstimated or parcel.needsChanges %}
       {% set summaryRows = summaryRows.concat([{
         key: {
           text: "Map upload"
         },
         value: {
-          html: parcel.fileUpload
+          html: parcel.fileUpload or "map-of-land-parcel-" + parcel.id + ".pdf"
         },
         actions: {
           items: [
             {
-              href: "#",
+              href: "upload-land-parcel-map?parcelIndex=" + loop.index0,
               text: "Change",
               visuallyHiddenText: "file upload for land parcel " + loop.index
             }
           ]
         }
       }]) %}
-      <!-- <p>DEBUG: summaryRows after concat: {{ summaryRows.length }}</p> -->
     {% endif %}
     
     {{ govukSummaryList({
