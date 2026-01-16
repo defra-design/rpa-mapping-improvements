@@ -83,6 +83,8 @@ The application uses `@defra/defra-map` component (configured in `app/config.jso
 - Interactive parcel selection and drawing
 - MapLibre GL geocoder integration
 
+**See [DEFRA-MAP-COMPONENT.md](DEFRA-MAP-COMPONENT.md) for comprehensive documentation** on the DEFRA map component including all plugins, providers, configuration options, and usage examples.
+
 ### Form Validation Pattern
 
 The register-land-v3 routes implement comprehensive server-side validation:

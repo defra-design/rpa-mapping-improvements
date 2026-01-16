@@ -139,7 +139,10 @@ The API key is kept server-side and injected via proxy routes for security.
 
 This prototype uses the [GOV.UK Prototype Kit](https://prototype-kit.service.gov.uk/).
 
-For detailed architecture information, coding patterns, and guidance for Claude Code, see [CLAUDE.md](CLAUDE.md).
+### Documentation
+
+- **[CLAUDE.md](CLAUDE.md)** - Architecture overview, coding patterns, and development guidelines
+- **[DEFRA-MAP-COMPONENT.md](DEFRA-MAP-COMPONENT.md)** - Comprehensive guide to the DEFRA map component including all plugins, configuration options, and usage examples
 
 ### Making Changes
 
