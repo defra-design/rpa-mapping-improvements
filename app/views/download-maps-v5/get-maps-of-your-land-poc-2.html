@@ -42,104 +42,53 @@
   <main>
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-one-third">
+        <!-- Title -->
+        <h1 class="govuk-heading-m">Map of your land</h1>
+        
         <!-- Whole holding information -->
-        <div id="whole-holding-summary">
-          <h2 class="govuk-heading-m govuk-!-static-margin-bottom-1">Whole holding</h2>
-          <p class="govuk-body-s govuk-!-static-margin-bottom-1">
-            Total area (ha) <span id="sidebar-total-area">Loading</span>
-          </p>
-          <p class="govuk-body-s govuk-!-static-margin-bottom-2">
-            Total parcels <span id="sidebar-total-parcels">Loading</span>
-          </p>
-        </div>
-
-        <!-- Individual parcels information (hidden by default) -->
-        <div id="individual-parcels-summary" style="display: none;">
-          <h2 class="govuk-heading-m govuk-!-static-margin-bottom-1">Individual land parcels</h2>
-          <p class="govuk-body-s govuk-!-static-margin-bottom-1">
-            Selected area (ha) <span id="sidebar-selected-area">0</span>
-          </p>
-          <p class="govuk-body-s govuk-!-static-margin-bottom-2">
-            Parcels selected <span id="sidebar-selected-count">0 of 0</span>
-          </p>
-        </div>
-
-        <!-- Single set of radio buttons -->
-        {% from "govuk/components/radios/macro.njk" import govukRadios %}
-        {{ govukRadios({
-          classes: "govuk-radios--small",
-          name: "selectMap",
-          formGroup: {
-            classes: "govuk-!-static-margin-bottom-2"
-          },
-          items: [
-            {
-              value: "whole-holding",
-              text: "Whole holding",
-              checked: true
-            },
-            {
-              value: "indi-parcels",
-              text: "Individual land parcels"
-            }
-          ]
-        }) }}
+        <p class="govuk-body govuk-!-margin-bottom-0">
+          Total area (ha) <span id="sidebar-total-area">0.0000</span>
+        </p>
+        <p class="govuk-body">
+          Total parcels <span id="sidebar-total-parcels">0</span>
+        </p>
 
         {% from "govuk/components/button/macro.njk" import govukButton %}
         {{ govukButton({
           text: "Download map",
-          classes: "govuk-!-static-margin-bottom-2"
+          classes: "govuk-!-static-margin-bottom-4"
         }) }}
 
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
+        <!-- Tabs component for different views -->
+        {% from "govuk/components/tabs/macro.njk" import govukTabs %}
         
-        <div id="land-parcels-section">
-          {% from "govuk/components/input/macro.njk" import govukInput %}
-          {{ govukInput({
-            id: "parcel-filter",
-            name: "parcelFilter",
-            classes: "govuk-input--width-10",
-            formGroup: {
-              classes: "govuk-!-margin-bottom-2"
+        {{ govukTabs({
+          items: [
+            {
+              label: "Land parcels",
+              id: "land-parcels",
+              panel: {
+                html: '<p class="govuk-body govuk-!-margin-bottom-0">Selected area (ha) <span id="sidebar-selected-area">0.0000</span></p><p class="govuk-body">Parcels selected <span id="sidebar-selected-count">0 of 0</span></p><div class="govuk-form-group govuk-!-margin-bottom-2"><label class="govuk-label govuk-label--s govuk-!-margin-bottom-1" for="parcel-filter">Filter</label><input class="govuk-input govuk-input--width-10" id="parcel-filter" name="parcelFilter" type="text"></div><div class="scrollable-checkbox-container" id="parcels-list"><p class="govuk-body-s">Loading</p></div>'
+              }
             },
-            label: {
-              text: "Filter",
-              classes: "govuk-label--m govuk-!-margin-bottom-1"
+            {
+              label: "Land covers",
+              id: "land-covers",
+              panel: {
+                html: '<div class="scrollable-checkbox-container" id="land-covers-list"><!-- Will be populated dynamically by JavaScript --></div>'
+              }
+            },
+            {
+              label: "Hedgerows",
+              id: "hedgerows",
+              panel: {
+                html: '<div class="govuk-checkboxes govuk-checkboxes--small"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="hedgerows-checkbox" name="hedgerows" type="checkbox" value="hedgerows"><label class="govuk-label govuk-checkboxes__label" for="hedgerows-checkbox">Show hedgerows</label></div></div>'
+              }
             }
-          }) }}
-          
-          <div class="scrollable-checkbox-container" id="parcels-list">
-            <p class="govuk-body-s">Loading</p>
-          </div>
-          <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
-        </div>
+          ]
+        }) }}
 
-        <div>
-          <h2 class="govuk-heading-m govuk-!-static-margin-bottom-1">Data</h2>
-          
-          <div class="scrollable-checkbox-container">
-            {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
-
-            {{ govukCheckboxes({
-              formGroup: {
-              classes: "govuk-!-static-margin-bottom-0"
-              },
-              name: "additionalInfo",
-              classes: "govuk-checkboxes--small",
-              items: [
-                {
-                  value: "land-covers",
-                  text: "Land covers"
-                },
-                {
-                  value: "hedgerows",
-                  text: "Hedgerows"
-                }
-              ]
-            }) }}
-          </div>    
-        </div>
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-2 govuk-!-static-margin-bottom-2">
+        <!-- <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible  govuk-!-static-margin-top-4 govuk-!-static-margin-bottom-2"> -->
       </div>
       <div class="govuk-grid-column-two-thirds">
         <!-- Map area -->
@@ -223,12 +172,14 @@
     // 29 parcels: 106200859
     // UR 12 noon: 106432212 106936676
     // UR 9.30 am: 110438001
-    const SBI = '106936676'; // Test SBI 
+    const SBI = '106332870'; // Test SBI 
     let landParcelsData = null;
     let landCoversData = null;
     let hedgeControlData = null;
     let parcelLayers = {};
     let cachedBounds = null; // Cache bounds calculation
+    let landCoverTypes = []; // Store unique land cover types
+    let activeLandCovers = new Set(); // Track which land covers are currently selected
 
     // Initialize the map
     const map = new maplibregl.Map({
@@ -310,6 +261,16 @@
         landCoversData = data;
         
         console.log('Loaded land covers:', data);
+        
+        // Extract unique land cover types from DESCRIPTION field
+        const types = new Set();
+        data.features.forEach(feature => {
+          if (feature.properties && feature.properties.DESCRIPTION) {
+            types.add(feature.properties.DESCRIPTION);
+          }
+        });
+        landCoverTypes = Array.from(types).sort();
+        console.log('Unique land cover types:', landCoverTypes);
         
         return data;
       } catch (error) {
@@ -622,17 +583,45 @@
         data: data
     });
 
-    // Add fill layer for land covers
+    // Land cover color mapping using GOV.UK Design System colors
+    const landCoverColors = {
+        'Permanent Grassland': '#00703c',         // GOV.UK green (dark)
+        'Arable Land': '#d4351c',                 // GOV.UK red
+        'Temporary Grassland': '#85994b',         // GOV.UK light green/olive
+        'Woodland': '#005a30',                    // GOV.UK very dark green
+        'Scrub - Ungrazeable': '#f47738',        // GOV.UK orange
+        'Notional - Scrub': '#fd0',               // GOV.UK yellow
+        'Track - Natural Surface': '#b58840',     // GOV.UK brown
+        'Metalled track': '#505a5f',              // GOV.UK dark grey
+        'Residential Gardens': '#912b88',         // GOV.UK purple
+        'Hard Standings': '#626a6e',              // GOV.UK mid-dark grey
+        'Farm Building': '#b1b4b6',               // GOV.UK mid grey
+        'Permanent Crops': '#4c2c92',             // GOV.UK dark purple
+        'Fallow': '#f3f2f1',                      // GOV.UK light grey
+        'Fallow Land': '#f3f2f1',                 // GOV.UK light grey
+        'default': '#1d70b8'                      // GOV.UK blue for any unknown types
+    };
+
+    // Build color expression for MapLibre
+    const colorExpression = ['match', ['get', 'DESCRIPTION']];
+    Object.entries(landCoverColors).forEach(([type, color]) => {
+        if (type !== 'default') {
+            colorExpression.push(type, color);
+        }
+    });
+    colorExpression.push(landCoverColors['default']); // fallback color
+
+    // Add fill layer for land covers with dynamic colors
     map.addLayer({
         id: 'land-covers-fill',
         type: 'fill',
         source: 'land-covers',
         paint: {
-        'fill-color': '#00703c', // GOV.UK green
-        'fill-opacity': 0.3
+            'fill-color': colorExpression,
+            'fill-opacity': 0.6
         },
         layout: {
-        'visibility': 'none' // Hidden by default
+            'visibility': 'none' // Hidden by default
         }
     });
 
@@ -642,11 +631,11 @@
         type: 'line',
         source: 'land-covers',
         paint: {
-        'line-color': '#00703c',
-        'line-width': 1
+            'line-color': '#0b0c0c', // Black outline
+            'line-width': 1.5
         },
         layout: {
-        'visibility': 'none' // Hidden by default
+            'visibility': 'none' // Hidden by default
         }
     });
 
@@ -814,6 +803,19 @@
       // Create checkboxes HTML
       let checkboxesHTML = '<div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">';
       
+      // Add "Select all" checkbox at the top
+      checkboxesHTML += `
+        <div class="govuk-checkboxes__item">
+          <input class="govuk-checkboxes__input" 
+                 id="select-all-parcels" 
+                 name="selectAllParcels" 
+                 type="checkbox">
+          <label class="govuk-label govuk-checkboxes__label" for="select-all-parcels">
+            Select all land parcels
+          </label>
+        </div>
+      `;
+      
       parcels.forEach(parcel => {
         checkboxesHTML += `
           <div class="govuk-checkboxes__item">
@@ -837,9 +839,31 @@
       
       document.getElementById('parcels-list').innerHTML = checkboxesHTML;
 
-      // Add event listeners to checkboxes
+      // Add event listener to "Select all" checkbox
+      const selectAllCheckbox = document.getElementById('select-all-parcels');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+          const parcelCheckboxes = document.querySelectorAll('.parcel-checkbox');
+          parcelCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+          });
+          updateSelectedParcels();
+        });
+      }
+
+      // Add event listeners to individual parcel checkboxes
       document.querySelectorAll('.parcel-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectedParcels);
+        checkbox.addEventListener('change', function() {
+          updateSelectedParcels();
+          
+          // Update "Select all" checkbox state
+          const allCheckboxes = document.querySelectorAll('.parcel-checkbox');
+          const checkedCheckboxes = document.querySelectorAll('.parcel-checkbox:checked');
+          if (selectAllCheckbox) {
+            selectAllCheckbox.checked = allCheckboxes.length === checkedCheckboxes.length;
+            selectAllCheckbox.indeterminate = checkedCheckboxes.length > 0 && checkedCheckboxes.length < allCheckboxes.length;
+          }
+        });
       });
     }
 
@@ -873,10 +897,8 @@
       }
     }
 
-    // Setup additional layers checkboxes
-    function setupAdditionalLayersCheckboxes() {
-      const checkboxes = document.querySelectorAll('input[name="additionalInfo"]');
-      
+    // Setup tab-based view controls
+    function setupTabControls() {
       // Land cover color mapping using GOV.UK Design System colors - high contrast
       // Based on actual RPA API land cover descriptions
       const landCoverColors = {
@@ -897,7 +919,75 @@
         'default': '#1d70b8'                      // GOV.UK blue for any unknown types
       };
 
-      // Function to get predominant land cover for a parcel
+      // Function to populate individual land cover checkboxes
+      function populateLandCoverCheckboxes() {
+        const container = document.getElementById('land-covers-list');
+        if (!container || landCoverTypes.length === 0) return;
+
+        const checkboxesHTML = landCoverTypes.map((type, index) => {
+          const color = landCoverColors[type] || landCoverColors['default'];
+          const sanitizedValue = type.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+          return `
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input land-cover-checkbox" 
+                     id="land-cover-${sanitizedValue}" 
+                     name="land-cover" 
+                     type="checkbox" 
+                     value="${type}">
+              <label class="govuk-label govuk-checkboxes__label" for="land-cover-${sanitizedValue}">
+                ${type}
+              </label>
+            </div>
+          `;
+        }).join('');
+
+        container.innerHTML = `
+          <div class="govuk-checkboxes govuk-checkboxes--small">
+            ${checkboxesHTML}
+          </div>
+        `;
+
+        // Add event listeners to individual land cover checkboxes
+        document.querySelectorAll('.land-cover-checkbox').forEach(checkbox => {
+          checkbox.addEventListener('change', function() {
+            const landCoverType = this.value;
+            
+            if (this.checked) {
+              activeLandCovers.add(landCoverType);
+            } else {
+              activeLandCovers.delete(landCoverType);
+            }
+            
+            // Update the map filter
+            updateLandCoverFilter();
+            
+            // Update legend
+            updateLegendForLandCovers();
+          });
+        });
+      }
+
+      // Function to update land cover filter based on selected types
+      function updateLandCoverFilter() {
+        if (!map.getLayer('land-covers-fill')) return;
+
+        if (activeLandCovers.size === 0) {
+          // If no land covers selected, hide the layers
+          map.setLayoutProperty('land-covers-fill', 'visibility', 'none');
+          map.setLayoutProperty('land-covers-outline', 'visibility', 'none');
+        } else {
+          // Show layers and apply filter
+          map.setLayoutProperty('land-covers-fill', 'visibility', 'visible');
+          map.setLayoutProperty('land-covers-outline', 'visibility', 'visible');
+
+          // Create filter expression: show only selected land cover types
+          const filter = ['in', ['get', 'DESCRIPTION'], ['literal', Array.from(activeLandCovers)]];
+          map.setFilter('land-covers-fill', filter);
+          map.setFilter('land-covers-outline', filter);
+        }
+      }
+
+      // Function to get predominant land cover for a parcel (kept for reference but not actively used)
       function getParcelLandCover(parcelId) {
         if (!landCoversData || !landCoversData.features) return null;
         
@@ -917,83 +1007,6 @@
         return landCover ? landCover.properties.DESCRIPTION : null;
       }
 
-      // Function to apply land cover colors to parcels
-      function applyLandCoverColors(enabled) {
-        if (!map.getLayer('parcels-fill')) return;
-        
-        if (enabled && landCoversData) {
-          console.log('Applying land cover colors...');
-          console.log('Land covers data available:', landCoversData.features.length, 'features');
-          console.log('Land parcels data available:', landParcelsData.features.length, 'features');
-          
-          // Log all unique land cover descriptions
-          const uniqueDescriptions = [...new Set(landCoversData.features.map(f => f.properties.DESCRIPTION))];
-          console.log('Unique land cover descriptions:', uniqueDescriptions);
-          
-          // Create a new GeoJSON with color property added
-          const coloredParcelsData = {
-            type: 'FeatureCollection',
-            features: landParcelsData.features.map(parcel => {
-              // Find ALL matching land covers for this parcel
-              const matchingLandCovers = landCoversData.features.filter(lc => 
-                lc.properties.SHEET_ID === parcel.properties.SHEET_ID &&
-                lc.properties.PARCEL_ID === parcel.properties.PARCEL_ID
-              );
-              
-              let color = '#1d70b8'; // Default GOV.UK blue
-              let landUse = 'Unknown';
-              
-              if (matchingLandCovers.length > 0) {
-                // If multiple land covers, find the one with the largest area
-                const largestLandCover = matchingLandCovers.reduce((largest, current) => {
-                  const largestArea = parseFloat(largest.properties.AREA_HA || 0);
-                  const currentArea = parseFloat(current.properties.AREA_HA || 0);
-                  return currentArea > largestArea ? current : largest;
-                });
-                
-                landUse = largestLandCover.properties.DESCRIPTION;
-                color = landCoverColors[landUse] || landCoverColors['default'];
-                
-                // Log if parcel has multiple land covers
-                if (matchingLandCovers.length > 1) {
-                  console.log(`Parcel ${parcel.properties.SHEET_ID}-${parcel.properties.PARCEL_ID} has ${matchingLandCovers.length} land covers:`, 
-                    matchingLandCovers.map(lc => `${lc.properties.DESCRIPTION} (${lc.properties.AREA_HA} ha)`).join(', '),
-                    `-> Using: ${landUse}`
-                  );
-                }
-              }
-              
-              return {
-                ...parcel,
-                properties: {
-                  ...parcel.properties,
-                  LAND_COVER_COLOR: color,
-                  LAND_USE: landUse,
-                  LAND_COVER_COUNT: matchingLandCovers.length
-                }
-              };
-            })
-          };
-          
-          console.log('Created colored parcels data, first feature:', coloredParcelsData.features[0].properties);
-          
-          // Update the source data
-          map.getSource('land-parcels').setData(coloredParcelsData);
-          
-          // Use the color property directly
-          map.setPaintProperty('parcels-fill', 'fill-color', ['get', 'LAND_COVER_COLOR']);
-          map.setPaintProperty('parcels-fill', 'fill-opacity', 0.6);
-          
-          console.log('Applied colors using property-based approach');
-        } else {
-          console.log('Resetting parcel colors to default blue');
-          // Reset to original data
-          map.getSource('land-parcels').setData(landParcelsData);
-          map.setPaintProperty('parcels-fill', 'fill-color', '#1d70b8');
-          map.setPaintProperty('parcels-fill', 'fill-opacity', 0.3);
-        }
-      }
-
       // Function to toggle legend visibility
       function toggleLegend(show) {
         const legendOverlay = document.getElementById('legend-overlay');
@@ -1011,48 +1024,20 @@
         const legendContent = document.getElementById('legend-content');
         if (!legendContent) return;
         
-        if (!landCoversEnabled || !landCoversData) {
+        if (!landCoversEnabled || !landCoversData || activeLandCovers.size === 0) {
           // Show "no features" message
           legendContent.innerHTML = '<p class="govuk-body">No features to display</p>';
           return;
         }
         
-        // Get predominant land covers from colored parcels
-        const predominantLandCovers = new Map(); // Map of land use -> color
-        
-        landParcelsData.features.forEach(parcel => {
-          const matchingLandCovers = landCoversData.features.filter(lc => 
-            lc.properties.SHEET_ID === parcel.properties.SHEET_ID &&
-            lc.properties.PARCEL_ID === parcel.properties.PARCEL_ID
-          );
-          
-          if (matchingLandCovers.length > 0) {
-            const largestLandCover = matchingLandCovers.reduce((largest, current) => {
-              const largestArea = parseFloat(largest.properties.AREA_HA || 0);
-              const currentArea = parseFloat(current.properties.AREA_HA || 0);
-              return currentArea > largestArea ? current : largest;
-            });
-            
-            const landUse = largestLandCover.properties.DESCRIPTION;
-            const color = landCoverColors[landUse] || landCoverColors['default'];
-            predominantLandCovers.set(landUse, color);
-          }
-        });
-        
-        // Build legend HTML
-        if (predominantLandCovers.size === 0) {
-          legendContent.innerHTML = '<p class="govuk-body">No land cover data available</p>';
-          return;
-        }
-        
+        // Build legend HTML for selected land covers only
         let html = '<div class="map-legend-items">';
         
-        // Sort by land use name for consistency
-        const sortedLandCovers = Array.from(predominantLandCovers.entries()).sort((a, b) => 
-          a[0].localeCompare(b[0])
-        );
+        // Sort selected land covers by name
+        const sortedLandCovers = Array.from(activeLandCovers).sort();
         
-        sortedLandCovers.forEach(([landUse, color]) => {
+        sortedLandCovers.forEach(landUse => {
+          const color = landCoverColors[landUse] || landCoverColors['default'];
           html += `
             <div class="map-legend-item">
               <span class="map-legend-color" style="background-color: ${color};"></span>
@@ -1062,7 +1047,7 @@
         });
         
         html += '</div>';
-        html += '<p class="govuk-body-s govuk-!-margin-top-2 govuk-!-margin-bottom-0">Parcels are coloured by their predominant land cover type.</p>';
+        html += '<p class="govuk-body-s govuk-!-margin-top-2 govuk-!-margin-bottom-0">Individual land covers are displayed with distinct colours within parcels.</p>';
         legendContent.innerHTML = html;
       }
       
@@ -1096,29 +1081,76 @@
         legendClose.addEventListener('click', hideLegend);
       }
       
-      checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-          const value = e.target.value;
-          const visibility = e.target.checked ? 'visible' : 'none';
-          
-          if (value === 'land-covers') {
-            if (map.getLayer('land-covers-fill')) {
-              map.setLayoutProperty('land-covers-fill', 'visibility', visibility);
-              map.setLayoutProperty('land-covers-outline', 'visibility', visibility);
-              
-              // Apply land cover colors to parcels
-              applyLandCoverColors(e.target.checked);
-              
-              // Show/hide legend
-              toggleLegend(e.target.checked);
-            }
-          } else if (value === 'hedgerows') {
-            if (map.getLayer('hedge-control-line')) {
-              map.setLayoutProperty('hedge-control-line', 'visibility', visibility);
-            }
+      // Populate land covers checkboxes when tab is first accessed
+      const landCoversTab = document.querySelector('a[href="#land-covers"]');
+      if (landCoversTab) {
+        landCoversTab.addEventListener('click', function() {
+          const landCoversList = document.getElementById('land-covers-list');
+          if (landCoversList && landCoversList.querySelector('.govuk-checkboxes') === null) {
+            populateLandCoverCheckboxes();
           }
         });
-      });
+      }
+      
+      // Handle hedgerows checkbox in hedgerows tab
+      const hedgerowsCheckbox = document.getElementById('hedgerows-checkbox');
+      if (hedgerowsCheckbox) {
+        hedgerowsCheckbox.addEventListener('change', function() {
+          const legendOverlay = document.getElementById('legend-overlay');
+          
+          // Show/hide hedgerows on map
+          if (map.getLayer('hedge-control-line')) {
+            map.setLayoutProperty('hedge-control-line', 'visibility', 
+              this.checked ? 'visible' : 'none');
+          }
+          
+          // Show/hide legend overlay
+          if (legendOverlay) {
+            legendOverlay.style.display = this.checked ? 'block' : 'none';
+          }
+        });
+      }
+      
+      // Function to update legend based on active land covers
+      function updateLegendForLandCovers() {
+        const legendContent = document.getElementById('legend-content');
+        const legendOverlay = document.getElementById('legend-overlay');
+        if (!legendContent) return;
+        
+        let html = '';
+        let hasContent = false;
+        
+        // Add land covers to legend if any are selected
+        if (activeLandCovers.size > 0) {
+          hasContent = true;
+          html += '<div class="map-legend-items">';
+          const sortedLandCovers = Array.from(activeLandCovers).sort();
+          sortedLandCovers.forEach(landUse => {
+            const color = landCoverColors[landUse] || landCoverColors['default'];
+            html += `
+              <div class="map-legend-item">
+                <span class="map-legend-color" style="background-color: ${color};"></span>
+                <span class="map-legend-label">${landUse}</span>
+              </div>
+            `;
+          });
+          html += '</div>';
+        }
+        
+        if (!hasContent) {
+          legendContent.innerHTML = '<p class="govuk-body">No features to display</p>';
+          // Hide legend overlay if nothing to show
+          if (legendOverlay) {
+            legendOverlay.style.display = 'none';
+          }
+        } else {
+          legendContent.innerHTML = html;
+          // Show legend overlay if we have content
+          if (legendOverlay) {
+            legendOverlay.style.display = 'block';
+          }
+        }
+      }
     }
 
     // Debounce helper function
@@ -1344,31 +1376,11 @@
       }
     });
 
-    // Radio button functionality
-    const radios = document.querySelectorAll('input[name="selectMap"]');
-    const landParcelsSection = document.getElementById('land-parcels-section');
-    const wholeHoldingSummary = document.getElementById('whole-holding-summary');
-    const individualParcelsSummary = document.getElementById('individual-parcels-summary');
-    const filterInput = document.getElementById('parcel-filter');
-    
-    function toggleContent() {
-      const selectedValue = document.querySelector('input[name="selectMap"]:checked')?.value;
-      
-      if (selectedValue === 'indi-parcels') {
-        landParcelsSection.style.display = 'block';
-        wholeHoldingSummary.style.display = 'none';
-        individualParcelsSummary.style.display = 'block';
-      } else {
-        landParcelsSection.style.display = 'none';
-        wholeHoldingSummary.style.display = 'block';
-        individualParcelsSummary.style.display = 'none';
-      }
-    }
-    
     // Search toggle functionality
     const searchToggle = document.getElementById('search-toggle');
     const searchContainer = document.getElementById('search-container');
     const searchClose = document.getElementById('search-close');
+    const filterInput = document.getElementById('parcel-filter');
     
     function hideSearch() {
       searchContainer.style.display = 'none';
@@ -1410,17 +1422,11 @@
       });
     }
     
-    radios.forEach(radio => {
-      radio.addEventListener('change', toggleContent);
-    });
-    
     // Debounced filter function
     if (filterInput) {
       const debouncedFilter = debounce(filterParcels, 150);
       filterInput.addEventListener('input', debouncedFilter);
     }
-    
-    toggleContent();
 
     // Load parcels when map is ready - THIS MUST BE LAST
     map.on('load', function() {
@@ -1545,24 +1551,23 @@
             addHedgeControlToMap(hedgeControlData);
           }
           
-          // Re-setup checkbox listeners
-          setupAdditionalLayersCheckboxes();
+          // Re-setup controls
+          setupTabControls();
           
-          // Restore the current selection state
+          // Restore the current selection state for parcels
           updateSelectedParcels();
           
-          // Restore visibility of land covers and hedgerows based on checkbox state
-          const landCoversCheckbox = document.querySelector('input[name="additionalInfo"][value="land-covers"]');
-          const hedgerowsCheckbox = document.querySelector('input[name="additionalInfo"][value="hedgerows"]');
+          // Restore data layer visibility based on checkboxes
+          const landCoversCheckbox = document.querySelector('input[name="dataLayers"][value="land-covers"]');
+          const hedgerowsCheckbox = document.querySelector('input[name="dataLayers"][value="hedgerows"]');
           
-          if (landCoversCheckbox && landCoversCheckbox.checked) {
-            if (map.getLayer('land-covers-fill')) {
-              map.setLayoutProperty('land-covers-fill', 'visibility', 'visible');
-              map.setLayoutProperty('land-covers-outline', 'visibility', 'visible');
-            }
+          if (landCoversCheckbox && landCoversCheckbox.checked && activeLandCovers.size > 0) {
+            // Restore land cover filter
+            updateLandCoverFilter();
           }
           
           if (hedgerowsCheckbox && hedgerowsCheckbox.checked) {
+            // Restore hedgerows visibility
             if (map.getLayer('hedge-control-line')) {
               map.setLayoutProperty('hedge-control-line', 'visibility', 'visible');
             }
@@ -1591,8 +1596,8 @@
           addHedgeControlToMap(hedgesData);
         }
         
-        // Set up checkbox listeners for additional layers
-        setupAdditionalLayersCheckboxes();
+        // Set up radio button listeners for view selection
+        setupTabControls();
       })();
     });
   });
@@ -1614,6 +1619,11 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0 15px; /* Horizontal gap only */
+  }
+  
+  /* Single column layout for land cover checkboxes */
+  #land-covers-list .govuk-checkboxes {
+    display: block; /* Single column */
   }
   
   /* Make parcel checkboxes display inline in columns */

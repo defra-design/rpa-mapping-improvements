@@ -1,0 +1,65 @@
+{% extends "layouts/main.html" %}
+
+{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "start",
+      text: "Get maps of your land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Register land"
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+{% set excludeBeforeContent = true %}
+
+{% block pageTitle %}
+  GOV.UK page template – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+
+{% block content %}
+
+<div class="app-full-width-container">
+  <main>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-third">
+
+      </div>
+      <div class="govuk-grid-column-two-thirds">
+
+      </div>
+    </div>
+  </main>
+</div>
+
+{% endblock %}
+
+
+<style>
+  .govuk-header__container, .govuk-width-container, .app-full-width-container {
+  max-width: 100%; /* Makes the container full width */
+  padding: 0 15px; /* Adds a bit of padding on the sides for spacing on large screens */
+  
+}
+.govuk-grid-column-one-third {
+  padding-left: 0;
+}
+
+</style>
+
+{% endblock %}

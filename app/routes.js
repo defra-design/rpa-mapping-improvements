@@ -31,6 +31,12 @@ router.use("download-maps", dm2);
 const dm3 = require("./views/download-maps-v3/_routes");
 router.use("download-maps", dm3);
 
+const dm4 = require("./views/download-maps-v4/_routes");
+router.use("download-maps", dm4);
+
+const dm5 = require("./views/download-maps-v5/_routes");
+router.use("download-maps", dm5);
+
 // Proxy OS Vector Tile Styles
 router.get('/api/map-proxy', async (req, res) => {
   try {
