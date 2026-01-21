@@ -46,10 +46,10 @@
         <h1 class="govuk-heading-m govuk-!-margin-bottom-2">Cannon Hall Farm</h1>
 
         <!-- Whole holding information -->
-        <p class="govuk-body govuk-!-margin-bottom-0">
+        <p class="govuk-body govuk-!-margin-bottom-1">
           Total area (ha) <span id="sidebar-total-area">0.0000</span>
         </p>
-        <p class="govuk-body govuk-!-margin-bottom-1">
+        <p class="govuk-body govuk-!-margin-bottom-0">
           Total parcels <span id="sidebar-total-parcels">0</span>
         </p>
 
@@ -64,7 +64,7 @@
                 text: "Land parcels"
               },
               summary: {
-                html: 'Selected area (ha) <span id="sidebar-selected-area">0.0000</span><br>Selected <span id="sidebar-selected-count">0 of 0</span>'
+                html: '<p class="govuk-body-s govuk-!-margin-bottom-1">Selected area (ha) <span id="sidebar-selected-area">0.0000</span></p><p class="govuk-body-s govuk-!-margin-bottom-0">Selected <span id="sidebar-selected-count">0 of 0</span></p>'
               },
               content: {
                 html: '<div class="parcel-controls-row" style="margin-top: -10px;"><div class="govuk-form-group govuk-!-margin-bottom-0 filter-input-wrapper"><label class="govuk-label govuk-label--s govuk-!-margin-bottom-1" for="parcel-filter">Filter</label><input class="govuk-input" id="parcel-filter" name="parcelFilter" type="text"></div><div id="select-all-container"><div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="select-all-parcels" name="selectAllParcels" type="checkbox"><label class="govuk-label govuk-checkboxes__label" for="select-all-parcels">Select all</label></div></div></div></div><div class="scrollable-checkbox-container" id="parcels-list"><p class="govuk-body-s">Loading</p></div>'
@@ -87,7 +87,7 @@
                 text: "Hedgerows"
               },
               content: {
-                html: '<div id="hedgerows-summary"><p class="govuk-body-s">Loading hedgerow data...</p></div><div class="govuk-checkboxes govuk-checkboxes--small govuk-!-margin-top-3"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="hedgerows-checkbox" name="hedgerows" type="checkbox" value="hedgerows"><label class="govuk-label govuk-checkboxes__label" for="hedgerows-checkbox">Select hedgerows</label></div></div>'
+                html: '<div class="govuk-checkboxes govuk-checkboxes--small govuk-!-margin-bottom-3"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="hedgerows-checkbox" name="hedgerows" type="checkbox" value="hedgerows"><label class="govuk-label govuk-checkboxes__label" for="hedgerows-checkbox">Select all</label></div></div><div id="hedgerows-summary"><p class="govuk-body-s">Loading</p></div>'
               }
             }
           ]
@@ -446,11 +446,113 @@
         }
       }
 
-      // Optimized click handler - single query for all layers
-      if (!map._parcelClickHandler) {
+      // Helper function: Check if point is inside polygon
+      function pointInPolygon(point, polygon) {
+        const [x, y] = point;
+        let inside = false;
+
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+          const [xi, yi] = polygon[i];
+          const [xj, yj] = polygon[j];
+
+          const intersect = ((yi > y) !== (yj > y)) &&
+            (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+
+          if (intersect) inside = !inside;
+        }
+
+        return inside;
+      }
+
+      // Helper function: Check if point is inside any ring of a polygon/multipolygon
+      function pointInFeature(point, feature) {
+        const geom = feature.geometry;
+
+        if (geom.type === 'Polygon') {
+          // Check exterior ring (first ring)
+          if (!pointInPolygon(point, geom.coordinates[0])) return false;
+
+          // Check holes (remaining rings) - point should NOT be in holes
+          for (let i = 1; i < geom.coordinates.length; i++) {
+            if (pointInPolygon(point, geom.coordinates[i])) return false;
+          }
+          return true;
+
+        } else if (geom.type === 'MultiPolygon') {
+          // Check each polygon in the multipolygon
+          for (const polygon of geom.coordinates) {
+            if (!pointInPolygon(point, polygon[0])) continue;
+
+            let inHole = false;
+            for (let i = 1; i < polygon.length; i++) {
+              if (pointInPolygon(point, polygon[i])) {
+                inHole = true;
+                break;
+              }
+            }
+
+            if (!inHole) return true;
+          }
+          return false;
+        }
+
+        return false;
+      }
+
+      // Helper function: Calculate distance from point to line segment
+      function pointToSegmentDistance(point, segmentStart, segmentEnd) {
+        const [px, py] = point;
+        const [x1, y1] = segmentStart;
+        const [x2, y2] = segmentEnd;
+
+        const A = px - x1;
+        const B = py - y1;
+        const C = x2 - x1;
+        const D = y2 - y1;
+
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+        let param = -1;
+
+        if (lenSq !== 0) param = dot / lenSq;
+
+        let xx, yy;
+
+        if (param < 0) {
+          xx = x1;
+          yy = y1;
+        } else if (param > 1) {
+          xx = x2;
+          yy = y2;
+        } else {
+          xx = x1 + param * C;
+          yy = y1 + param * D;
+        }
+
+        const dx = px - xx;
+        const dy = py - yy;
+
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      // Helper function: Check if point is near a LineString
+      function pointNearLineString(point, lineString, threshold) {
+        const coords = lineString.coordinates;
+
+        for (let i = 0; i < coords.length - 1; i++) {
+          const distance = pointToSegmentDistance(point, coords[i], coords[i + 1]);
+          if (distance < threshold) return true;
+        }
+
+        return false;
+      }
+
+      // Unified click handler - combines parcel, land cover, and hedgerow info
+      // Queries source data directly to work regardless of layer visibility
+      if (!map._unifiedClickHandler) {
         let isProcessingClick = false;
 
-        map._parcelClickHandler = (e) => {
+        map._unifiedClickHandler = (e) => {
           // If already processing a click, ignore this one completely
           if (isProcessingClick) {
             console.log('Click ignored - already processing another click');
@@ -464,111 +566,137 @@
             isProcessingClick = false;
           }, 100);
 
-          console.log('=== PARCEL CLICK EVENT ===');
+          console.log('=== UNIFIED CLICK EVENT ===');
 
-          // Single query for all relevant layers at once
-          const allFeatures = map.queryRenderedFeatures(e.point, {
-            layers: ['land-covers-fill', 'hedge-control-line', 'parcels-fill']
-          });
+          const clickPoint = [e.lngLat.lng, e.lngLat.lat];
 
-          // Check what was actually clicked
-          const hedgeClicked = allFeatures.some(f => f.layer.id === 'hedge-control-line');
+          // Query source data directly for all features at click point
+          let parcelFeature = null;
+          let landCoverFeatures = [];
+          let hedgeFeatures = [];
 
-          // Only block parcel selection if we clicked directly on a hedge
-          // Land covers should not block parcel selection
-          if (hedgeClicked) {
+          // Find parcel at click point
+          if (landParcelsData && landParcelsData.features) {
+            parcelFeature = landParcelsData.features.find(f => pointInFeature(clickPoint, f));
+          }
+
+          // Need at least a parcel to show popup
+          if (!parcelFeature) {
+            console.log('No parcel found at click point');
             return;
           }
 
-          // Find parcel features in the results
-          const parcelFeatures = allFeatures.filter(f => f.layer.id === 'parcels-fill');
+          const parcelProps = parcelFeature.properties;
+          console.log('Parcel clicked:', parcelProps);
 
-          if (parcelFeatures.length > 0) {
-            const feature = parcelFeatures[0];
-            const props = feature.properties;
+          // Find all land covers for this parcel (if data is loaded)
+          if (landCoversData && landCoversData.features) {
+            landCoverFeatures = landCoversData.features.filter(f =>
+              f.properties.SHEET_ID === parcelProps.SHEET_ID &&
+              f.properties.PARCEL_ID === parcelProps.PARCEL_ID
+            );
+          }
 
-            console.log('Parcel clicked:', props);
+          // Find all hedgerows for this parcel (if data is loaded)
+          if (hedgeControlData && hedgeControlData.features) {
+            hedgeFeatures = hedgeControlData.features.filter(f =>
+              f.properties.REF_PARCEL_SHEET_ID === parcelProps.SHEET_ID &&
+              f.properties.REF_PARCEL_PARCEL_ID === parcelProps.PARCEL_ID
+            );
+          }
 
-            // Get the full feature from landParcelsData
-            const fullFeature = landParcelsData.features.find(f =>
-              f.properties.SHEET_ID === props.SHEET_ID &&
-              f.properties.PARCEL_ID === props.PARCEL_ID
+          // Handle parcel selection logic
+          let wasJustSelected = false;
+
+          if (parcelFeature) {
+            // Check if selected-parcels source exists
+            const selectedSource = map.getSource('selected-parcels');
+            if (!selectedSource) {
+              console.error('selected-parcels source not found');
+              return;
+            }
+
+            // Get current selected parcels
+            const currentData = selectedSource._data;
+            const currentFeatures = currentData.features || [];
+
+            // Check if this parcel is already selected
+            const parcelId = `${parcelProps.SHEET_ID}${parcelProps.PARCEL_ID}`;
+            const existingIndex = currentFeatures.findIndex(f =>
+              `${f.properties.SHEET_ID}${f.properties.PARCEL_ID}` === parcelId
             );
 
-            if (fullFeature) {
-              // Check if selected-parcels source exists
-              const selectedSource = map.getSource('selected-parcels');
-              if (!selectedSource) {
-                console.error('selected-parcels source not found');
-                return;
-              }
-
-              // Get current selected parcels
-              const currentData = selectedSource._data;
-              const currentFeatures = currentData.features || [];
-
-              // Check if this parcel is already selected
-              const parcelId = `${props.SHEET_ID}${props.PARCEL_ID}`;
-              const existingIndex = currentFeatures.findIndex(f =>
-                `${f.properties.SHEET_ID}${f.properties.PARCEL_ID}` === parcelId
-              );
-
-              let newFeatures;
-              if (existingIndex !== -1) {
-                // Parcel already selected - remove it (toggle off)
-                newFeatures = currentFeatures.filter((f, i) => i !== existingIndex);
-              } else {
-                // Parcel not selected - add it
-                newFeatures = [...currentFeatures, fullFeature];
-              }
-
-              // Update the selected parcels
-              console.log('About to update selected parcels, new count:', newFeatures.length);
-              console.log('Selected source exists:', !!selectedSource);
-              selectedSource.setData({
-                type: 'FeatureCollection',
-                features: newFeatures
-              });
-              console.log('Selected parcels data updated successfully');
-
-              // Update statistics in the overlay
-              // Update statistics in sidebar
-              const totalArea = newFeatures.reduce((sum, f) =>
-                sum + parseFloat(f.properties.AREA_HA || 0), 0
-              );
-              // Update sidebar elements
-              document.getElementById('sidebar-selected-area').textContent = totalArea.toFixed(4);
-              document.getElementById('sidebar-selected-count').textContent =
-                `${newFeatures.length} of ${landParcelsData.features.length}`;
-
-              // Also update checkboxes to match
-              const checkbox = document.getElementById(`parcel-${parcelId}`);
-              if (checkbox) {
-                checkbox.checked = existingIndex === -1; // Check if we just added it
-              }
+            let newFeatures;
+            if (existingIndex !== -1) {
+              // Parcel already selected - remove it (toggle off)
+              newFeatures = currentFeatures.filter((f, i) => i !== existingIndex);
+              wasJustSelected = false;
+            } else {
+              // Parcel not selected - add it
+              newFeatures = [...currentFeatures, parcelFeature];
+              wasJustSelected = true;
             }
 
-            // Only show parcel popup if land covers layer is not visible
-            const landCoversVisible = map.getLayoutProperty('land-covers-fill', 'visibility') === 'visible';
-            if (!landCoversVisible) {
-              new maplibregl.Popup()
-                .setLngLat(e.lngLat)
-                .setHTML(`
-                  <h3 class="govuk-heading-m govuk-!-margin-bottom-1">Land parcel</h3>
-                  ${props.SHEET_ID} ${props.PARCEL_ID}<br>
-                  Total area (ha) ${parseFloat(props.AREA_HA).toFixed(4)}
-                `)
-                .addTo(map);
+            // Update the selected parcels
+            selectedSource.setData({
+              type: 'FeatureCollection',
+              features: newFeatures
+            });
+
+            // Update statistics in sidebar
+            const totalArea = newFeatures.reduce((sum, f) =>
+              sum + parseFloat(f.properties.AREA_HA || 0), 0
+            );
+            document.getElementById('sidebar-selected-area').textContent = totalArea.toFixed(4);
+            document.getElementById('sidebar-selected-count').textContent =
+              `${newFeatures.length} of ${landParcelsData.features.length}`;
+
+            // Also update checkboxes to match
+            const checkbox = document.getElementById(`parcel-${parcelId}`);
+            if (checkbox) {
+              checkbox.checked = existingIndex === -1; // Check if we just added it
             }
+          }
+
+          // Only show popup if the parcel was just selected (not deselected)
+          if (wasJustSelected) {
+            // Build combined popup HTML
+            let popupHTML = `<h3 class="govuk-heading-s govuk-!-margin-bottom-2">${parcelProps.SHEET_ID} ${parcelProps.PARCEL_ID}</h3>`;
+            popupHTML += `<p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Area</strong></p>`;
+            popupHTML += `<p class="govuk-body-s govuk-!-margin-bottom-1">${parseFloat(parcelProps.AREA_HA).toFixed(4)} ha</p>`;
+
+            // Add land cover info if present (regardless of layer visibility)
+            if (landCoverFeatures.length > 0) {
+              // Get unique land cover descriptions (remove duplicates)
+              const landCoverDescriptions = [...new Set(landCoverFeatures.map(f => f.properties.DESCRIPTION || 'N/A'))];
+              popupHTML += `<p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Land cover</strong></p>`;
+              popupHTML += `<p class="govuk-body-s govuk-!-margin-bottom-1">${landCoverDescriptions.join(', ')}</p>`;
+            }
+
+            // Add hedgerow info if present (regardless of layer visibility)
+            if (hedgeFeatures.length > 0) {
+              // Calculate total hedgerow length for this parcel
+              const totalLength = hedgeFeatures.reduce((sum, f) =>
+                sum + parseFloat(f.properties.LENGTH || 0), 0
+              );
+              popupHTML += `<p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Hedgerow</strong></p>`;
+              popupHTML += `<p class="govuk-body-s govuk-!-margin-bottom-1">${totalLength.toFixed(2)} m</p>`;
+            }
+
+            // Show the combined popup
+            new maplibregl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML(popupHTML)
+              .addTo(map);
           }
         };
       }
 
-      // Remove any existing handler first
-      map.off('click', 'parcels-fill', map._parcelClickHandler);
+      // Remove any existing handlers first
+      map.off('click', map._unifiedClickHandler);
 
-      // Add the handler
-      map.on('click', 'parcels-fill', map._parcelClickHandler);
+      // Attach unified handler to the map itself (not specific layers)
+      map.on('click', map._unifiedClickHandler);
 
 
       // Change cursor on hover
@@ -650,44 +778,7 @@
         }
     });
 
-    // Store the handler function so we can remove it later
-    if (!map._landCoverClickHandler) {
-        map._landCoverClickHandler = (e) => {
-        // Check if we clicked on a hedge - if so, don't show land cover popup
-        const hedgeFeatures = map.queryRenderedFeatures(e.point, {
-            layers: ['hedge-control-line']
-        });
-
-        if (hedgeFeatures.length > 0) {
-            return; // Let the hedge handler take precedence
-        }
-
-        if (e.features.length > 0) {
-            const props = e.features[0].properties;
-
-            new maplibregl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`
-                <h3 class="govuk-heading-m govuk-!-margin-bottom-1">Land cover</h3>
-                ${props.DESCRIPTION || 'N/A'}<br>
-                Land parcel ${props.SHEET_ID || ''} ${props.PARCEL_ID || ''}<br>
-                Total area (ha) ${parseFloat(props.AREA_HA || 0).toFixed(4)}<br>
-                Code ${props.LAND_COVER_CLASS_CODE || 'N/A'}
-            `)
-            .addTo(map);
-        }
-        };
-    }
-
-    // Remove any existing handlers first
-    map.off('click', 'land-covers-fill', map._landCoverClickHandler);
-    map.off('mouseenter', 'land-covers-fill');
-    map.off('mouseleave', 'land-covers-fill');
-
-    // Add the handlers
-    map.on('click', 'land-covers-fill', map._landCoverClickHandler);
-
-    // Change cursor on hover
+    // Cursor change handlers for land covers
     map.on('mouseenter', 'land-covers-fill', () => {
         map.getCanvas().style.cursor = 'pointer';
     });
@@ -710,40 +801,24 @@
 
       // Calculate statistics
       const totalCount = data.features.length;
-      let totalLength = 0;
       let maxLength = 0;
+      let minLength = Infinity;
 
       data.features.forEach(feature => {
         const length = parseFloat(feature.properties.LENGTH || 0);
-        totalLength += length;
         if (length > maxLength) {
           maxLength = length;
         }
+        if (length < minLength) {
+          minLength = length;
+        }
       });
-
-      const averageLength = totalCount > 0 ? totalLength / totalCount : 0;
-      const totalLengthKm = totalLength / 1000;
 
       // Build summary HTML
       const summaryHTML = `
-        <dl class="govuk-summary-list govuk-summary-list--no-border">
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Total hedgerows</dt>
-            <dd class="govuk-summary-list__value">${totalCount}</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Total length</dt>
-            <dd class="govuk-summary-list__value">${totalLength.toFixed(2)}m (${totalLengthKm.toFixed(2)}km)</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Average length</dt>
-            <dd class="govuk-summary-list__value">${averageLength.toFixed(2)}m</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Longest hedgerow</dt>
-            <dd class="govuk-summary-list__value">${maxLength.toFixed(2)}m</dd>
-          </div>
-        </dl>
+        <p class="govuk-body-s govuk-!-margin-bottom-1">Total ${totalCount}</p>
+        <p class="govuk-body-s govuk-!-margin-bottom-1">Longest ${maxLength.toFixed(2)}m</p>
+        <p class="govuk-body-s govuk-!-margin-bottom-0">Shortest ${minLength.toFixed(2)}m</p>
       `;
 
       summaryContainer.innerHTML = summaryHTML;
@@ -779,36 +854,7 @@
         }
       });
 
-      // Store the handler function so we can remove it later
-      if (!map._hedgeClickHandler) {
-        map._hedgeClickHandler = (e) => {
-          // Stop the event from propagating to layers below
-          e.preventDefault();
-
-          if (e.features.length > 0) {
-            const props = e.features[0].properties;
-
-            new maplibregl.Popup()
-              .setLngLat(e.lngLat)
-              .setHTML(`
-                <strong>Hedgerow</strong><br>
-                Length (m): ${parseFloat(props.LENGTH || 0).toFixed(2)}<br>
-                Land parcel: ${props.REF_PARCEL_SHEET_ID || ''} ${props.REF_PARCEL_PARCEL_ID || ''}
-              `)
-              .addTo(map);
-          }
-        };
-      }
-
-      // Remove any existing handlers first
-      map.off('click', 'hedge-control-line', map._hedgeClickHandler);
-      map.off('mouseenter', 'hedge-control-line');
-      map.off('mouseleave', 'hedge-control-line');
-
-      // Add the handlers
-      map.on('click', 'hedge-control-line', map._hedgeClickHandler);
-
-      // Change cursor on hover
+      // Cursor change handlers for hedgerows
       map.on('mouseenter', 'hedge-control-line', () => {
         map.getCanvas().style.cursor = 'pointer';
       });
@@ -2052,6 +2098,11 @@
     cursor: pointer;
   }
 
+  /* Highlight selected parcels */
+  .parcel-item-wrapper:has(input:checked) {
+    background-color: #f4f8fb;
+  }
+
   /* Reset styles on the checkbox item inside wrapper */
   .parcel-item-wrapper .govuk-checkboxes__item {
     margin-bottom: 0;
@@ -2452,32 +2503,9 @@
     margin-top: -14px;
   }
 
-  /* Hedgerows summary styling */
-  #hedgerows-summary .govuk-summary-list {
-    margin-bottom: 0;
+  /* Hedgerows checkbox label styling */
+  #hedgerows-checkbox + .govuk-checkboxes__label {
     font-size: 1rem;
-    line-height: 1.25;
-  }
-
-  #hedgerows-summary .govuk-summary-list__row {
-    border: none;
-  }
-
-  #hedgerows-summary .govuk-summary-list__key,
-  #hedgerows-summary .govuk-summary-list__value {
-    padding-top: 5px;
-    padding-bottom: 5px;
-    font-size: 1rem;
-    line-height: 1.25;
-  }
-
-  #hedgerows-summary .govuk-summary-list__key {
-    width: 60%;
-  }
-
-  #hedgerows-summary .govuk-summary-list__value {
-    width: 40%;
-    text-align: right;
   }
 
   #parcel-filter {
