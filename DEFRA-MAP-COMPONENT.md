@@ -62,7 +62,7 @@ Include these CSS files in your HTML `<head>`:
 <link href="/plugin-assets/@defra/defra-map/plugins/map-styles/dist/css/index.css" rel="stylesheet">
 <link href="/plugin-assets/@defra/defra-map/plugins/search/dist/css/index.css" rel="stylesheet">
 <link href="/plugin-assets/@defra/defra-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/defra-map/plugins/data-layers-ml/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/defra-map/plugins/datasets/dist/css/index.css" rel="stylesheet">
 <link href="/plugin-assets/@defra/defra-map/plugins/interact/dist/css/index.css" rel="stylesheet">
 ```
 
@@ -83,7 +83,7 @@ Load scripts before your initialization code:
 <script src="/plugin-assets/@defra/defra-map/plugins/search/dist/umd/index.js"></script>
 <script src="/plugin-assets/@defra/defra-map/plugins/zoom-controls/dist/umd/index.js"></script>
 <script src="/plugin-assets/@defra/defra-map/plugins/scale-bar/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/defra-map/plugins/data-layers-ml/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/defra-map/plugins/datasets/dist/umd/index.js"></script>
 <script src="/plugin-assets/@defra/defra-map/plugins/interact/dist/umd/index.js"></script>
 ```
 
@@ -118,7 +118,7 @@ The component automatically removes this class when ready.
 When using UMD builds, the library is available as `window.defra`:
 
 ```javascript
-const defraMap = new defra.DefraMap('map', options);
+const interactiveMap = new defra.InteractiveMap('map', options);
 ```
 
 ---
@@ -128,7 +128,7 @@ const defraMap = new defra.DefraMap('map', options);
 ### Minimal Example
 
 ```javascript
-const defraMap = new defra.DefraMap('map', {
+const interactiveMap = new defra.InteractiveMap('map', {
   mapProvider: defra.maplibreProvider(),
   behaviour: 'inline',
   containerHeight: '650px',
@@ -143,7 +143,7 @@ const defraMap = new defra.DefraMap('map', {
 ### With Plugins
 
 ```javascript
-const defraMap = new defra.DefraMap('map', {
+const interactiveMap = new defra.InteractiveMap('map', {
   mapProvider: defra.maplibreProvider(),
   behaviour: 'inline',
   minZoom: 6,
@@ -166,10 +166,10 @@ const defraMap = new defra.DefraMap('map', {
 
 ## Configuration Options
 
-### DefraMap Constructor Options
+### InteractiveMap Constructor Options
 
 ```javascript
-new defra.DefraMap(containerId, options)
+new defra.InteractiveMap(containerId, options)
 ```
 
 **Parameters**:
@@ -388,7 +388,7 @@ The map component uses an event system for inter-component communication.
 ### Listening to Events
 
 ```javascript
-defraMap.on('event:name', (eventData) => {
+interactiveMap.on('event:name', (eventData) => {
   console.log('Event fired:', eventData);
 });
 ```
@@ -400,7 +400,7 @@ defraMap.on('event:name', (eventData) => {
 Fired when the map is fully initialized.
 
 ```javascript
-defraMap.on('map:ready', (e) => {
+interactiveMap.on('map:ready', (e) => {
   const map = e.map; // MapLibre map instance
   // Now safe to interact with map
 });
@@ -411,7 +411,7 @@ defraMap.on('map:ready', (e) => {
 Fired when a marker is placed or moved (interact plugin).
 
 ```javascript
-defraMap.on('interact:markerchange', (e) => {
+interactiveMap.on('interact:markerchange', (e) => {
   console.log('Marker coords:', e.coords); // [lng, lat]
 });
 ```
@@ -421,7 +421,7 @@ defraMap.on('interact:markerchange', (e) => {
 Fired when a feature is selected (interact plugin).
 
 ```javascript
-defraMap.on('interact:featureselected', (e) => {
+interactiveMap.on('interact:featureselected', (e) => {
   console.log('Selected feature:', e.feature);
 });
 ```
@@ -431,7 +431,7 @@ defraMap.on('interact:featureselected', (e) => {
 Fired when the map style changes (map-styles plugin).
 
 ```javascript
-defraMap.on('map:stylechange', (e) => {
+interactiveMap.on('map:stylechange', (e) => {
   console.log('New style:', e.styleId);
 });
 ```
@@ -441,7 +441,7 @@ defraMap.on('map:stylechange', (e) => {
 Get the MapLibre map instance for advanced operations:
 
 ```javascript
-defraMap.on('map:ready', (e) => {
+interactiveMap.on('map:ready', (e) => {
   const map = e.map;
 
   // Add custom layers, sources, etc.
@@ -519,7 +519,7 @@ const interactPlugin = defra.interactPlugin({
 });
 
 // Create map with plugins
-const defraMap = new defra.DefraMap('map', {
+const interactiveMap = new defra.InteractiveMap('map', {
   mapProvider: defra.maplibreProvider(),
   behaviour: 'inline',
   minZoom: 6,
@@ -552,7 +552,7 @@ const defraMap = new defra.DefraMap('map', {
 });
 
 // Handle marker placement
-defraMap.on('interact:markerchange', (e) => {
+interactiveMap.on('interact:markerchange', (e) => {
   const coords = e.coords; // [lng, lat]
   document.querySelector('#coords').value = JSON.stringify(coords);
 
@@ -561,7 +561,7 @@ defraMap.on('interact:markerchange', (e) => {
 });
 
 // Store zoom level
-defraMap.on('map:ready', (e) => {
+interactiveMap.on('map:ready', (e) => {
   const map = e.map;
   document.querySelector('#zoom').value = map.getZoom();
 
@@ -585,7 +585,7 @@ async function fetchParcelData(parcelId) {
 }
 
 // Initialize map
-const defraMap = new defra.DefraMap('map', {
+const interactiveMap = new defra.InteractiveMap('map', {
   mapProvider: defra.maplibreProvider(),
   behaviour: 'inline',
   containerHeight: '500px',
@@ -596,7 +596,7 @@ const defraMap = new defra.DefraMap('map', {
 });
 
 // When map is ready, add parcel layer
-defraMap.on('map:ready', async (e) => {
+interactiveMap.on('map:ready', async (e) => {
   const map = e.map;
   const parcelData = await fetchParcelData('AB123456');
 
@@ -678,7 +678,7 @@ function transformTileRequest(url, resourceType) {
   return { url };
 }
 
-const defraMap = new defra.DefraMap('map', {
+const interactiveMap = new defra.InteractiveMap('map', {
   mapProvider: defra.maplibreProvider(),
   transformRequest: transformTileRequest,
   // ... other options

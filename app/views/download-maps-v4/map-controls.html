@@ -6,12 +6,12 @@
 
 {% block head %}
   <link href="/public/stylesheets/application.css" rel="stylesheet" type="text/css">
-  <link href="/plugin-assets/%40defra%2Fdefra-map/dist/css/index.css" rel="stylesheet" type="text/css">
-  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/map-styles/dist/css/index.css" rel="stylesheet" type="text/css">
-  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/css/index.css" rel="stylesheet" type="text/css">
-  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet" type="text/css">
-  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/css/index.css" rel="stylesheet" type="text/css">
-  <link href="/plugin-assets/%40defra%2Fdefra-map/plugins/interact/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/css/index.css" rel="stylesheet" type="text/css">
 {% endblock %}
 
 {% block bodyStart %}
@@ -150,15 +150,15 @@
 
 {% block pageScripts %}
   <!-- Defra library scripts -->
-  <script src="/plugin-assets/%40defra%2Fdefra-map/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/providers/maplibre/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/providers/open-names/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/map-styles/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/search/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/zoom-controls/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/scale-bar/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/data-layers-ml/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Fdefra-map/plugins/interact/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/providers/maplibre/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/providers/open-names/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/zoom-controls/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
   <script src="/public/javascripts/request.js"></script>
   <script src="/public/javascripts/searchCustomDatasets.js"></script>
   
@@ -169,7 +169,7 @@
       PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
     }
 
-    const defraMap = new defra.DefraMap('map', {
+    const interactiveMap = new defra.InteractiveMap('map', {
       mapProvider: defra.maplibreProvider(),
       reverseGeocodeProvider: defra.openNamesProvider({
         url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
@@ -191,8 +191,8 @@
             id: 'outdoor',
             label: 'Outdoor',
             url: '{{ data.VTS_OUTDOOR_URL }}',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
             logoAltText: 'Ordnance survey logo',
             attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
             backgroundColor: '#f5f5f0'
@@ -202,31 +202,31 @@
             url: '{{ data.VTS_DARK_URL }}',
             mapColorScheme: 'dark',
             appColorScheme: 'dark',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/dark-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-white.svg',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/dark-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-white.svg',
             logoAltText: 'Ordnance survey logo',
             attribution: 'Test'
           }, {
             id: 'black-and-white',
             label: 'Black/White',
             url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/black-and-white-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo-black.svg',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/black-and-white-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-black.svg',
             logoAltText: 'Ordnance survey logo',
             attribution: 'Test'
           }, {
             id: 'satellite',
             label: 'Satellite',
             url: '{{ data.VTS_SATELLITE_URL }}',
-            thumbnail: '/plugin-assets/%40defra%2Fdefra-map/assets/images/outdoor-map-thumb.jpg',
-            logo: '/plugin-assets/%40defra%2Fdefra-map/assets/images/os-logo.svg',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
             logoAltText: 'Ordnance survey logo',
             attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
           }]
         }),
-        defra.dataLayersMLPlugin({
+        defra.datasetsPlugin({
           transformRequest: transformDataRequest,
-          layers: [{
+          datasets: [{
             id: 'field-parcels',
             label: 'Field parcels',
             filter: ['!=', ['get', 'SBI'], '106223377'],
