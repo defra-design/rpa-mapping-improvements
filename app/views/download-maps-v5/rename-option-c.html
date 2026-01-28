@@ -1,0 +1,1802 @@
+{% extends "layouts/main.html" %}
+
+{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "start",
+      text: "Get maps of your land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Register land"
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+{% set excludeBeforeContent = true %}
+
+{% block head %}
+  {{ super() }}
+  <!-- DEFRA Interactive Map Component CSS -->
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/css/index.css">
+{% endblock %}
+
+{% block pageTitle %}
+  Rename Option C - Map - Get maps of your land – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block content %}
+
+<div class="app-map-fullscreen">
+
+    <!-- Menu button (visible when panel is closed on mobile) -->
+  <button class="app-map-fullscreen__menu-btn" id="menu-btn" aria-label="Open menu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+    <span>Menu</span>
+  </button>
+
+
+  <!-- Side panel -->
+  <div class="app-map-fullscreen__panel" id="map-panel" role="region" aria-label="Map controls and selection panel">
+    <!-- Close button (mobile only) -->
+    <button class="app-map-fullscreen__panel-close" id="panel-close" aria-label="Close panel">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <div class="app-map-fullscreen__panel-content" id="panel-content">
+      <!-- Title -->
+      <h1 class="govuk-heading-m govuk-!-margin-bottom-2 govuk-!-margin-top-1">Cannon Hall Farm</h1>
+
+      <!-- Whole holding information -->
+      <p class="govuk-body-s govuk-!-margin-bottom-1">
+        Total area (ha) <span id="sidebar-total-area">0.0000</span>
+      </p>
+      <p class="govuk-body-s govuk-!-margin-bottom-0">
+        Total parcels <span id="sidebar-total-parcels">0</span>
+      </p>
+
+      <!-- Accordion component for different views -->
+      {% from "govuk/components/accordion/macro.njk" import govukAccordion %}
+
+      {{ govukAccordion({
+        id: "accordion-land-data",
+        items: [
+          {
+            heading: {
+              text: "Land parcels"
+            },
+            summary: {
+              html: '<p class="govuk-body-s govuk-!-margin-bottom-1">Selected area (ha) <span id="sidebar-selected-area">0.0000</span></p><p class="govuk-body-s govuk-!-margin-bottom-0">Selected <span id="sidebar-selected-count">0 of 0</span></p>'
+            },
+            content: {
+              html: '<div class="govuk-checkboxes govuk-checkboxes--small govuk-!-margin-bottom-3"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="enable-field-names" type="checkbox"><label class="govuk-label govuk-checkboxes__label" for="enable-field-names">Add field names</label></div></div><div class="parcel-controls-row" style="margin-top: -10px;"><div class="govuk-form-group govuk-!-margin-bottom-0 filter-input-wrapper"><label class="govuk-label govuk-label--s govuk-!-margin-bottom-1" for="parcel-filter">Filter</label><input class="govuk-input" id="parcel-filter" name="parcelFilter" type="text"></div><div id="select-all-container"><div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="select-all-parcels" name="selectAllParcels" type="checkbox"><label class="govuk-label govuk-checkboxes__label" for="select-all-parcels">Select all</label></div></div></div></div><div class="scrollable-checkbox-container" id="parcels-list"><p class="govuk-body-s">Loading</p></div>'
+            },
+            expanded: true
+          },
+          {
+            heading: {
+              text: "Land covers"
+            },
+            summary: {
+              html: 'Selected <span id="land-covers-selected-count">0</span>'
+            },
+            content: {
+              html: '<div class="scrollable-checkbox-container" id="land-covers-list"><!-- Will be populated dynamically by JavaScript --></div>'
+            }
+          },
+          {
+            heading: {
+              text: "Hedgerows"
+            },
+            content: {
+              html: '<div class="govuk-checkboxes govuk-checkboxes--small govuk-!-margin-bottom-3"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="hedgerows-checkbox" name="hedgerows" type="checkbox" value="hedgerows"><label class="govuk-label govuk-checkboxes__label" for="hedgerows-checkbox">Select all</label></div></div><div id="hedgerows-summary"><p class="govuk-body-s">Loading</p></div>'
+            }
+          }
+        ]
+      }) }}
+
+      {% from "govuk/components/button/macro.njk" import govukButton %}
+      <form method="post" id="selections-form">
+        <input type="hidden" name="selected-parcels" id="selected-parcels-input" value="{{ data['selected-parcels'] | default('') }}">
+        <input type="hidden" name="selected-land-covers" id="selected-land-covers-input" value="{{ data['selected-land-covers'] | default('') }}">
+        <input type="hidden" name="hedgerows-enabled" id="hedgerows-input" value="{{ data['hedgerows-enabled'] | default('false') }}">
+        <input type="hidden" name="selected-hedgerows" id="selected-hedgerows-input" value="{{ data['selected-hedgerows'] | default('') }}">
+        <input type="hidden" name="parcel-field-names" id="parcel-field-names-input" value="{{ data['parcel-field-names'] | default('{}') }}">
+        {{ govukButton({
+          text: "Download map",
+          classes: ""
+        }) }}
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Full-viewport map with loading state -->
+  <div id="map" class="app-map-fullscreen__map"></div>
+
+
+</div>
+
+{% endblock %}
+
+{% block pageScripts %}
+<!-- DEFRA Interactive Map Component JS -->
+<script src="/plugin-assets/%40defra%2Finteractive-map/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/providers/maplibre/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // =====================================================
+    // CUSTOM POPUP FUNCTIONS
+    // =====================================================
+    // const customPopup = document.getElementById('custom-popup');
+    // const customPopupContent = customPopup.querySelector('.custom-popup__content');
+    // const customPopupClose = customPopup.querySelector('.custom-popup__close');
+
+    // // Close popup when close button clicked
+    // customPopupClose.addEventListener('click', function() {
+    //   customPopup.style.display = 'none';
+    // });
+
+    // // Close popup when clicking outside
+    // document.addEventListener('click', function(e) {
+    //   if (customPopup.style.display !== 'none' &&
+    //       !customPopup.contains(e.target) &&
+    //       !e.target.closest('.maplibregl-canvas')) {
+    //     customPopup.style.display = 'none';
+    //   }
+    // });
+
+    // Show popup at screen coordinates
+    // function showPopup(html, screenX, screenY) {
+    //   customPopupContent.innerHTML = html;
+    //   customPopup.style.display = 'block';
+
+      // Get fullscreen container bounds (popup is inside .app-map-fullscreen which is position: fixed)
+      // const fullscreenContainer = document.querySelector('.app-map-fullscreen');
+      // const containerRect = fullscreenContainer.getBoundingClientRect();
+
+      // // Calculate position relative to fullscreen container
+      // let left = screenX - containerRect.left + 10;
+      // let top = screenY - containerRect.top + 10;
+
+      // // Get popup dimensions after content is set
+      // const popupRect = customPopup.getBoundingClientRect();
+
+      // // Try to position above the click point
+      // if (screenY - containerRect.top - popupRect.height - 20 > 0) {
+      //   top = screenY - containerRect.top - popupRect.height - 10;
+      // }
+
+      // // Keep popup within container bounds horizontally
+      // if (left + popupRect.width > containerRect.width - 20) {
+      //   left = containerRect.width - popupRect.width - 20;
+      // }
+      // if (left < 10) {
+      //   left = 10;
+      // }
+
+    //   customPopup.style.left = left + 'px';
+    //   customPopup.style.top = top + 'px';
+    // }
+
+    // function hidePopup() {
+    //   customPopup.style.display = 'none';
+    // }
+
+    // =====================================================
+    // FULLSCREEN LAYOUT SETUP (POC-5)
+    // =====================================================
+
+    // Calculate and set header height
+    const govukHeader = document.querySelector('.govuk-header');
+    const serviceNav = document.querySelector('.govuk-service-navigation');
+    const headerHeight = (govukHeader?.offsetHeight || 0) + (serviceNav?.offsetHeight || 0);
+    document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+
+    // Panel close/open functionality (mobile only)
+    const mapPanel = document.getElementById('map-panel');
+    const panelClose = document.getElementById('panel-close');
+    const menuBtn = document.getElementById('menu-btn');
+
+    // Close panel (mobile)
+    if (panelClose && mapPanel) {
+      panelClose.addEventListener('click', function() {
+        mapPanel.classList.add('app-map-fullscreen__panel--closed');
+        setTimeout(() => {
+          if (window.interactiveMap && window.interactiveMap.api && window.interactiveMap.api.map) {
+            window.interactiveMap.api.map.resize();
+          }
+        }, 350);
+      });
+    }
+
+    // Open panel via Menu button (mobile)
+    if (menuBtn && mapPanel) {
+      menuBtn.addEventListener('click', function() {
+        mapPanel.classList.remove('app-map-fullscreen__panel--closed');
+        setTimeout(() => {
+          if (window.interactiveMap && window.interactiveMap.api && window.interactiveMap.api.map) {
+            window.interactiveMap.api.map.resize();
+          }
+        }, 350);
+      });
+    }
+
+    // Escape key to close panel (mobile only)
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && mapPanel) {
+        const isMobile = window.matchMedia('(max-width: 640px)').matches;
+        if (isMobile) {
+          mapPanel.classList.add('app-map-fullscreen__panel--closed');
+          setTimeout(() => {
+            if (window.interactiveMap && window.interactiveMap.api && window.interactiveMap.api.map) {
+              window.interactiveMap.api.map.resize();
+            }
+          }, 350);
+        }
+      }
+    });
+
+    // Recalculate header height on resize
+    window.addEventListener('resize', function() {
+      const newHeaderHeight = (govukHeader?.offsetHeight || 0) + (serviceNav?.offsetHeight || 0);
+      document.documentElement.style.setProperty('--header-height', newHeaderHeight + 'px');
+
+      // Trigger map resize (let DEFRA component handle its own layout)
+      if (window.interactiveMap && window.interactiveMap.api && window.interactiveMap.api.map) {
+        window.interactiveMap.api.map.resize();
+      }
+    });
+
+    // =====================================================
+    // DATA CONFIGURATION
+    // =====================================================
+    const SBI = '106332870'; // Test SBI
+    let landParcelsData = null;
+    let landCoversData = null;
+    let hedgeControlData = null;
+    let cachedBounds = null;
+    let landCoverTypes = [];
+    let activeLandCovers = new Set();
+    let interactiveMap = null;
+    let mapInstance = null;
+    let datasetsReady = false;
+
+    // Land cover color mapping
+    const landCoverColors = {
+      'Permanent Grassland': '#00703c',
+      'Arable Land': '#d4351c',
+      'Temporary Grassland': '#85994b',
+      'Woodland': '#005a30',
+      'Scrub - Ungrazeable': '#f47738',
+      'Notional - Scrub': '#fd0',
+      'Track - Natural Surface': '#b58840',
+      'Metalled track': '#505a5f',
+      'Residential Gardens': '#912b88',
+      'Hard Standings': '#626a6e',
+      'Farm Building': '#b1b4b6',
+      'Permanent Crops': '#4c2c92',
+      'Fallow': '#f3f2f1',
+      'Fallow Land': '#f3f2f1',
+      'default': '#1d70b8'
+    };
+
+    // =====================================================
+    // DATA FETCHING FUNCTIONS
+    // =====================================================
+    async function fetchLandParcels() {
+      try {
+        const url = `https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels&cql_filter=SBI=${SBI}&srsname=EPSG:4326&outputFormat=application/json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        const data = await response.json();
+        landParcelsData = data;
+
+        // Add ngc property (combined SHEET_ID + PARCEL_ID) for interact plugin
+        data.features.forEach(feature => {
+          feature.properties.ngc = `${feature.properties.SHEET_ID}${feature.properties.PARCEL_ID}`;
+        });
+
+        console.log('Loaded parcels:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching land parcels:', error);
+        document.getElementById('parcels-list').innerHTML =
+          '<p class="govuk-body-s" style="color: #d4351c;">Error loading parcels. Please check console.</p>';
+        return null;
+      }
+    }
+
+    async function fetchLandCovers() {
+      try {
+        const url = `https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&cql_filter=SBI=${SBI}&srsname=EPSG:4326&outputFormat=application/json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        const data = await response.json();
+        landCoversData = data;
+
+        // Extract unique land cover types
+        const types = new Set();
+        data.features.forEach(feature => {
+          if (feature.properties && feature.properties.DESCRIPTION) {
+            types.add(feature.properties.DESCRIPTION);
+          }
+        });
+        landCoverTypes = Array.from(types).sort();
+        console.log('Loaded land covers:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching land covers:', error);
+        return null;
+      }
+    }
+
+    async function fetchHedgeControl() {
+      try {
+        const url = `https://environment.data.gov.uk/data-services/RPA/HedgeControl/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:HedgeControl&cql_filter=SBI=${SBI}&srsname=EPSG:4326&outputFormat=application/json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        const data = await response.json();
+        hedgeControlData = data;
+        console.log('Loaded hedge control:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching hedge control:', error);
+        return null;
+      }
+    }
+
+    // =====================================================
+    // MAP LAYER FUNCTIONS
+    // =====================================================
+
+    // Track selected parcel IDs
+    let selectedParcelIds = new Set();
+
+    function addParcelsToMap(map, data) {
+      if (!data || !data.features || data.features.length === 0) {
+        console.log('No parcel features found');
+        return;
+      }
+
+      // Add GeoJSON source for parcels with promoteId for selection tracking
+      map.addSource('parcels', {
+        type: 'geojson',
+        data: data,
+        promoteId: 'ngc'
+      });
+
+      // Add fill layer for parcels
+      map.addLayer({
+        id: 'parcels-fill',
+        type: 'fill',
+        source: 'parcels',
+        paint: {
+          'fill-color': '#1d70b8',
+          'fill-opacity': 0.3
+        }
+      });
+
+      // Add outline layer for parcels
+      map.addLayer({
+        id: 'parcels-outline',
+        type: 'line',
+        source: 'parcels',
+        paint: {
+          'line-color': '#1d70b8',
+          'line-width': 2
+        }
+      });
+
+      // Enable the interact plugin now that layers are added
+      console.log('Enabling interact plugin...');
+      interactPlugin.enable();
+      console.log('Interact plugin enabled');
+
+      console.log('Added parcels to map with', data.features.length, 'features');
+
+      // Calculate and cache bounds
+      if (!cachedBounds) {
+        let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+
+        data.features.forEach(feature => {
+          const processCoords = (coords) => {
+            coords.forEach(coord => {
+              if (Array.isArray(coord[0])) {
+                processCoords(coord);
+              } else {
+                minLng = Math.min(minLng, coord[0]);
+                maxLng = Math.max(maxLng, coord[0]);
+                minLat = Math.min(minLat, coord[1]);
+                maxLat = Math.max(maxLat, coord[1]);
+              }
+            });
+          };
+          processCoords(feature.geometry.coordinates);
+        });
+
+        cachedBounds = [[minLng, minLat], [maxLng, maxLat]];
+
+        map.fitBounds(cachedBounds, {
+          padding: 50,
+          duration: 0
+        });
+
+        // Remove loading state
+        document.getElementById('map').classList.remove('im-is-loading');
+
+        // Trigger map resize to ensure proper layout
+        setTimeout(() => {
+          if (map && map.resize) {
+            map.resize();
+          }
+        }, 100);
+      }
+    }
+
+
+    // =====================================================
+    // SIDEBAR FUNCTIONS
+    // =====================================================
+    function populateHedgerowsSummary(data) {
+      const summaryContainer = document.getElementById('hedgerows-summary');
+      if (!summaryContainer) return;
+
+      if (!data || !data.features || data.features.length === 0) {
+        summaryContainer.innerHTML = '<p class="govuk-body-s">No hedgerow data available.</p>';
+        return;
+      }
+
+      const totalCount = data.features.length;
+      let maxLength = 0, minLength = Infinity;
+
+      data.features.forEach(feature => {
+        const length = parseFloat(feature.properties.LENGTH || 0);
+        if (length > maxLength) maxLength = length;
+        if (length < minLength) minLength = length;
+      });
+
+      summaryContainer.innerHTML = `
+        <p class="govuk-body-s govuk-!-margin-bottom-1">Total ${totalCount}</p>
+        <p class="govuk-body-s govuk-!-margin-bottom-1">Longest ${maxLength.toFixed(2)}m</p>
+        <p class="govuk-body-s govuk-!-margin-bottom-0">Shortest ${minLength.toFixed(2)}m</p>
+      `;
+    }
+
+    function updateSelectAllCheckboxState() {
+      const selectAllCheckbox = document.getElementById('select-all-parcels');
+      if (!selectAllCheckbox) return;
+
+      const allCheckboxes = document.querySelectorAll('.parcel-checkbox');
+      let visibleCheckboxes = [];
+      let visibleCheckedCheckboxes = [];
+
+      allCheckboxes.forEach(cb => {
+        const parentWrapper = cb.closest('.parcel-item-wrapper');
+        if (parentWrapper && parentWrapper.style.display !== 'none') {
+          visibleCheckboxes.push(cb);
+          if (cb.checked) visibleCheckedCheckboxes.push(cb);
+        }
+      });
+
+      if (visibleCheckboxes.length === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      } else {
+        selectAllCheckbox.checked = visibleCheckboxes.length === visibleCheckedCheckboxes.length;
+        selectAllCheckbox.indeterminate = visibleCheckedCheckboxes.length > 0 && visibleCheckedCheckboxes.length < visibleCheckboxes.length;
+      }
+
+      const sidebarSelectedCount = document.getElementById('sidebar-selected-count');
+      if (sidebarSelectedCount) {
+        sidebarSelectedCount.textContent = `${visibleCheckedCheckboxes.length} of ${visibleCheckboxes.length}`;
+      }
+    }
+
+    function createParcelCheckboxes(data) {
+      if (!data || !data.features || data.features.length === 0) {
+        document.getElementById('parcels-list').innerHTML =
+          '<p class="govuk-body-s">No parcels found for this SBI.</p>';
+        return;
+      }
+
+      const parcels = data.features.map(f => ({
+        id: f.properties.ngc,
+        sheetId: f.properties.SHEET_ID,
+        parcelId: f.properties.PARCEL_ID,
+        area: f.properties.AREA_HA,
+        feature: f
+      }));
+
+      parcels.sort((a, b) => a.id.localeCompare(b.id));
+
+      const totalArea = parcels.reduce((sum, p) => sum + parseFloat(p.area || 0), 0);
+      document.getElementById('sidebar-total-area').textContent = totalArea.toFixed(4);
+      document.getElementById('sidebar-total-parcels').textContent = parcels.length;
+      document.getElementById('sidebar-selected-count').textContent = `0 of ${parcels.length}`;
+
+      let checkboxesHTML = '<div class="govuk-checkboxes govuk-checkboxes--small parcels-bordered-list" data-module="govuk-checkboxes">';
+
+      parcels.forEach(parcel => {
+        let landCoverInfo = '';
+        if (landCoversData && landCoversData.features) {
+          const parcelLandCovers = landCoversData.features.filter(lc =>
+            lc.properties.SHEET_ID === parcel.sheetId &&
+            lc.properties.PARCEL_ID === parcel.parcelId
+          );
+          if (parcelLandCovers.length > 0) {
+            const uniqueLandCovers = [...new Set(parcelLandCovers.map(lc => lc.properties.DESCRIPTION))];
+            landCoverInfo = uniqueLandCovers.join(', ');
+          }
+        }
+
+        let hedgerowInfo = '';
+        if (hedgeControlData && hedgeControlData.features) {
+          const parcelHedgerows = hedgeControlData.features.filter(h =>
+            h.properties.REF_PARCEL_SHEET_ID === parcel.sheetId &&
+            h.properties.REF_PARCEL_PARCEL_ID === parcel.parcelId
+          );
+          if (parcelHedgerows.length > 0) {
+            const totalLength = parcelHedgerows.reduce((sum, h) => sum + parseFloat(h.properties.LENGTH || 0), 0);
+            hedgerowInfo = `${parcelHedgerows.length} hedgerow${parcelHedgerows.length !== 1 ? 's' : ''} (${totalLength.toFixed(2)}m)`;
+          }
+        }
+
+        let hintContent = `${parseFloat(parcel.area).toFixed(4)} (ha)`;
+        if (landCoverInfo) hintContent += `<br>${landCoverInfo}`;
+        if (hedgerowInfo) hintContent += `<br>${hedgerowInfo}`;
+
+        checkboxesHTML += `
+          <div class="parcel-item-wrapper">
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input parcel-checkbox"
+                     id="parcel-${parcel.id}"
+                     name="landParcels"
+                     type="checkbox"
+                     value="${parcel.id}"
+                     data-area="${parcel.area}">
+              <label class="govuk-label govuk-checkboxes__label" for="parcel-${parcel.id}">
+                ${parcel.sheetId} ${parcel.parcelId}
+              </label>
+              <div class="govuk-hint govuk-checkboxes__hint">
+                ${hintContent}
+              </div>
+            </div>
+            <div class="parcel-rename-input" style="display: none; padding-left: 45px; padding-bottom: 10px;">
+              <label class="govuk-label govuk-!-font-size-14" for="rename-${parcel.id}">Field name (optional)</label>
+              <input class="govuk-input govuk-input--width-10 rename-field" id="rename-${parcel.id}" type="text"
+                     placeholder="e.g. Top Meadow" data-parcel-id="${parcel.id}">
+            </div>
+          </div>
+        `;
+      });
+
+      checkboxesHTML += '</div>';
+      document.getElementById('parcels-list').innerHTML = checkboxesHTML;
+
+      // Select all checkbox handler
+      const selectAllCheckbox = document.getElementById('select-all-parcels');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+          const parcelCheckboxes = document.querySelectorAll('.parcel-checkbox');
+          parcelCheckboxes.forEach(checkbox => {
+            const parentWrapper = checkbox.closest('.parcel-item-wrapper');
+            if (parentWrapper && parentWrapper.style.display !== 'none') {
+              if (checkbox.checked !== this.checked) {
+                checkbox.checked = this.checked;
+                // Sync with map via interact plugin
+                if (this.checked) {
+                  selectFeatureOnMap(checkbox.value);
+                } else {
+                  unselectFeatureOnMap(checkbox.value);
+                }
+              }
+            }
+          });
+          updateSidebarStats();
+          updateHiddenInputs();
+          updateRenameInputVisibility();
+        });
+      }
+
+      // Individual checkbox handlers
+      document.querySelectorAll('.parcel-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          if (this.checked) {
+            selectFeatureOnMap(this.value);
+          } else {
+            unselectFeatureOnMap(this.value);
+          }
+          updateSidebarStats();
+          updateSelectAllCheckboxState();
+          updateHiddenInputs();
+          updateRenameInputVisibility();
+        });
+      });
+
+      // Make whole parcel item clickable
+      document.querySelectorAll('.parcel-item-wrapper').forEach(wrapper => {
+        wrapper.addEventListener('click', function(e) {
+          if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL' || e.target.closest('.parcel-rename-input')) return;
+          const checkbox = this.querySelector('.parcel-checkbox');
+          if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+
+      // Update hidden inputs when rename fields change
+      document.getElementById('parcels-list').addEventListener('input', function(e) {
+        if (e.target.classList.contains('rename-field')) {
+          updateHiddenInputs();
+        }
+      });
+
+      // Toggle "Add field names" functionality
+      function updateRenameInputVisibility() {
+        const toggle = document.getElementById('enable-field-names');
+        const showInputs = toggle && toggle.checked;
+        document.querySelectorAll('.parcel-item-wrapper').forEach(wrapper => {
+          const cb = wrapper.querySelector('.parcel-checkbox');
+          const renameInput = wrapper.querySelector('.parcel-rename-input');
+          if (cb && renameInput) {
+            if (showInputs && cb.checked) {
+              renameInput.style.display = 'block';
+            } else {
+              renameInput.style.display = 'none';
+            }
+          }
+        });
+      }
+
+      const enableFieldNamesToggle = document.getElementById('enable-field-names');
+      if (enableFieldNamesToggle) {
+        enableFieldNamesToggle.addEventListener('change', function() {
+          updateRenameInputVisibility();
+          updateHiddenInputs();
+        });
+      }
+    }
+
+    // Select feature using interact plugin API
+    function selectFeatureOnMap(featureId) {
+      selectedParcelIds.add(featureId);
+      // Try interact plugin API
+      if (interactPlugin && typeof interactPlugin.selectFeature === 'function') {
+        interactPlugin.selectFeature({
+          featureId: featureId,
+          layerId: 'parcels-fill',
+          idProperty: 'ngc'
+        });
+      } else if (interactiveMap && interactiveMap.api && interactiveMap.api.interact) {
+        interactiveMap.api.interact.selectFeature({
+          featureId: featureId,
+          layerId: 'parcels-fill',
+          idProperty: 'ngc'
+        });
+      }
+    }
+
+    // Unselect feature using interact plugin API
+    function unselectFeatureOnMap(featureId) {
+      selectedParcelIds.delete(featureId);
+      // Try interact plugin API
+      if (interactPlugin && typeof interactPlugin.unselectFeature === 'function') {
+        interactPlugin.unselectFeature({
+          featureId: featureId,
+          layerId: 'parcels-fill',
+          idProperty: 'ngc'
+        });
+      } else if (interactiveMap && interactiveMap.api && interactiveMap.api.interact) {
+        interactiveMap.api.interact.unselectFeature({
+          featureId: featureId,
+          layerId: 'parcels-fill',
+          idProperty: 'ngc'
+        });
+      }
+    }
+
+    function updateSidebarStats() {
+      let selectedArea = 0;
+
+      if (landParcelsData && landParcelsData.features) {
+        landParcelsData.features.forEach(f => {
+          if (selectedParcelIds.has(f.properties.ngc)) {
+            selectedArea += parseFloat(f.properties.AREA_HA || 0);
+          }
+        });
+      }
+
+      document.getElementById('sidebar-selected-area').textContent = selectedArea.toFixed(4);
+      document.getElementById('sidebar-selected-count').textContent =
+        `${selectedParcelIds.size} of ${landParcelsData ? landParcelsData.features.length : 0}`;
+    }
+
+    function updateHiddenInputs() {
+      // Selected parcels
+      const selectedFeatures = landParcelsData && landParcelsData.features
+        ? landParcelsData.features.filter(f => selectedParcelIds.has(f.properties.ngc))
+        : [];
+
+      const parcelsInput = document.getElementById('selected-parcels-input');
+      if (parcelsInput) {
+        parcelsInput.value = JSON.stringify({
+          type: 'FeatureCollection',
+          features: selectedFeatures
+        });
+      }
+
+      // Selected land covers
+      const landCoversInput = document.getElementById('selected-land-covers-input');
+      if (landCoversInput) {
+        const selectedLandCoverFeatures = landCoversData && landCoversData.features
+          ? landCoversData.features.filter(f => {
+              const parcelId = `${f.properties.SHEET_ID}${f.properties.PARCEL_ID}`;
+              return selectedParcelIds.has(parcelId);
+            })
+          : [];
+        landCoversInput.value = JSON.stringify({
+          type: 'FeatureCollection',
+          features: selectedLandCoverFeatures
+        });
+      }
+
+      // Hedgerows
+      const hedgerowsCheckbox = document.getElementById('hedgerows-checkbox');
+      const hedgerowsInput = document.getElementById('hedgerows-input');
+      if (hedgerowsInput && hedgerowsCheckbox) {
+        hedgerowsInput.value = hedgerowsCheckbox.checked ? 'true' : 'false';
+      }
+
+      const hedgerowsDataInput = document.getElementById('selected-hedgerows-input');
+      if (hedgerowsDataInput && hedgeControlData && hedgeControlData.features) {
+        const selectedHedgerowFeatures = hedgeControlData.features.filter(f => {
+          const parcelId = `${f.properties.REF_PARCEL_SHEET_ID}${f.properties.REF_PARCEL_PARCEL_ID}`;
+          return selectedParcelIds.has(parcelId);
+        });
+        hedgerowsDataInput.value = JSON.stringify({
+          type: 'FeatureCollection',
+          features: selectedHedgerowFeatures
+        });
+      }
+
+      // Field names
+      const fieldNamesInput = document.getElementById('parcel-field-names-input');
+      if (fieldNamesInput) {
+        const fieldNames = {};
+        document.querySelectorAll('.rename-field').forEach(input => {
+          if (input.value.trim()) {
+            fieldNames[input.dataset.parcelId] = input.value.trim();
+          }
+        });
+        fieldNamesInput.value = JSON.stringify(fieldNames);
+      }
+    }
+
+    // =====================================================
+    // LAND COVER CONTROLS
+    // =====================================================
+    function setupAccordionControls() {
+      function populateLandCoverCheckboxes() {
+        const container = document.getElementById('land-covers-list');
+        if (!container || landCoverTypes.length === 0) return;
+
+        const landCoverCounts = {};
+        if (landCoversData && landCoversData.features) {
+          landCoversData.features.forEach(feature => {
+            const type = feature.properties.DESCRIPTION;
+            landCoverCounts[type] = (landCoverCounts[type] || 0) + 1;
+          });
+        }
+
+        const checkboxesHTML = landCoverTypes.map(type => {
+          const sanitizedValue = type.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+          const count = landCoverCounts[type] || 0;
+          return `
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input land-cover-checkbox"
+                     id="land-cover-${sanitizedValue}"
+                     name="land-cover"
+                     type="checkbox"
+                     value="${type}">
+              <label class="govuk-label govuk-checkboxes__label" for="land-cover-${sanitizedValue}">
+                ${type} (${count})
+              </label>
+            </div>
+          `;
+        }).join('');
+
+        container.innerHTML = `<div class="govuk-checkboxes govuk-checkboxes--small">${checkboxesHTML}</div>`;
+
+        document.querySelectorAll('.land-cover-checkbox').forEach(checkbox => {
+          checkbox.addEventListener('change', function() {
+            const landCoverType = this.value;
+            if (this.checked) {
+              activeLandCovers.add(landCoverType);
+              addLandCoverDataset(landCoverType);
+            } else {
+              activeLandCovers.delete(landCoverType);
+              removeLandCoverDataset(landCoverType);
+            }
+            filterParcelsByLandCover();
+            updateLandCoversSelectedCount();
+            updateHiddenInputs();
+          });
+        });
+      }
+
+      // Add a land cover type as a dataset via datasetsPlugin
+      function addLandCoverDataset(landCoverType) {
+        if (!landCoversData || !datasetsReady) {
+          console.warn('Cannot add land cover dataset - not ready');
+          return;
+        }
+
+        const filteredFeatures = landCoversData.features.filter(
+          f => f.properties.DESCRIPTION === landCoverType
+        );
+
+        if (filteredFeatures.length === 0) return;
+
+        const datasetId = `land-cover-${landCoverType.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
+        const color = landCoverColors[landCoverType] || landCoverColors['default'];
+
+        datasetsPlugin.addDataset({
+          id: datasetId,
+          label: landCoverType,
+          geojson: {
+            type: 'FeatureCollection',
+            features: filteredFeatures
+          },
+          fill: color,
+          stroke: '#0b0c0c',
+          strokeWidth: 1.5,
+          showInKey: true,
+          showInLayers: false,
+          symbolDescription: `${landCoverType} area`,
+          minZoom: 0,
+          maxZoom: 24
+        });
+
+        console.log(`Added land cover dataset: ${datasetId}`);
+      }
+
+      // Remove a land cover type dataset
+      function removeLandCoverDataset(landCoverType) {
+        if (!datasetsReady) return;
+
+        const datasetId = `land-cover-${landCoverType.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
+        datasetsPlugin.removeDataset(datasetId);
+        console.log(`Removed land cover dataset: ${datasetId}`);
+      }
+
+      function updateLandCoversSelectedCount() {
+        const countElement = document.getElementById('land-covers-selected-count');
+        if (countElement) countElement.textContent = activeLandCovers.size;
+      }
+
+      function filterParcelsByLandCover() {
+        const hedgerowsCheckbox = document.getElementById('hedgerows-checkbox');
+        const parcelWrappers = document.querySelectorAll('#parcels-list .parcel-item-wrapper');
+        const hedgerowsActive = hedgerowsCheckbox && hedgerowsCheckbox.checked;
+
+        let hedgerowValidParcelIds = null;
+        if (hedgerowsActive && hedgeControlData && hedgeControlData.features) {
+          hedgerowValidParcelIds = new Set();
+          hedgeControlData.features.forEach(h => {
+            hedgerowValidParcelIds.add(`${h.properties.REF_PARCEL_SHEET_ID}${h.properties.REF_PARCEL_PARCEL_ID}`);
+          });
+        }
+
+        if (activeLandCovers.size === 0) {
+          parcelWrappers.forEach(wrapper => {
+            const checkbox = wrapper.querySelector('.parcel-checkbox');
+            if (!checkbox) return;
+            const parcelId = checkbox.value;
+            const label = wrapper.querySelector('.govuk-checkboxes__label');
+            const labelText = label ? label.textContent.toLowerCase() : '';
+            const filterInput = document.getElementById('parcel-filter');
+            const filterValue = filterInput ? filterInput.value.toLowerCase() : '';
+
+            let matchesHedgerows = hedgerowValidParcelIds === null || hedgerowValidParcelIds.has(parcelId);
+            let matchesTextFilter = filterValue === '' || labelText.includes(filterValue);
+
+            wrapper.style.display = (matchesHedgerows && matchesTextFilter) ? '' : 'none';
+          });
+          updateSelectAllCheckboxState();
+          return;
+        }
+
+        const validParcelIds = new Set();
+        if (landCoversData && landCoversData.features) {
+          landCoversData.features.forEach(lc => {
+            if (activeLandCovers.has(lc.properties.DESCRIPTION)) {
+              validParcelIds.add(`${lc.properties.SHEET_ID}${lc.properties.PARCEL_ID}`);
+            }
+          });
+        }
+
+        parcelWrappers.forEach(wrapper => {
+          const checkbox = wrapper.querySelector('.parcel-checkbox');
+          if (!checkbox) return;
+          const parcelId = checkbox.value;
+          const label = wrapper.querySelector('.govuk-checkboxes__label');
+          const labelText = label ? label.textContent.toLowerCase() : '';
+          const filterInput = document.getElementById('parcel-filter');
+          const filterValue = filterInput ? filterInput.value.toLowerCase() : '';
+
+          let matchesLandCover = validParcelIds.has(parcelId);
+          let matchesHedgerows = hedgerowValidParcelIds === null || hedgerowValidParcelIds.has(parcelId);
+          let matchesTextFilter = filterValue === '' || labelText.includes(filterValue);
+
+          wrapper.style.display = (matchesLandCover && matchesHedgerows && matchesTextFilter) ? '' : 'none';
+        });
+        updateSelectAllCheckboxState();
+      }
+
+      // Populate land covers on accordion open
+      const landCoversAccordionButton = document.querySelector('.govuk-accordion__section-button[aria-controls="accordion-land-data-content-2"]');
+      if (landCoversAccordionButton) {
+        landCoversAccordionButton.addEventListener('click', () => {
+          setTimeout(() => {
+            const list = document.getElementById('land-covers-list');
+            if (list && !list.querySelector('.govuk-checkboxes')) {
+              populateLandCoverCheckboxes();
+            }
+          }, 150);
+        });
+      }
+
+      setTimeout(() => {
+        const list = document.getElementById('land-covers-list');
+        if (list && list.offsetParent !== null && !list.querySelector('.govuk-checkboxes')) {
+          populateLandCoverCheckboxes();
+        }
+      }, 500);
+
+      // Hedgerows checkbox - add/remove dataset via datasetsPlugin
+      const hedgerowsCheckbox = document.getElementById('hedgerows-checkbox');
+      if (hedgerowsCheckbox) {
+        hedgerowsCheckbox.addEventListener('change', function() {
+          if (this.checked) {
+            addHedgerowsDataset();
+          } else {
+            removeHedgerowsDataset();
+          }
+          filterParcelsByLandCover();
+          updateHiddenInputs();
+        });
+      }
+
+      // Add hedgerows as a dataset via datasetsPlugin
+      function addHedgerowsDataset() {
+        if (!hedgeControlData || !datasetsReady) {
+          console.warn('Cannot add hedgerows dataset - not ready');
+          return;
+        }
+
+        datasetsPlugin.addDataset({
+          id: 'hedgerows',
+          label: 'Hedgerows',
+          geojson: hedgeControlData,
+          stroke: '#912b88',
+          strokeWidth: 3,
+          showInKey: true,
+          showInLayers: false,
+          symbolDescription: 'purple line',
+          keySymbolShape: 'line',
+          minZoom: 0,
+          maxZoom: 24
+        });
+
+        console.log('Added hedgerows dataset');
+      }
+
+      // Remove hedgerows dataset
+      function removeHedgerowsDataset() {
+        if (!datasetsReady) return;
+
+        datasetsPlugin.removeDataset('hedgerows');
+        console.log('Removed hedgerows dataset');
+      }
+
+      // Text filter
+      const filterInput = document.getElementById('parcel-filter');
+      if (filterInput) {
+        filterInput.addEventListener('input', debounce(() => filterParcelsByLandCover(), 150));
+      }
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+      };
+    }
+
+    // =====================================================
+    // CUSTOM PARCEL SEARCH DATASET
+    // =====================================================
+    // Uses buildRequest/parseResults pattern required by DEFRA search plugin.
+    // buildRequest creates a Blob URL from client-side parcel data,
+    // parseResults filters and formats the results.
+    const parcelSearchDataset = {
+      name: 'Land Parcels',
+      buildRequest: (query) => {
+        const data = landParcelsData || { type: 'FeatureCollection', features: [] };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        return {
+          url: URL.createObjectURL(blob),
+          options: { method: 'GET' }
+        };
+      },
+      parseResults: (json, query) => {
+        if (!json || !json.features) return [];
+
+        const searchTerm = query.toLowerCase().replace(/\s+/g, '');
+        const filtered = json.features.filter(feature => {
+          const ngc = `${feature.properties.SHEET_ID}${feature.properties.PARCEL_ID}`.toLowerCase();
+          const ngcSpaced = `${feature.properties.SHEET_ID} ${feature.properties.PARCEL_ID}`.toLowerCase();
+          return ngc.includes(searchTerm) || ngcSpaced.includes(query.toLowerCase());
+        });
+
+        return filtered.slice(0, 5).map(feature => {
+          let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+          const processCoords = (coords) => {
+            coords.forEach(coord => {
+              if (Array.isArray(coord[0])) {
+                processCoords(coord);
+              } else {
+                minLng = Math.min(minLng, coord[0]);
+                maxLng = Math.max(maxLng, coord[0]);
+                minLat = Math.min(minLat, coord[1]);
+                maxLat = Math.max(maxLat, coord[1]);
+              }
+            });
+          };
+          processCoords(feature.geometry.coordinates);
+
+          const centerLng = (minLng + maxLng) / 2;
+          const centerLat = (minLat + maxLat) / 2;
+
+          // Build display text and marked version (with HTML formatting)
+          const parcelLabel = `${feature.properties.SHEET_ID} ${feature.properties.PARCEL_ID}`;
+          const area = parseFloat(feature.properties.AREA_HA).toFixed(4);
+          const text = `${parcelLabel} - Total area (ha) ${area}`;
+          const marked = `<strong>${parcelLabel}</strong><br><span style="font-weight:normal;font-size:0.85em;color:#505a5f">Total area (ha) ${area}</span>`;
+
+          return {
+            id: feature.properties.ngc || `${feature.properties.SHEET_ID}${feature.properties.PARCEL_ID}`,
+            text: text,
+            marked: marked,
+            point: [centerLng, centerLat],
+            bounds: [minLng, minLat, maxLng, maxLat],
+            type: 'parcel'
+          };
+        });
+      },
+      // Only search parcels for queries starting with 2 letters + digit (parcel ID format)
+      includeRegex: /^[A-Za-z]{2}\s*\d/
+    };
+
+    // =====================================================
+    // INITIALIZE DEFRA INTERACTIVE MAP WITH PLUGINS
+    // =====================================================
+    // Using datasetsPlugin and interactPlugin for GeoJSON parcel selection
+
+    // Calculate available height for map (viewport minus header)
+    const mapHeight = window.innerHeight - (govukHeader?.offsetHeight || 0) - (serviceNav?.offsetHeight || 0);
+
+    // Create datasets plugin for land covers and hedgerows with showInKey
+    // Note: Need placeholder dataset for Key button to appear
+    const datasetsPlugin = defra.datasetsPlugin({
+      datasets: [{
+        id: 'placeholder',
+        label: 'placeholder',
+        geojson: { type: 'FeatureCollection', features: [] },
+        showInKey: true,
+        showInLayers: false,
+        visibility: 'hidden'
+      }]
+    });
+
+    // Create interact plugin for parcel selection
+    // Note: Must call interactPlugin.enable() after map:ready
+    const interactPlugin = defra.interactPlugin({
+      dataLayers: [{
+        layerId: 'parcels-fill',
+        idProperty: 'ngc',
+        selectedFeatureStyle: {
+          stroke: { outdoor: '#0b0c0c', dark: '#ffdd00' },
+          'stroke-width': 3,
+          fill: 'rgba(255, 221, 0, 0.5)'
+        }
+      }],
+      interactionMode: 'select',
+      multiSelect: true,
+      closeOnDone: false,
+      closeOnCancel: false
+    });
+
+    interactiveMap = new defra.InteractiveMap('map', {
+      mapProvider: defra.maplibreProvider(),
+      behaviour: 'inline',
+      minZoom: 6,
+      maxZoom: 20,
+      enableZoomControls: true,
+      containerHeight: mapHeight + 'px',
+      mapStyle: {
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '© OpenStreetMap contributors',
+        backgroundColor: '#f5f5f0'
+      },
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [
+            {
+              id: 'outdoor',
+              label: 'Map',
+              url: {
+                version: 8,
+                sources: {
+                  'raster-tiles': {
+                    type: 'raster',
+                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '© OpenStreetMap contributors'
+                  }
+                },
+                layers: [
+                  {
+                    id: 'simple-tiles',
+                    type: 'raster',
+                    source: 'raster-tiles',
+                    minzoom: 0,
+                    maxzoom: 22
+                  }
+                ]
+              },
+              thumbnail: '/public/images/map.svg',
+              attribution: '© OpenStreetMap contributors',
+              backgroundColor: '#f5f5f0',
+              mapColorScheme: 'light',
+              appColorScheme: 'light'
+            },
+            {
+              id: 'satellite',
+              label: 'Satellite',
+              url: {
+                version: 8,
+                sources: {
+                  'satellite-tiles': {
+                    type: 'raster',
+                    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                    tileSize: 256,
+                    attribution: '© Esri, Maxar, Earthstar Geographics'
+                  }
+                },
+                layers: [
+                  {
+                    id: 'satellite',
+                    type: 'raster',
+                    source: 'satellite-tiles',
+                    minzoom: 0,
+                    maxzoom: 22
+                  }
+                ]
+              },
+              thumbnail: '/public/images/map.svg',
+              attribution: '© Esri, Maxar, Earthstar Geographics',
+              backgroundColor: '#1a1a1a',
+              mapColorScheme: 'dark',
+              appColorScheme: 'dark'
+            }
+          ]
+        }),
+        interactPlugin,
+        datasetsPlugin,
+        defra.searchPlugin({
+          // osNamesURL: '/api/geocode-proxy?query={query}',
+          customDatasets: [parcelSearchDataset],
+          width: '300px',
+          showMarker: true,
+          isExpanded: false
+        }),
+        defra.scaleBarPlugin({ units: 'metric' })
+      ]
+    });
+
+    window.interactiveMap = interactiveMap;
+
+    // =====================================================
+    // DATASETS PLUGIN READY EVENT
+    // =====================================================
+    interactiveMap.on('datasets:ready', () => {
+      console.log('Datasets plugin ready');
+      datasetsReady = true;
+    });
+
+    // =====================================================
+    // INTERACT PLUGIN EVENT HANDLERS
+    // =====================================================
+    // Handle selection changes from interact plugin (map clicks)
+    interactiveMap.on('interact:selectionchange', (e) => {
+      console.log('Selection changed:', e);
+
+      // Update selectedParcelIds set from interact plugin selection
+      selectedParcelIds.clear();
+      if (e.selectedFeatures) {
+        e.selectedFeatures.forEach(feature => {
+          selectedParcelIds.add(feature.featureId);
+        });
+      }
+
+      // Sync checkboxes with selection
+      document.querySelectorAll('.parcel-checkbox').forEach(checkbox => {
+        checkbox.checked = selectedParcelIds.has(checkbox.value);
+      });
+
+      // Update sidebar stats and form inputs
+      updateSidebarStats();
+      updateSelectAllCheckboxState();
+      updateHiddenInputs();
+      updateRenameInputVisibility();
+    });
+
+    // =====================================================
+    // MAP READY EVENT - LOAD DATA
+    // =====================================================
+    interactiveMap.on('map:ready', async (e) => {
+      mapInstance = e.map;
+
+      // Trigger map resize to ensure proper layout
+      setTimeout(() => {
+        if (mapInstance && mapInstance.resize) {
+          mapInstance.resize();
+        }
+        // Dispatch window resize event to trigger DEFRA component overlay repositioning
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
+
+      // Try additional delayed resize for overlay visibility
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 500);
+
+      // Fetch all data in parallel
+      const [parcelsData, coversData, hedgesData] = await Promise.all([
+        fetchLandParcels(),
+        fetchLandCovers(),
+        fetchHedgeControl()
+      ]);
+
+      if (parcelsData) {
+        addParcelsToMap(mapInstance, parcelsData);
+        createParcelCheckboxes(parcelsData);
+      }
+
+      // Land covers and hedgerows are added via datasetsPlugin when checkboxes are toggled
+      // Just populate the hedgerows summary here
+      if (hedgesData) {
+        populateHedgerowsSummary(hedgesData);
+      }
+
+      setupAccordionControls();
+    });
+
+    // Re-add parcels layer after style change (datasetsPlugin handles land covers/hedgerows)
+    interactiveMap.on('map:stylechange', (e) => {
+      console.log('Style changed:', e);
+
+      // Wait for style to load then re-add parcels layer
+      setTimeout(() => {
+        if (mapInstance) {
+          // Re-add parcels layer (manually managed for interact plugin)
+          if (landParcelsData && !mapInstance.getSource('parcels')) {
+            mapInstance.addSource('parcels', {
+              type: 'geojson',
+              data: landParcelsData,
+              promoteId: 'ngc'
+            });
+
+            mapInstance.addLayer({
+              id: 'parcels-fill',
+              type: 'fill',
+              source: 'parcels',
+              paint: {
+                'fill-color': '#1d70b8',
+                'fill-opacity': 0.3
+              }
+            });
+
+            mapInstance.addLayer({
+              id: 'parcels-outline',
+              type: 'line',
+              source: 'parcels',
+              paint: {
+                'line-color': '#1d70b8',
+                'line-width': 2
+              }
+            });
+
+            // Re-enable interact plugin after layers are added
+            console.log('Re-enabling interact plugin after style change...');
+            interactPlugin.enable();
+
+            // Re-select previously selected parcels
+            selectedParcelIds.forEach(featureId => {
+              selectFeatureOnMap(featureId);
+            });
+          }
+
+          // Note: Land covers and hedgerows are managed by datasetsPlugin
+          // which handles style changes automatically
+        }
+      }, 500);
+    });
+
+    // Helper: updateRenameInputVisibility needs to be accessible from interact:selectionchange
+    // Since it's defined inside createParcelCheckboxes, we expose it here as a no-op
+    // until createParcelCheckboxes runs and replaces it
+    function updateRenameInputVisibility() {
+      const toggle = document.getElementById('enable-field-names');
+      const showInputs = toggle && toggle.checked;
+      document.querySelectorAll('.parcel-item-wrapper').forEach(wrapper => {
+        const cb = wrapper.querySelector('.parcel-checkbox');
+        const renameInput = wrapper.querySelector('.parcel-rename-input');
+        if (cb && renameInput) {
+          if (showInputs && cb.checked) {
+            renameInput.style.display = 'block';
+          } else {
+            renameInput.style.display = 'none';
+          }
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  /* =====================================================
+     FULLSCREEN MAP LAYOUT STYLES (POC-5)
+     ===================================================== */
+
+  :root {
+    --header-height: 100px;
+  }
+
+  html, body {
+    overflow: hidden;
+    overscroll-behavior: none;
+    height: 100%;
+  }
+
+  /* Ensure service navigation dropdown appears above the map on mobile */
+  .govuk-service-navigation {
+    position: relative;
+    z-index: 100;
+  }
+
+  .app-map-fullscreen {
+    position: fixed;
+    display: flex;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .app-map-fullscreen__map {
+    /* position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0; */
+    width: 100%;
+    height: 100%;
+  }
+
+  /* DEFRA map container styling - ensure full height */
+  #map {
+    height: 100% !important;
+  }
+
+  /* Remove top border from DEFRA map component */
+  #map .im-o-app,
+  #map .im-c-viewport {
+    border-top: none !important;
+  }
+
+  /* Ensure DEFRA component fills container */
+  #map .im-o-app {
+    height: 100% !important;
+  }
+
+  .app-map-fullscreen__panel {
+    width: 500px;
+    max-width: 100vw;
+    background: #ffffff;
+    /* border-right: 1px solid #b1b4b6; */
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+  }
+
+  .app-map-fullscreen__panel--closed {
+    transform: translateX(-100%);
+  }
+
+  .app-map-fullscreen__panel-content {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 15px;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 0;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .app-map-fullscreen__panel-close {
+    display: none;
+  }
+
+  .app-map-fullscreen__menu-btn {
+    display: none;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 5;
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    padding: 8px 12px;
+    cursor: pointer;
+    align-items: center;
+    gap: 8px;
+    font-family: "GDS Transport", arial, sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #0b0c0c;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .app-map-fullscreen__menu-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .app-map-fullscreen__menu-btn:hover {
+    background-color: #f3f2f1;
+  }
+
+  .app-map-fullscreen__menu-btn:focus-visible {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    background-color: #ffdd00;
+  }
+
+  @media (max-width: 640px) {
+    .app-map-fullscreen__panel {
+      position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+      width: 400px;
+      max-width: calc(100vw - 60px);
+    }
+
+    .app-map-fullscreen__panel-close {
+      display: flex;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 44px;
+      height: 44px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      line-height: 1;
+      color: #0b0c0c;
+      z-index: 11;
+    }
+
+    .app-map-fullscreen__panel-close:hover {
+      background-color: #f3f2f1;
+    }
+
+    .app-map-fullscreen__panel-close:focus-visible {
+      outline: 3px solid #ffdd00;
+      outline-offset: 0;
+      background-color: #ffdd00;
+    }
+
+    .app-map-fullscreen__panel-content {
+      padding-top: 15px;
+      padding-right: 50px;
+    }
+
+    .app-map-fullscreen__panel--closed ~ .app-map-fullscreen__menu-btn {
+      display: flex;
+    }
+
+    .app-map-fullscreen__panel:not(.app-map-fullscreen__panel--closed) ~ .app-map-fullscreen__menu-btn {
+      display: none;
+    }
+  }
+
+  /* =====================================================
+     SIDEBAR STYLES
+     ===================================================== */
+
+  .scrollable-checkbox-container {
+    max-height: 325px;
+    overflow-y: auto;
+    overflow-x: visible;
+    margin-left: -15px;
+    padding-left: 15px;
+    padding-right: 10px;
+    margin-bottom: 30px;
+  }
+
+  #parcels-list .govuk-checkboxes,
+  #land-covers-list .govuk-checkboxes {
+    display: block;
+  }
+
+  .scrollable-checkbox-container .govuk-checkboxes__label {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .scrollable-checkbox-container .govuk-checkboxes__hint {
+    font-size: 1rem;
+    line-height: 1.25;
+    padding-right: 0px;
+    margin-top: -14px;
+  }
+
+  #parcels-list .govuk-checkboxes__hint {
+    margin-bottom: 0;
+    line-height: 1.4;
+  }
+
+  .parcel-item-wrapper {
+    margin-bottom: 5px;
+    border: 1px solid #d4d7db;
+    padding: 0px 5px 10px 8px;
+    cursor: pointer;
+  }
+
+  .parcel-item-wrapper:has(input:checked) {
+    background-color: #f4f8fb;
+  }
+
+  .parcel-item-wrapper .govuk-checkboxes__item {
+    margin-bottom: 0;
+  }
+
+  .parcel-item-wrapper .govuk-checkboxes__label {
+    align-items: flex-start;
+    padding-top: 0;
+    min-height: auto;
+  }
+
+  .govuk-radios__label {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .scrollable-checkbox-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollable-checkbox-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .scrollable-checkbox-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 0px;
+  }
+
+  .scrollable-checkbox-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .parcel-controls-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+    margin-bottom: 15px;
+  }
+
+  .filter-input-wrapper {
+    flex: 0 0 50%;
+  }
+
+  #select-all-container {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  #select-all-container .govuk-checkboxes {
+    margin-bottom: 0;
+  }
+
+  #select-all-container .govuk-checkboxes__item {
+    margin-bottom: -10px;
+    padding-bottom: 0;
+  }
+
+  #select-all-container .govuk-checkboxes__label {
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+
+  #parcel-filter {
+    font-size: 1rem;
+    line-height: 1.25;
+    text-transform: uppercase;
+  }
+
+  #hedgerows-checkbox + .govuk-checkboxes__label {
+    font-size: 1rem;
+  }
+
+  .govuk-button {
+    font-size: 1rem;
+    line-height: 1.25;
+    margin-bottom: 3px;
+  }
+
+  .govuk-checkboxes__hint {
+    margin-top: -14px;
+  }
+
+  /* =====================================================
+     ACCORDION STYLES
+     ===================================================== */
+
+  .govuk-accordion__section-button {
+    font-size: 1.25rem;
+  }
+
+  .govuk-accordion__section-summary {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .govuk-accordion__show-all,
+  .govuk-accordion__show-all-text,
+  .govuk-accordion__section-toggle,
+  .govuk-accordion__section-toggle-text {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  /* Custom popup styles */
+  .custom-popup {
+    position: absolute;
+    z-index: 100;
+    background: #ffffff;
+    padding: 15px 20px;
+    padding-right: 45px;
+    font-size: 1rem;
+    line-height: 1.25;
+    min-width: 200px;
+    max-width: 300px;
+    font-family: "GDS Transport", arial, sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+   */
+  }
+
+  .custom-popup__close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 28px;
+    line-height: 1;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0b0c0c;
+    font-family: "GDS Transport", arial, sans-serif;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  .custom-popup__close:hover {
+    background-color: #f3f2f1;
+  }
+
+  .custom-popup__close:focus {
+    outline: none;
+  }
+
+  .custom-popup__close:focus-visible {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    background-color: #ffdd00;
+  }
+
+  .custom-popup__content strong {
+    font-size: 1.1875rem;
+    line-height: 1.25;
+    display: block;
+    margin-bottom: 2px;
+    font-weight: 700;
+  }
+
+  /* =====================================================
+     FULL WIDTH LAYOUT
+     ===================================================== */
+
+  .govuk-header__container, .govuk-width-container, .app-full-width-container {
+    max-width: 100%;
+    padding: 0 15px;
+  }
+
+  .govuk-grid-column-one-third {
+    padding-left: 0;
+  }
+
+  .govuk-grid-column-one-third > .govuk-body {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+</style>
+{% endblock %}

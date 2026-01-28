@@ -1,0 +1,135 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Download confirmation – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+    <h1 class="govuk-heading-xl">
+      <span class="govuk-caption-xl">Cannon Hall Farm</span>
+      Map pack contents
+    </h1>
+
+    {% set parcelsData = data['selected-parcels'] | default('{"type":"FeatureCollection","features":[]}') %}
+    {% set parcelsGeoJson = parcelsData | fromJson %}
+
+    {% set landCoversData = data['selected-land-covers'] | default('{"type":"FeatureCollection","features":[]}') %}
+    {% set landCoversGeoJson = landCoversData | fromJson %}
+
+    {% set hedgerowsData = data['selected-hedgerows'] | default('{"type":"FeatureCollection","features":[]}') %}
+    {% set hedgerowsGeoJson = hedgerowsData | fromJson %}
+
+    {% set fieldNamesRaw = data['parcel-field-names'] | default('{}') %}
+    {% set fieldNamesData = fieldNamesRaw | fromJson %}
+
+    <h2 class="govuk-heading-m">Parcels in map pack ({{ parcelsGeoJson.features | length }})</h2>
+
+    {% if parcelsGeoJson.features and parcelsGeoJson.features.length > 0 %}
+
+      {% from "govuk/components/table/macro.njk" import govukTable %}
+
+      {% set tableRows = [] %}
+      {% for feature in parcelsGeoJson.features %}
+        {% set parcelId = feature.properties.SHEET_ID + " " + feature.properties.PARCEL_ID %}
+        {% set parcelNgc = feature.properties.SHEET_ID + feature.properties.PARCEL_ID %}
+        {% set fieldName = fieldNamesData[parcelNgc] if fieldNamesData[parcelNgc] else "—" %}
+        {% set tableRows = (tableRows.push([
+          { text: parcelId, classes: "govuk-!-font-weight-bold" },
+          { text: fieldName },
+          { text: feature.properties.AREA_HA | default(0) | round(4), format: "numeric" },
+          { text: feature.properties.SHAPE_PERIMETER | default(0) | round(0), format: "numeric" },
+          { html: '<span class="land-covers-cell" data-parcel-id="' + parcelNgc + '">—</span>' },
+          { html: '<span class="hedgerows-cell" data-parcel-id="' + parcelNgc + '">—</span>' }
+        ]), tableRows) %}
+      {% endfor %}
+
+      {{ govukTable({
+        caption: "Land parcels",
+        captionClasses: "govuk-visually-hidden",
+        firstCellIsHeader: true,
+        head: [
+          { text: "Parcel ID" },
+          { text: "Field name" },
+          { text: "Area (ha)", format: "numeric" },
+          { text: "Perimeter (m)", format: "numeric" },
+          { text: "Land covers" },
+          { text: "Hedgerows" }
+        ],
+        rows: tableRows
+      }) }}
+
+    {% else %}
+      <p class="govuk-body govuk-hint">No parcels selected</p>
+    {% endif %}
+
+    <!-- Store data for JavaScript processing -->
+    <script type="application/json" id="land-covers-data">{{ landCoversData | safe }}</script>
+    <script type="application/json" id="hedgerows-data">{{ hedgerowsData | safe }}</script>
+
+    <!-- <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible"> -->
+
+    <p class="govuk-body">
+      <a href="/download-maps-v5/get-maps-of-your-land-poc-5" class="govuk-link">Back to map</a>
+    </p>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Load and display land covers for each parcel
+  try {
+    var landCoversDataEl = document.getElementById('land-covers-data');
+    var landCoversData = landCoversDataEl ? JSON.parse(landCoversDataEl.textContent) : null;
+
+    if (landCoversData && landCoversData.features && landCoversData.features.length > 0) {
+      document.querySelectorAll('.land-covers-cell').forEach(function(cell) {
+        var parcelId = cell.dataset.parcelId;
+        var parcelLandCovers = landCoversData.features.filter(function(f) {
+          return (f.properties.SHEET_ID + f.properties.PARCEL_ID) === parcelId;
+        });
+
+        if (parcelLandCovers.length > 0) {
+          var html = parcelLandCovers.map(function(f) {
+            var area = parseFloat(f.properties.AREA_HA || 0).toFixed(4);
+            return (f.properties.DESCRIPTION || 'Unknown') + ' (' + area + ' ha)';
+          }).join('<br>');
+          cell.innerHTML = html;
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error loading land covers:', e);
+  }
+
+  // Load and display hedgerows for each parcel
+  try {
+    var hedgerowsDataEl = document.getElementById('hedgerows-data');
+    var hedgerowsData = hedgerowsDataEl ? JSON.parse(hedgerowsDataEl.textContent) : null;
+
+    if (hedgerowsData && hedgerowsData.features && hedgerowsData.features.length > 0) {
+      document.querySelectorAll('.hedgerows-cell').forEach(function(cell) {
+        var parcelId = cell.dataset.parcelId;
+        var parcelHedgerows = hedgerowsData.features.filter(function(f) {
+          return (f.properties.REF_PARCEL_SHEET_ID + f.properties.REF_PARCEL_PARCEL_ID) === parcelId;
+        });
+
+        if (parcelHedgerows.length > 0) {
+          var totalLength = parcelHedgerows.reduce(function(sum, f) {
+            return sum + (parseFloat(f.properties.LENGTH) || 0);
+          }, 0);
+          cell.innerHTML = parcelHedgerows.length + ' hedgerow' + (parcelHedgerows.length !== 1 ? 's' : '') + '<br>' + totalLength.toFixed(2) + ' m total';
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error loading hedgerows:', e);
+  }
+});
+</script>
+
+{% endblock %}

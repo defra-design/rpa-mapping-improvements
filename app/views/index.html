@@ -18,9 +18,12 @@
 {{ govukAccordion({
   id: "accordion-with-expanded-item",
   items: [
-  {
+    {
       heading: {
         text: "Register land v04"
+      },
+      summary: {
+        text: "January 2026"
       },
       content: {
         html: '
@@ -29,25 +32,16 @@
         <ul class="govuk-list govuk-list--bullet">
           <li>Defra mapping component</li>
           <li>Image of land parcel to be registered</li>
-          <li></li>
-        </ul>
-        <h3 class="govuk-heading-s">Removed</h3>
-        <ul class="govuk-list govuk-list--bullet">
-          <li></li>
-          <li></li>
-        </ul>
-        
-        <h3 class="govuk-heading-s">Updated</h3>
-        <ul class="govuk-list govuk-list--bullet">
-          <li></li>
-          <li></li>
         </ul>
         '
       }
     },
-  {
+    {
       heading: {
         text: "Register land v03"
+      },
+      summary: {
+        text: "December 2025"
       },
       content: {
         html: '
@@ -56,18 +50,6 @@
         <ul class="govuk-list govuk-list--bullet">
           <li>Defra mapping component</li>
           <li>Image of land parcel to be registered</li>
-          <li></li>
-        </ul>
-        <h3 class="govuk-heading-s">Removed</h3>
-        <ul class="govuk-list govuk-list--bullet">
-          <li></li>
-          <li></li>
-        </ul>
-        
-        <h3 class="govuk-heading-s">Updated</h3>
-        <ul class="govuk-list govuk-list--bullet">
-          <li></li>
-          <li></li>
         </ul>
         '
       }
@@ -75,6 +57,9 @@
     {
       heading: {
         text: "Register land v02"
+      },
+      summary: {
+        text: "October 2025"
       },
       content: {
         html: '
@@ -89,107 +74,59 @@
           <li>Is the land parcel already registered on the Rural Payments service? question</li>
           <li>x2 interstitial screens, copy moved to find or generate parcel ID screen</li>
         </ul>
-        
         <h3 class="govuk-heading-s">Updated</h3>
         <ul class="govuk-list govuk-list--bullet">
           <li>Find or generate parcel ID screen</li>
           <li>Multiple copy updates / amends</li>
         </ul>
-
         <h3 class="govuk-heading-s">Error messages</h3>
         <ul class="govuk-list govuk-list--bullet">
-          <li><a href="register-land-v2/error-messages/upload-land-parcel-map">Error message for file upload,</a> this is a stand alone error message, it is presented outside the prototype flow</a></li>
+          <li><a href="register-land-v2/error-messages/upload-land-parcel-map">Error message for file upload,</a> this is a stand alone error message, it is presented outside the prototype flow</li>
         </ul>
         '
-        
       }
     },
     {
       heading: {
         text: "Register land v01"
       },
+      summary: {
+        text: "September 2025"
+      },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="register-land-v1/business-overview">Continue to prototype start page</a></p><h3 class="govuk-heading-s">Customer Journeys</h3><ol class="govuk-list govuk-list--number govuk-list--spaced"><li>Land parcel registered, parcel ID known, enter parcel ID, enter date to link to business, check details, declaration, request submitted</li><li>Land parcel registered, parcel ID not known, find parcel ID, parcel registered, enter date to link to business, check details, declaration, request submitted</li><li>Land parcel not registered, parcel ID known, enter parcel ID, upload parcel map, enter date to link to business, check details, declaration, request submitted</li><li>Land parcel not registered, parcel ID not known, estimate parcel ID, upload parcel map, enter date to link to business, check details, declaration, request submitted</li><li>Don&#39;t know if land parcel is registered, check if land parcel is registered, land parcel is registered, add land parcel, enter date to link to business, check details, declaration, request submitted</li><li>Don&#39;t know if land parcel is registered, check if land parcel is registered, land parcel is not registered, upload parcel map, enter date to link to business, check details, declaration, request submitted</li></ol>'
-      }
-    },
-
-    {
-      heading: {
-        text: "Download maps POC-5 (DEFRA Interactive Map)"
-      },
-      content: {
-        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/get-maps-of-your-land-poc-5">View DEFRA component prototype</a></p>
-         <p class="govuk-body"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/get-maps-of-your-land-poc-5-simple">Simplified test page (no custom layout CSS)</a></p>
-         <p class="govuk-body"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/get-maps-of-your-land-poc-5-debug">CSS debug page (toggle individual rules)</a></p>
-         <h3 class="govuk-heading-s">Added</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>DEFRA @defra/interactive-map component with interact plugin</li>
-            <li>Built-in map style switching (Map/Satellite)</li>
-            <li>Built-in search with custom parcel search dataset</li>
-            <li>Multi-select parcel selection via interact plugin</li>
-            <li>Two-way sync between map clicks and sidebar checkboxes</li>
-          </ul>
-         <h3 class="govuk-heading-s">Simplified from POC-4</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Selection state managed by interact plugin instead of custom GeoJSON source</li>
-            <li>Zoom controls via enableZoomControls option</li>
-            <li>Style toggle via mapStylesPlugin</li>
-          </ul>
-         <h3 class="govuk-heading-s">Kept from POC-4</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Sidebar accordion structure</li>
-            <li>Land cover and hedgerow filtering</li>
-            <li>Form submission to confirmation page</li>
-          </ul>
-        '
-      }
-    },
-    {
-      heading: {
-        text: "Download maps POC-4 (Fullscreen Layout)"
-      },
-      content: {
-        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/get-maps-of-your-land-poc-4">View fullscreen map prototype</a></p>
-         <h3 class="govuk-heading-s">Added</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Full-viewport map layout (similar to Flood Map for Planning service)</li>
-            <li>Collapsible overlay panel for controls</li>
-            <li>Mobile-responsive bottom sheet pattern</li>
-            <li>Keyboard navigation (Escape to collapse panel)</li>
-          </ul>
-         <h3 class="govuk-heading-s">Updated</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Map fills available viewport below GOV.UK header</li>
-            <li>Search and legend overlays repositioned to top-right</li>
-            <li>Footer removed for immersive map experience</li>
-          </ul>
-         <h3 class="govuk-heading-s">Based on</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>POC-3 with all existing functionality preserved</li>
-          </ul>
-        '
       }
     },
     {
       heading: {
         text: "Get maps of your land v05"
       },
+      summary: {
+        text: "January 2026"
+      },
       content: {
-        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/start">Continue to prototype start page</a></p>
-         <h3 class="govuk-heading-s">Added</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li></li>
-          </ul>
-         <h3 class="govuk-heading-s">Updated</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li></li>
+        html: '
+        <p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/start">Continue to prototype start page</a></p>
 
+        <h3 class="govuk-heading-s">Updated</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>DEFRA @defra/interactive-map component with interact plugin</li>
+          <li>Full-viewport map layout with collapsible sidebar</li>
+          <li>Built-in map style switching (Map/Satellite)</li>
+          <li>Built-in search with custom parcel search dataset</li>
+          <li>Multi-select parcel selection via interact plugin</li>
+          <li>Two-way sync between map clicks and sidebar checkboxes</li>
+          <li>Sidebar accordion with land cover and hedgerow filtering</li>
+          <li>Mobile-responsive bottom sheet pattern</li>
+          <li>Form submission to map pack contents page</li>
+        </ul>
 
-          </ul>
-         <h3 class="govuk-heading-s">Removed</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li></li>
-          </ul>
+        <h3 class="govuk-heading-s">Parcel rename options</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/rename-option-a">Option A: Input always visible</a> &mdash; text input appears automatically below every checked parcel</li>
+          <li><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/rename-option-b">Option B: &ldquo;Rename&rdquo; link</a> &mdash; small link appears when checked; click to reveal input</li>
+          <li><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/rename-option-c">Option C: Single toggle</a> &mdash; one &ldquo;Add field names&rdquo; checkbox at top shows inputs for all selected parcels</li>
+        </ul>
         '
       }
     },
@@ -197,55 +134,56 @@
       heading: {
         text: "Get maps of your land v04"
       },
+      summary: {
+        text: "January 2026"
+      },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v4/start">Continue to prototype start page</a></p>
-         <h3 class="govuk-heading-s">Added</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Full width page layout</li>
-            <li>Search functionality toggle</li>
-            
-          </ul>       
-         <h3 class="govuk-heading-s">Updated</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Whole holding and individual land parcel data now displayed in left hand column</li>
-            <li>Parcel IDs displaying in 2 columns on desktop</li>
-            <li>Repsonsive layout</li>
-            <li>Position of ariel photography toggle</li>
-            
-
-          </ul>      
-         <h3 class="govuk-heading-s">Removed</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Overlay containing search, whole holding and individual parcel information</li>
-          </ul>
+        <h3 class="govuk-heading-s">Added</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Full width page layout</li>
+          <li>Search functionality toggle</li>
+        </ul>
+        <h3 class="govuk-heading-s">Updated</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Whole holding and individual land parcel data now displayed in left hand column</li>
+          <li>Parcel IDs displaying in 2 columns on desktop</li>
+          <li>Repsonsive layout</li>
+          <li>Position of ariel photography toggle</li>
+        </ul>
+        <h3 class="govuk-heading-s">Removed</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Overlay containing search, whole holding and individual parcel information</li>
+        </ul>
         '
       }
     },
-
     {
       heading: {
         text: "Get maps of your land v03"
       },
+      summary: {
+        text: "November 2025"
+      },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v3/start">Continue to prototype start page</a></p>
-         <h3 class="govuk-heading-s">Added</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Interactive map</li>
-            <li>Data using RPA land API</li>
-            <li>Displaying land parcels using SBI 106332870</li>
-            <li>Displaying land covers data</li>
-            <li>Displaying hedge row data</li>
-          </ul>       
-         <h3 class="govuk-heading-s">Updated</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Land parcel search</li>
-            <li>Land parcel filter</li>
-
-          </ul>      
-         <h3 class="govuk-heading-s">Removed</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Static map</li>
-          </ul>
+        <h3 class="govuk-heading-s">Added</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Interactive map</li>
+          <li>Data using RPA land API</li>
+          <li>Displaying land parcels using SBI 106332870</li>
+          <li>Displaying land covers data</li>
+          <li>Displaying hedge row data</li>
+        </ul>
+        <h3 class="govuk-heading-s">Updated</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Land parcel search</li>
+          <li>Land parcel filter</li>
+        </ul>
+        <h3 class="govuk-heading-s">Removed</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Static map</li>
+        </ul>
         '
       }
     },
@@ -253,23 +191,25 @@
       heading: {
         text: "Get maps of your land v02"
       },
+      summary: {
+        text: "October 2025"
+      },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v2/start">Continue to prototype start page</a></p>
-         <h3 class="govuk-heading-s">Added</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Start screen</li>
-            <li>Single screen containing map, map type options, additional information and land parcel checkboxes</li>
-            <li>Overlay box with whole holding and indivdual land parcel details</li>
-          </ul>       
-         <h3 class="govuk-heading-s">Updated</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Static map graphic showing land parcels</li>
-
-          </ul>      
-         <h3 class="govuk-heading-s">Removed</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Indivdual screens for map options, map, land parcels, additional information and confrimation of additional information and land parcels</li>
-          </ul>
+        <h3 class="govuk-heading-s">Added</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Start screen</li>
+          <li>Single screen containing map, map type options, additional information and land parcel checkboxes</li>
+          <li>Overlay box with whole holding and individual land parcel details</li>
+        </ul>
+        <h3 class="govuk-heading-s">Updated</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Static map graphic showing land parcels</li>
+        </ul>
+        <h3 class="govuk-heading-s">Removed</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Individual screens for map options, map, land parcels, additional information and confirmation of additional information and land parcels</li>
+        </ul>
         '
       }
     },
@@ -277,30 +217,25 @@
       heading: {
         text: "Get maps of your land v01"
       },
-      content: {
-        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v1/what-maps">Continue to prototype start page</a></p>
-         <h3 class="govuk-heading-s">Added</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Build prototype of <a class="govuk-link govuk-link--no-visited-state" href="https://app.mural.co/t/coredefra2548/m/coredefra2548/1758209762836/7b6230e5685919e216a477b8fd6fb63e11aca5f8">existing Mural design</a></li>
-          </ul>       
-         <h3 class="govuk-heading-s">Updated</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Used tabs to display map and list land parcels</li>
-            <li>Add confirmation screen displaying additional information and selected land parcels</li>
-          </ul>      
-         <h3 class="govuk-heading-s">Removed</h3>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Aerial photography options</li>
-          </ul> 
-        '
-      } 
-    },
-    {
-      heading: {
-        text: "Land history"
+      summary: {
+        text: "September 2025"
       },
       content: {
-        html: '<p class="govuk-body"></p>'
+        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v1/what-maps">Continue to prototype start page</a></p>
+        <h3 class="govuk-heading-s">Added</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Build prototype of <a class="govuk-link govuk-link--no-visited-state" href="https://app.mural.co/t/coredefra2548/m/coredefra2548/1758209762836/7b6230e5685919e216a477b8fd6fb63e11aca5f8">existing Mural design</a></li>
+        </ul>
+        <h3 class="govuk-heading-s">Updated</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Used tabs to display map and list land parcels</li>
+          <li>Add confirmation screen displaying additional information and selected land parcels</li>
+        </ul>
+        <h3 class="govuk-heading-s">Removed</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Aerial photography options</li>
+        </ul>
+        '
       }
     }
   ]

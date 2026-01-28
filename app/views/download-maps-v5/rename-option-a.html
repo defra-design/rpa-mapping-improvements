@@ -39,7 +39,7 @@
 {% endblock %}
 
 {% block pageTitle %}
-  Map - Get maps of your land – {{ serviceName }} – GOV.UK Prototype Kit
+  Map - Rename Option A - Get maps of your land – {{ serviceName }} – GOV.UK Prototype Kit
 {% endblock %}
 
 {% block footer %}{% endblock %}
@@ -47,14 +47,15 @@
 {% block content %}
 
 <div class="app-map-fullscreen">
-  <!-- Full-viewport map with loading state -->
-  <div id="map" class="app-map-fullscreen__map im-is-loading"></div>
 
-  <!-- Custom popup (inside fullscreen container for proper positioning) -->
-  <div id="custom-popup" class="custom-popup" style="display: none;">
-    <button class="custom-popup__close" aria-label="Close popup">&times;</button>
-    <div class="custom-popup__content"></div>
-  </div>
+    <!-- Menu button (visible when panel is closed on mobile) -->
+  <button class="app-map-fullscreen__menu-btn" id="menu-btn" aria-label="Open menu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+    <span>Menu</span>
+  </button>
+
 
   <!-- Side panel -->
   <div class="app-map-fullscreen__panel" id="map-panel" role="region" aria-label="Map controls and selection panel">
@@ -120,21 +121,19 @@
         <input type="hidden" name="selected-land-covers" id="selected-land-covers-input" value="{{ data['selected-land-covers'] | default('') }}">
         <input type="hidden" name="hedgerows-enabled" id="hedgerows-input" value="{{ data['hedgerows-enabled'] | default('false') }}">
         <input type="hidden" name="selected-hedgerows" id="selected-hedgerows-input" value="{{ data['selected-hedgerows'] | default('') }}">
+        <input type="hidden" name="parcel-field-names" id="parcel-field-names-input" value="{{ data['parcel-field-names'] | default('{}') }}">
         {{ govukButton({
           text: "Download map",
           classes: ""
         }) }}
       </form>
     </div>
+
   </div>
 
-  <!-- Menu button (visible when panel is closed on mobile) -->
-  <button class="app-map-fullscreen__menu-btn" id="menu-btn" aria-label="Open menu">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-    </svg>
-    <span>Menu</span>
-  </button>
+  <!-- Full-viewport map with loading state -->
+  <div id="map" class="app-map-fullscreen__map"></div>
+
 
 </div>
 
@@ -155,60 +154,60 @@
     // =====================================================
     // CUSTOM POPUP FUNCTIONS
     // =====================================================
-    const customPopup = document.getElementById('custom-popup');
-    const customPopupContent = customPopup.querySelector('.custom-popup__content');
-    const customPopupClose = customPopup.querySelector('.custom-popup__close');
+    // const customPopup = document.getElementById('custom-popup');
+    // const customPopupContent = customPopup.querySelector('.custom-popup__content');
+    // const customPopupClose = customPopup.querySelector('.custom-popup__close');
 
-    // Close popup when close button clicked
-    customPopupClose.addEventListener('click', function() {
-      customPopup.style.display = 'none';
-    });
+    // // Close popup when close button clicked
+    // customPopupClose.addEventListener('click', function() {
+    //   customPopup.style.display = 'none';
+    // });
 
-    // Close popup when clicking outside
-    document.addEventListener('click', function(e) {
-      if (customPopup.style.display !== 'none' &&
-          !customPopup.contains(e.target) &&
-          !e.target.closest('.maplibregl-canvas')) {
-        customPopup.style.display = 'none';
-      }
-    });
+    // // Close popup when clicking outside
+    // document.addEventListener('click', function(e) {
+    //   if (customPopup.style.display !== 'none' &&
+    //       !customPopup.contains(e.target) &&
+    //       !e.target.closest('.maplibregl-canvas')) {
+    //     customPopup.style.display = 'none';
+    //   }
+    // });
 
     // Show popup at screen coordinates
-    function showPopup(html, screenX, screenY) {
-      customPopupContent.innerHTML = html;
-      customPopup.style.display = 'block';
+    // function showPopup(html, screenX, screenY) {
+    //   customPopupContent.innerHTML = html;
+    //   customPopup.style.display = 'block';
 
       // Get fullscreen container bounds (popup is inside .app-map-fullscreen which is position: fixed)
-      const fullscreenContainer = document.querySelector('.app-map-fullscreen');
-      const containerRect = fullscreenContainer.getBoundingClientRect();
+      // const fullscreenContainer = document.querySelector('.app-map-fullscreen');
+      // const containerRect = fullscreenContainer.getBoundingClientRect();
 
-      // Calculate position relative to fullscreen container
-      let left = screenX - containerRect.left + 10;
-      let top = screenY - containerRect.top + 10;
+      // // Calculate position relative to fullscreen container
+      // let left = screenX - containerRect.left + 10;
+      // let top = screenY - containerRect.top + 10;
 
-      // Get popup dimensions after content is set
-      const popupRect = customPopup.getBoundingClientRect();
+      // // Get popup dimensions after content is set
+      // const popupRect = customPopup.getBoundingClientRect();
 
-      // Try to position above the click point
-      if (screenY - containerRect.top - popupRect.height - 20 > 0) {
-        top = screenY - containerRect.top - popupRect.height - 10;
-      }
+      // // Try to position above the click point
+      // if (screenY - containerRect.top - popupRect.height - 20 > 0) {
+      //   top = screenY - containerRect.top - popupRect.height - 10;
+      // }
 
-      // Keep popup within container bounds horizontally
-      if (left + popupRect.width > containerRect.width - 20) {
-        left = containerRect.width - popupRect.width - 20;
-      }
-      if (left < 10) {
-        left = 10;
-      }
+      // // Keep popup within container bounds horizontally
+      // if (left + popupRect.width > containerRect.width - 20) {
+      //   left = containerRect.width - popupRect.width - 20;
+      // }
+      // if (left < 10) {
+      //   left = 10;
+      // }
 
-      customPopup.style.left = left + 'px';
-      customPopup.style.top = top + 'px';
-    }
+    //   customPopup.style.left = left + 'px';
+    //   customPopup.style.top = top + 'px';
+    // }
 
-    function hidePopup() {
-      customPopup.style.display = 'none';
-    }
+    // function hidePopup() {
+    //   customPopup.style.display = 'none';
+    // }
 
     // =====================================================
     // FULLSCREEN LAYOUT SETUP (POC-5)
@@ -589,6 +588,11 @@
                 ${hintContent}
               </div>
             </div>
+            <div class="parcel-rename-input" style="display: none; padding-left: 45px; padding-bottom: 10px;">
+              <label class="govuk-label govuk-!-font-size-14" for="rename-${parcel.id}">Field name (optional)</label>
+              <input class="govuk-input govuk-input--width-10 rename-field" id="rename-${parcel.id}" type="text"
+                     placeholder="e.g. Top Meadow" data-parcel-id="${parcel.id}">
+            </div>
           </div>
         `;
       });
@@ -615,6 +619,20 @@
               }
             }
           });
+          // Show/hide rename inputs
+          document.querySelectorAll('.parcel-item-wrapper').forEach(wrapper => {
+            const cb = wrapper.querySelector('.parcel-checkbox');
+            const renameInput = wrapper.querySelector('.parcel-rename-input');
+            if (cb && renameInput) {
+              if (cb.checked) {
+                renameInput.style.display = 'block';
+              } else {
+                renameInput.style.display = 'none';
+                const input = renameInput.querySelector('.rename-field');
+                if (input) input.value = '';
+              }
+            }
+          });
           updateSidebarStats();
           updateHiddenInputs();
         });
@@ -628,6 +646,18 @@
           } else {
             unselectFeatureOnMap(this.value);
           }
+          // Show/hide rename input
+          const wrapper = this.closest('.parcel-item-wrapper');
+          const renameInput = wrapper.querySelector('.parcel-rename-input');
+          if (renameInput) {
+            if (this.checked) {
+              renameInput.style.display = 'block';
+            } else {
+              renameInput.style.display = 'none';
+              const input = renameInput.querySelector('.rename-field');
+              if (input) input.value = '';
+            }
+          }
           updateSidebarStats();
           updateSelectAllCheckboxState();
           updateHiddenInputs();
@@ -637,13 +667,20 @@
       // Make whole parcel item clickable
       document.querySelectorAll('.parcel-item-wrapper').forEach(wrapper => {
         wrapper.addEventListener('click', function(e) {
-          if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL') return;
+          if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL' || e.target.closest('.parcel-rename-input')) return;
           const checkbox = this.querySelector('.parcel-checkbox');
           if (checkbox) {
             checkbox.checked = !checkbox.checked;
             checkbox.dispatchEvent(new Event('change'));
           }
         });
+      });
+
+      // Update hidden inputs when rename fields change
+      document.getElementById('parcels-list').addEventListener('input', function(e) {
+        if (e.target.classList.contains('rename-field')) {
+          updateHiddenInputs();
+        }
       });
     }
 
@@ -747,6 +784,18 @@
           type: 'FeatureCollection',
           features: selectedHedgerowFeatures
         });
+      }
+
+      // Field names
+      const fieldNamesInput = document.getElementById('parcel-field-names-input');
+      if (fieldNamesInput) {
+        const fieldNames = {};
+        document.querySelectorAll('.rename-field').forEach(input => {
+          if (input.value.trim()) {
+            fieldNames[input.dataset.parcelId] = input.value.trim();
+          }
+        });
+        fieldNamesInput.value = JSON.stringify(fieldNames);
       }
     }
 
@@ -995,20 +1044,30 @@
     // =====================================================
     // CUSTOM PARCEL SEARCH DATASET
     // =====================================================
+    // Uses buildRequest/parseResults pattern required by DEFRA search plugin.
+    // buildRequest creates a Blob URL from client-side parcel data,
+    // parseResults filters and formats the results.
     const parcelSearchDataset = {
       name: 'Land Parcels',
-      search: async (query) => {
-        if (!landParcelsData || !landParcelsData.features) return [];
+      buildRequest: (query) => {
+        const data = landParcelsData || { type: 'FeatureCollection', features: [] };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        return {
+          url: URL.createObjectURL(blob),
+          options: { method: 'GET' }
+        };
+      },
+      parseResults: (json, query) => {
+        if (!json || !json.features) return [];
 
         const searchTerm = query.toLowerCase().replace(/\s+/g, '');
-        const results = landParcelsData.features.filter(feature => {
-          const parcelId = `${feature.properties.SHEET_ID}${feature.properties.PARCEL_ID}`.toLowerCase();
-          const parcelIdWithSpace = `${feature.properties.SHEET_ID} ${feature.properties.PARCEL_ID}`.toLowerCase();
-          return parcelId.includes(searchTerm) || parcelIdWithSpace.includes(query.toLowerCase());
+        const filtered = json.features.filter(feature => {
+          const ngc = `${feature.properties.SHEET_ID}${feature.properties.PARCEL_ID}`.toLowerCase();
+          const ngcSpaced = `${feature.properties.SHEET_ID} ${feature.properties.PARCEL_ID}`.toLowerCase();
+          return ngc.includes(searchTerm) || ngcSpaced.includes(query.toLowerCase());
         });
 
-        return results.slice(0, 5).map(feature => {
-          // Calculate bounds
+        return filtered.slice(0, 5).map(feature => {
           let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
           const processCoords = (coords) => {
             coords.forEach(coord => {
@@ -1027,13 +1086,24 @@
           const centerLng = (minLng + maxLng) / 2;
           const centerLat = (minLat + maxLat) / 2;
 
+          // Build display text and marked version (with HTML formatting)
+          const parcelLabel = `${feature.properties.SHEET_ID} ${feature.properties.PARCEL_ID}`;
+          const area = parseFloat(feature.properties.AREA_HA).toFixed(4);
+          const text = `${parcelLabel} - Total area (ha) ${area}`;
+          const marked = `<strong>${parcelLabel}</strong><br><span style="font-weight:normal;font-size:0.85em;color:#505a5f">Total area (ha) ${area}</span>`;
+
           return {
-            label: `${feature.properties.SHEET_ID} ${feature.properties.PARCEL_ID} (${parseFloat(feature.properties.AREA_HA).toFixed(4)} ha)`,
-            coordinates: [centerLng, centerLat],
-            bounds: [minLng, minLat, maxLng, maxLat]
+            id: feature.properties.ngc || `${feature.properties.SHEET_ID}${feature.properties.PARCEL_ID}`,
+            text: text,
+            marked: marked,
+            point: [centerLng, centerLat],
+            bounds: [minLng, minLat, maxLng, maxLat],
+            type: 'parcel'
           };
         });
-      }
+      },
+      // Only search parcels for queries starting with 2 letters + digit (parcel ID format)
+      includeRegex: /^[A-Za-z]{2}\s*\d/
     };
 
     // =====================================================
@@ -1153,7 +1223,7 @@
         interactPlugin,
         datasetsPlugin,
         defra.searchPlugin({
-          osNamesURL: '/api/geocode-proxy?query={query}',
+          // osNamesURL: '/api/geocode-proxy?query={query}',
           customDatasets: [parcelSearchDataset],
           width: '300px',
           showMarker: true,
@@ -1191,6 +1261,18 @@
       // Sync checkboxes with selection
       document.querySelectorAll('.parcel-checkbox').forEach(checkbox => {
         checkbox.checked = selectedParcelIds.has(checkbox.value);
+        // Show/hide rename input based on selection
+        const wrapper = checkbox.closest('.parcel-item-wrapper');
+        const renameInput = wrapper ? wrapper.querySelector('.parcel-rename-input') : null;
+        if (renameInput) {
+          if (checkbox.checked) {
+            renameInput.style.display = 'block';
+          } else {
+            renameInput.style.display = 'none';
+            const input = renameInput.querySelector('.rename-field');
+            if (input) input.value = '';
+          }
+        }
       });
 
       // Update sidebar stats and form inputs
@@ -1316,6 +1398,7 @@
 
   .app-map-fullscreen {
     position: fixed;
+    display: flex;
     top: var(--header-height);
     left: 0;
     right: 0;
@@ -1326,11 +1409,11 @@
   }
 
   .app-map-fullscreen__map {
-    position: absolute;
+    /* position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 0; */
     width: 100%;
     height: 100%;
   }
@@ -1352,14 +1435,10 @@
   }
 
   .app-map-fullscreen__panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 400px;
+    width: 500px;
     max-width: 100vw;
     background: #ffffff;
-    border-right: 1px solid #b1b4b6;
+    /* border-right: 1px solid #b1b4b6; */
     z-index: 10;
     display: flex;
     flex-direction: column;
@@ -1375,6 +1454,23 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 15px;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 0;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
   }
 
   .app-map-fullscreen__panel-close {
@@ -1418,6 +1514,10 @@
 
   @media (max-width: 640px) {
     .app-map-fullscreen__panel {
+      position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
       width: 400px;
       max-width: calc(100vw - 60px);
     }

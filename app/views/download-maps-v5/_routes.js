@@ -22,7 +22,7 @@ router.post('/download-maps-v5/get-maps-of-your-land-poc-4', function (req, res)
 
   // Redirect to a confirmation page or back to the map
   // For now, redirect to a simple confirmation
-  res.redirect('/download-maps-v5/download-confirmation');
+  res.redirect('/download-maps-v5/map-pack-contents');
 });
 
 // POC-5: DEFRA Interactive Map Component version
@@ -38,7 +38,34 @@ router.post('/download-maps-v5/get-maps-of-your-land-poc-5', function (req, res)
   });
 
   // Redirect to confirmation page
-  res.redirect('/download-maps-v5/download-confirmation');
+  res.redirect('/download-maps-v5/map-pack-contents');
+});
+
+// Rename Option A: Always visible input
+router.post('/download-maps-v5/rename-option-a', function (req, res) {
+  console.log('Rename Option A selections:', {
+    parcels: req.session.data['selected-parcels'],
+    fieldNames: req.session.data['parcel-field-names']
+  });
+  res.redirect('/download-maps-v5/map-pack-contents');
+});
+
+// Rename Option B: "Rename" link reveals input
+router.post('/download-maps-v5/rename-option-b', function (req, res) {
+  console.log('Rename Option B selections:', {
+    parcels: req.session.data['selected-parcels'],
+    fieldNames: req.session.data['parcel-field-names']
+  });
+  res.redirect('/download-maps-v5/map-pack-contents');
+});
+
+// Rename Option C: Single toggle for all
+router.post('/download-maps-v5/rename-option-c', function (req, res) {
+  console.log('Rename Option C selections:', {
+    parcels: req.session.data['selected-parcels'],
+    fieldNames: req.session.data['parcel-field-names']
+  });
+  res.redirect('/download-maps-v5/map-pack-contents');
 });
 
 module.exports = router;
