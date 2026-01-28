@@ -136,22 +136,6 @@
     <span>Menu</span>
   </button>
 
-  <!-- Legend overlay (toggle-able, hidden until land covers enabled) -->
-  <div id="legend-overlay" class="map-overlay" style="display: none;">
-    <button id="legend-toggle" class="map-legend-toggle" aria-label="Show legend">
-      <img src="/public/images/list.svg" alt="" aria-hidden="true">
-    </button>
-
-    <!-- Legend content (hidden by default) -->
-    <div id="legend-container" class="map-legend" style="display: none;">
-      <button type="button" id="legend-close" class="map-legend-close" aria-label="Close legend">×</button>
-      <h3 class="govuk-heading-m govuk-!-margin-bottom-2">Key</h3>
-      <div id="legend-content">
-        <!-- Will be populated dynamically by JavaScript -->
-        <p class="govuk-body-s">No features to display</p>
-      </div>
-    </div>
-  </div>
 </div>
 
 {% endblock %}
@@ -303,6 +287,7 @@
     let activeLandCovers = new Set();
     let interactiveMap = null;
     let mapInstance = null;
+    let datasetsReady = false;
 
     // Land cover color mapping
     const landCoverColors = {
@@ -473,82 +458,9 @@
             map.resize();
           }
         }, 100);
-
-        // Show legend overlay
-        const legendOverlay = document.getElementById('legend-overlay');
-        if (legendOverlay) {
-          legendOverlay.style.display = 'block';
-        }
       }
     }
 
-    function addLandCoversToMap(map, data) {
-      if (!data || !data.features || data.features.length === 0) {
-        console.log('No land cover features found');
-        return;
-      }
-
-      map.addSource('land-covers', {
-        type: 'geojson',
-        data: data
-      });
-
-      // Build color expression
-      const colorExpression = ['match', ['get', 'DESCRIPTION']];
-      Object.entries(landCoverColors).forEach(([type, color]) => {
-        if (type !== 'default') {
-          colorExpression.push(type, color);
-        }
-      });
-      colorExpression.push(landCoverColors['default']);
-
-      map.addLayer({
-        id: 'land-covers-fill',
-        type: 'fill',
-        source: 'land-covers',
-        paint: {
-          'fill-color': colorExpression,
-          'fill-opacity': 0.6
-        },
-        layout: { 'visibility': 'none' }
-      });
-
-      map.addLayer({
-        id: 'land-covers-outline',
-        type: 'line',
-        source: 'land-covers',
-        paint: {
-          'line-color': '#0b0c0c',
-          'line-width': 1.5
-        },
-        layout: { 'visibility': 'none' }
-      });
-    }
-
-    function addHedgeControlToMap(map, data) {
-      if (!data || !data.features || data.features.length === 0) {
-        console.log('No hedge control features found');
-        return;
-      }
-
-      populateHedgerowsSummary(data);
-
-      map.addSource('hedge-control', {
-        type: 'geojson',
-        data: data
-      });
-
-      map.addLayer({
-        id: 'hedge-control-line',
-        type: 'line',
-        source: 'hedge-control',
-        paint: {
-          'line-color': '#912b88',
-          'line-width': 3
-        },
-        layout: { 'visibility': 'none' }
-      });
-    }
 
     // =====================================================
     // SIDEBAR FUNCTIONS
@@ -875,13 +787,14 @@
 
         document.querySelectorAll('.land-cover-checkbox').forEach(checkbox => {
           checkbox.addEventListener('change', function() {
+            const landCoverType = this.value;
             if (this.checked) {
-              activeLandCovers.add(this.value);
+              activeLandCovers.add(landCoverType);
+              addLandCoverDataset(landCoverType);
             } else {
-              activeLandCovers.delete(this.value);
+              activeLandCovers.delete(landCoverType);
+              removeLandCoverDataset(landCoverType);
             }
-            updateLandCoverFilter();
-            updateLegendForLandCovers();
             filterParcelsByLandCover();
             updateLandCoversSelectedCount();
             updateHiddenInputs();
@@ -889,24 +802,54 @@
         });
       }
 
+      // Add a land cover type as a dataset via datasetsPlugin
+      function addLandCoverDataset(landCoverType) {
+        if (!landCoversData || !datasetsReady) {
+          console.warn('Cannot add land cover dataset - not ready');
+          return;
+        }
+
+        const filteredFeatures = landCoversData.features.filter(
+          f => f.properties.DESCRIPTION === landCoverType
+        );
+
+        if (filteredFeatures.length === 0) return;
+
+        const datasetId = `land-cover-${landCoverType.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
+        const color = landCoverColors[landCoverType] || landCoverColors['default'];
+
+        datasetsPlugin.addDataset({
+          id: datasetId,
+          label: landCoverType,
+          geojson: {
+            type: 'FeatureCollection',
+            features: filteredFeatures
+          },
+          fill: color,
+          stroke: '#0b0c0c',
+          strokeWidth: 1.5,
+          showInKey: true,
+          showInLayers: false,
+          symbolDescription: `${landCoverType} area`,
+          minZoom: 0,
+          maxZoom: 24
+        });
+
+        console.log(`Added land cover dataset: ${datasetId}`);
+      }
+
+      // Remove a land cover type dataset
+      function removeLandCoverDataset(landCoverType) {
+        if (!datasetsReady) return;
+
+        const datasetId = `land-cover-${landCoverType.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
+        datasetsPlugin.removeDataset(datasetId);
+        console.log(`Removed land cover dataset: ${datasetId}`);
+      }
+
       function updateLandCoversSelectedCount() {
         const countElement = document.getElementById('land-covers-selected-count');
         if (countElement) countElement.textContent = activeLandCovers.size;
-      }
-
-      function updateLandCoverFilter() {
-        if (!mapInstance || !mapInstance.getLayer('land-covers-fill')) return;
-
-        if (activeLandCovers.size === 0) {
-          mapInstance.setLayoutProperty('land-covers-fill', 'visibility', 'none');
-          mapInstance.setLayoutProperty('land-covers-outline', 'visibility', 'none');
-        } else {
-          mapInstance.setLayoutProperty('land-covers-fill', 'visibility', 'visible');
-          mapInstance.setLayoutProperty('land-covers-outline', 'visibility', 'visible');
-          const filter = ['in', ['get', 'DESCRIPTION'], ['literal', Array.from(activeLandCovers)]];
-          mapInstance.setFilter('land-covers-fill', filter);
-          mapInstance.setFilter('land-covers-outline', filter);
-        }
       }
 
       function filterParcelsByLandCover() {
@@ -968,56 +911,6 @@
         updateSelectAllCheckboxState();
       }
 
-      function updateLegendForLandCovers() {
-        const legendContent = document.getElementById('legend-content');
-        const legendOverlay = document.getElementById('legend-overlay');
-        if (!legendContent) return;
-
-        let html = '';
-        let hasContent = false;
-
-        if (activeLandCovers.size > 0) {
-          hasContent = true;
-          html += '<div class="map-legend-items">';
-          Array.from(activeLandCovers).sort().forEach(landUse => {
-            const color = landCoverColors[landUse] || landCoverColors['default'];
-            html += `
-              <div class="map-legend-item">
-                <span class="map-legend-color" style="background-color: ${color};"></span>
-                <span class="map-legend-label">${landUse}</span>
-              </div>
-            `;
-          });
-          html += '</div>';
-        }
-
-        if (!hasContent) {
-          legendContent.innerHTML = '<p class="govuk-body">No features to display</p>';
-          if (legendOverlay) legendOverlay.style.display = 'none';
-        } else {
-          legendContent.innerHTML = html;
-          if (legendOverlay) legendOverlay.style.display = 'block';
-        }
-      }
-
-      // Legend toggle
-      const legendToggle = document.getElementById('legend-toggle');
-      const legendClose = document.getElementById('legend-close');
-      const legendContainer = document.getElementById('legend-container');
-
-      if (legendToggle) {
-        legendToggle.addEventListener('click', () => {
-          legendContainer.style.display = 'block';
-          legendToggle.style.display = 'none';
-        });
-      }
-      if (legendClose) {
-        legendClose.addEventListener('click', () => {
-          legendContainer.style.display = 'none';
-          legendToggle.style.display = 'block';
-        });
-      }
-
       // Populate land covers on accordion open
       const landCoversAccordionButton = document.querySelector('.govuk-accordion__section-button[aria-controls="accordion-land-data-content-2"]');
       if (landCoversAccordionButton) {
@@ -1038,17 +931,50 @@
         }
       }, 500);
 
-      // Hedgerows checkbox
+      // Hedgerows checkbox - add/remove dataset via datasetsPlugin
       const hedgerowsCheckbox = document.getElementById('hedgerows-checkbox');
       if (hedgerowsCheckbox) {
         hedgerowsCheckbox.addEventListener('change', function() {
-          if (mapInstance && mapInstance.getLayer('hedge-control-line')) {
-            mapInstance.setLayoutProperty('hedge-control-line', 'visibility',
-              this.checked ? 'visible' : 'none');
+          if (this.checked) {
+            addHedgerowsDataset();
+          } else {
+            removeHedgerowsDataset();
           }
           filterParcelsByLandCover();
           updateHiddenInputs();
         });
+      }
+
+      // Add hedgerows as a dataset via datasetsPlugin
+      function addHedgerowsDataset() {
+        if (!hedgeControlData || !datasetsReady) {
+          console.warn('Cannot add hedgerows dataset - not ready');
+          return;
+        }
+
+        datasetsPlugin.addDataset({
+          id: 'hedgerows',
+          label: 'Hedgerows',
+          geojson: hedgeControlData,
+          stroke: '#912b88',
+          strokeWidth: 3,
+          showInKey: true,
+          showInLayers: false,
+          symbolDescription: 'purple line',
+          keySymbolShape: 'line',
+          minZoom: 0,
+          maxZoom: 24
+        });
+
+        console.log('Added hedgerows dataset');
+      }
+
+      // Remove hedgerows dataset
+      function removeHedgerowsDataset() {
+        if (!datasetsReady) return;
+
+        datasetsPlugin.removeDataset('hedgerows');
+        console.log('Removed hedgerows dataset');
       }
 
       // Text filter
@@ -1117,6 +1043,19 @@
 
     // Calculate available height for map (viewport minus header)
     const mapHeight = window.innerHeight - (govukHeader?.offsetHeight || 0) - (serviceNav?.offsetHeight || 0);
+
+    // Create datasets plugin for land covers and hedgerows with showInKey
+    // Note: Need placeholder dataset for Key button to appear
+    const datasetsPlugin = defra.datasetsPlugin({
+      datasets: [{
+        id: 'placeholder',
+        label: 'placeholder',
+        geojson: { type: 'FeatureCollection', features: [] },
+        showInKey: true,
+        showInLayers: false,
+        visibility: 'hidden'
+      }]
+    });
 
     // Create interact plugin for parcel selection
     // Note: Must call interactPlugin.enable() after map:ready
@@ -1212,6 +1151,7 @@
           ]
         }),
         interactPlugin,
+        datasetsPlugin,
         defra.searchPlugin({
           osNamesURL: '/api/geocode-proxy?query={query}',
           customDatasets: [parcelSearchDataset],
@@ -1224,6 +1164,14 @@
     });
 
     window.interactiveMap = interactiveMap;
+
+    // =====================================================
+    // DATASETS PLUGIN READY EVENT
+    // =====================================================
+    interactiveMap.on('datasets:ready', () => {
+      console.log('Datasets plugin ready');
+      datasetsReady = true;
+    });
 
     // =====================================================
     // INTERACT PLUGIN EVENT HANDLERS
@@ -1262,7 +1210,14 @@
         if (mapInstance && mapInstance.resize) {
           mapInstance.resize();
         }
+        // Dispatch window resize event to trigger DEFRA component overlay repositioning
+        window.dispatchEvent(new Event('resize'));
       }, 100);
+
+      // Try additional delayed resize for overlay visibility
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 500);
 
       // Fetch all data in parallel
       const [parcelsData, coversData, hedgesData] = await Promise.all([
@@ -1276,25 +1231,23 @@
         createParcelCheckboxes(parcelsData);
       }
 
-      if (coversData) {
-        addLandCoversToMap(mapInstance, coversData);
-      }
-
+      // Land covers and hedgerows are added via datasetsPlugin when checkboxes are toggled
+      // Just populate the hedgerows summary here
       if (hedgesData) {
-        addHedgeControlToMap(mapInstance, hedgesData);
+        populateHedgerowsSummary(hedgesData);
       }
 
       setupAccordionControls();
     });
 
-    // Re-add all layers after style change (style changes remove all custom layers)
+    // Re-add parcels layer after style change (datasetsPlugin handles land covers/hedgerows)
     interactiveMap.on('map:stylechange', (e) => {
       console.log('Style changed:', e);
 
-      // Wait for style to load then re-add all layers
+      // Wait for style to load then re-add parcels layer
       setTimeout(() => {
         if (mapInstance) {
-          // Re-add parcels layer
+          // Re-add parcels layer (manually managed for interact plugin)
           if (landParcelsData && !mapInstance.getSource('parcels')) {
             mapInstance.addSource('parcels', {
               type: 'geojson',
@@ -1332,34 +1285,8 @@
             });
           }
 
-          // Re-add land covers
-          if (landCoversData && !mapInstance.getSource('land-covers')) {
-            addLandCoversToMap(mapInstance, landCoversData);
-          }
-
-          // Re-add hedgerows
-          if (hedgeControlData && !mapInstance.getSource('hedge-control')) {
-            addHedgeControlToMap(mapInstance, hedgeControlData);
-          }
-
-          // Restore visibility states for land covers
-          if (activeLandCovers.size > 0) {
-            const filter = ['in', ['get', 'DESCRIPTION'], ['literal', Array.from(activeLandCovers)]];
-            if (mapInstance.getLayer('land-covers-fill')) {
-              mapInstance.setLayoutProperty('land-covers-fill', 'visibility', 'visible');
-              mapInstance.setFilter('land-covers-fill', filter);
-            }
-            if (mapInstance.getLayer('land-covers-outline')) {
-              mapInstance.setLayoutProperty('land-covers-outline', 'visibility', 'visible');
-              mapInstance.setFilter('land-covers-outline', filter);
-            }
-          }
-
-          // Restore hedgerows visibility
-          const hedgerowsCheckbox = document.getElementById('hedgerows-checkbox');
-          if (hedgerowsCheckbox && hedgerowsCheckbox.checked && mapInstance.getLayer('hedge-control-line')) {
-            mapInstance.setLayoutProperty('hedge-control-line', 'visibility', 'visible');
-          }
+          // Note: Land covers and hedgerows are managed by datasetsPlugin
+          // which handles style changes automatically
         }
       }, 500);
     });
@@ -1379,6 +1306,12 @@
     overflow: hidden;
     overscroll-behavior: none;
     height: 100%;
+  }
+
+  /* Ensure service navigation dropdown appears above the map on mobile */
+  .govuk-service-navigation {
+    position: relative;
+    z-index: 100;
   }
 
   .app-map-fullscreen {
@@ -1531,20 +1464,6 @@
     }
   }
 
-  /* Legend overlay positioning */
-  #legend-overlay {
-    position: absolute !important;
-    top: 10px !important;
-    right: 60px !important;
-    z-index: 10;
-  }
-
-  #legend-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
   /* =====================================================
      SIDEBAR STYLES
      ===================================================== */
@@ -1673,111 +1592,6 @@
 
   .govuk-checkboxes__hint {
     margin-top: -14px;
-  }
-
-  /* =====================================================
-     LEGEND STYLES
-     ===================================================== */
-
-  .map-overlay {
-    z-index: 10;
-  }
-
-  .map-legend {
-    background-color: white;
-    padding: 10px;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1);
-    width: 275px;
-    position: relative;
-  }
-
-  .map-legend .govuk-heading-m {
-    margin-top: 0;
-    padding-right: 40px;
-  }
-
-  .map-legend-items {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .map-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .map-legend-color {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-
-  .map-legend-label {
-    font-size: 1rem;
-    line-height: 1.25;
-    color: #0b0c0c;
-    font-family: "GDS Transport", arial, sans-serif;
-    font-weight: 400;
-  }
-
-  .map-legend-toggle {
-    background: white !important;
-    border: 2px solid rgba(0, 0, 0, 0.1) !important;
-    border-radius: 0 !important;
-    cursor: pointer;
-    padding: 0 !important;
-    width: 40px !important;
-    height: 40px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1), 0 0 12px rgba(0, 0, 0, 0.1) !important;
-  }
-
-  .map-legend-toggle img {
-    width: 24px !important;
-    height: 24px !important;
-  }
-
-  .map-legend-toggle:hover {
-    background-color: #f3f2f1 !important;
-  }
-
-  .map-legend-toggle:focus-visible {
-    outline: 3px solid #ffdd00 !important;
-    outline-offset: 0 !important;
-    box-shadow: inset 0 0 0 4px #0b0c0c !important;
-  }
-
-  .map-legend-close {
-    position: absolute;
-    top: 10px;
-    right: 4px;
-    background: none;
-    border: none;
-    font-size: 34px;
-    line-height: 1;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-    color: #0b0c0c;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .map-legend-close:hover {
-    background-color: #f3f2f1;
-  }
-
-  .map-legend-close:focus-visible {
-    outline: 3px solid #ffdd00;
-    outline-offset: 0;
-    box-shadow: inset 0 0 0 4px #0b0c0c;
   }
 
   /* =====================================================

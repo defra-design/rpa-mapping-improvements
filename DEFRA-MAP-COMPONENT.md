@@ -926,13 +926,13 @@ const datasetsPlugin = defra.datasetsPlugin({
 
 The placeholder will not display in the Key (no features), but it enables the Key button to appear.
 
-### Search Plugin Hides Other Overlays When Expanded
+### Search Plugin Hides Other Overlays When Expanded (Expected Behavior)
 
-**Issue**: When the search input is expanded (by clicking the search icon), all other overlay buttons (Key, Map Styles, Zoom controls) disappear from the map.
+**Behavior**: When the search input is expanded (by clicking the search icon), other overlay buttons (Key, Map Styles, Zoom controls) are hidden.
 
-**Symptoms**:
+**What happens**:
 - Click the search icon to expand the search input
-- Other overlay buttons (Key, Map Styles, Zoom +/-) disappear
+- Other overlay buttons (Key, Map Styles, Zoom +/-) are hidden
 - Closing the search input makes the other overlays reappear
 
 **Affected components**:
@@ -940,9 +940,7 @@ The placeholder will not display in the Key (no features), but it enables the Ke
 - Map Styles button (mapStylesPlugin)
 - Zoom controls
 
-**Status**: Observed in all layouts (inline, fullscreen, with/without custom CSS). This appears to be component behavior rather than a CSS conflict.
-
-**Workaround**: None currently. Users must close the search input to access other map controls.
+**Reason**: This is intentional design to prevent overlays from overlapping on smaller screens. Users must close the search input to access other map controls.
 
 ---
 
