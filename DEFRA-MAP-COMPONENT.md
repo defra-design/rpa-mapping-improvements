@@ -273,19 +273,40 @@ defra.searchPlugin({
 - `isExpanded` - Start with search box expanded
 
 **Custom Datasets Format**:
+
+Custom datasets must use the `buildRequest`/`parseResults` pattern (not a simple `search` function):
+
 ```javascript
 [{
   name: 'Dataset Name',
-  search: async (query) => {
-    // Return array of results
+  buildRequest: (query, defaultBuildRequest) => {
+    // Return { url, options } for the fetch request
+    // For server-side data:
+    return {
+      url: `/api/my-search?query=${encodeURIComponent(query)}`,
+      options: { method: 'GET' }
+    };
+    // For client-side data, use a Blob URL:
+    // const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    // return { url: URL.createObjectURL(blob), options: { method: 'GET' } };
+  },
+  parseResults: (json, query) => {
+    // Parse fetched JSON into result objects
     return [{
-      label: 'Result Label',
-      coordinates: [lng, lat],
-      bounds: [minLng, minLat, maxLng, maxLat] // optional
+      id: 'unique-id',
+      text: 'Result Label',           // Display text (supports <mark> for highlighting)
+      point: [lng, lat],              // Center point [longitude, latitude]
+      bounds: [minLng, minLat, maxLng, maxLat], // Fit bounds (optional)
+      type: 'custom'                  // Result type identifier
     }];
-  }
+  },
+  includeRegex: /^pattern$/,          // Only search when query matches (optional)
+  excludeRegex: /^pattern$/,          // Skip search when query matches (optional)
+  exclusive: false                    // If true, stop querying other datasets when results found (optional)
 }]
 ```
+
+**Important**: The search plugin processes datasets sequentially. If a custom dataset's `buildRequest` returns an invalid URL (e.g. `undefined`), it will throw an error that breaks the entire search including the OS Names search.
 
 ### Zoom Controls
 
@@ -769,25 +790,61 @@ interactiveMap.on('map:ready', async (e) => {
 
 ### Example 3: Custom Search with Parcel IDs
 
+Custom datasets must use `buildRequest`/`parseResults` (not a `search` function).
+
+**Server-side approach** (fetch from API):
 ```javascript
-// Custom dataset for searching parcels
 const parcelSearchDataset = {
   name: 'Land Parcels',
-  search: async (query) => {
-    const url = `${process.env.PARCEL_SERVICE_URL}/${query}`;
-    const response = await fetch(url);
-
-    if (!response.ok) return [];
-
-    const data = await response.json();
-    return [{
-      label: `Parcel ${data.properties.ngc}`,
-      coordinates: calculateCenter(data.geometry),
-      bounds: getBounds(data.geometry)
-    }];
-  }
+  buildRequest: (query) => ({
+    url: `/api/parcel-search?query=${encodeURIComponent(query)}`,
+    options: { method: 'GET' }
+  }),
+  parseResults: (json, query) => {
+    if (!json || !json.features) return [];
+    return json.features.slice(0, 5).map(f => ({
+      id: f.properties.ngc,
+      text: `${f.properties.SHEET_ID} ${f.properties.PARCEL_ID} (${parseFloat(f.properties.AREA_HA).toFixed(4)} ha)`,
+      point: calculateCenter(f.geometry),
+      bounds: getBounds(f.geometry),
+      type: 'parcel'
+    }));
+  },
+  includeRegex: /^[A-Za-z]{2}\s*\d/  // Only for parcel ID format queries
 };
+```
 
+**Client-side approach** (search already-loaded data via Blob URL):
+```javascript
+const parcelSearchDataset = {
+  name: 'Land Parcels',
+  buildRequest: (query) => {
+    const data = landParcelsData || { type: 'FeatureCollection', features: [] };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    return { url: URL.createObjectURL(blob), options: { method: 'GET' } };
+  },
+  parseResults: (json, query) => {
+    if (!json || !json.features) return [];
+    const term = query.toLowerCase().replace(/\s+/g, '');
+    return json.features
+      .filter(f => {
+        const ngc = `${f.properties.SHEET_ID}${f.properties.PARCEL_ID}`.toLowerCase();
+        return ngc.includes(term);
+      })
+      .slice(0, 5)
+      .map(f => ({
+        id: f.properties.ngc,
+        text: `${f.properties.SHEET_ID} ${f.properties.PARCEL_ID}`,
+        point: calculateCenter(f.geometry),
+        bounds: getBounds(f.geometry),
+        type: 'parcel'
+      }));
+  },
+  includeRegex: /^[A-Za-z]{2}\s*\d/
+};
+```
+
+```javascript
 // Use in search plugin
 defra.searchPlugin({
   osNamesURL: '/api/geocode-proxy?query={query}',
