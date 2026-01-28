@@ -8,6 +8,16 @@ const router = govukPrototypeKit.requests.setupRouter()
 
 // Add your routes here
 
+// Main map page
+router.post('/download-maps-v5/get-maps-of-your-land', function (req, res) {
+  console.log('Saved selections:', {
+    parcels: req.session.data['selected-parcels'],
+    landCovers: req.session.data['selected-land-covers'],
+    hedgerows: req.session.data['hedgerows-enabled']
+  });
+  res.redirect('/download-maps-v5/map-pack-contents');
+});
+
 // Save map selections to session
 router.post('/download-maps-v5/get-maps-of-your-land-poc-4', function (req, res) {
   // Data is automatically saved to session by the prototype kit
