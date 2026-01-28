@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block bodyStart %}
-  <script>document.body.classList.add('am-is-loading')</script>
+  <script>document.body.classList.add('im-is-loading')</script>
 {% endblock %}
 
 {% block beforeContent %}
@@ -155,7 +155,6 @@
   <script src="/plugin-assets/%40defra%2Finteractive-map/providers/open-names/dist/umd/index.js"></script>
   <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/umd/index.js"></script>
   <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/umd/index.js"></script>
-  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/zoom-controls/dist/umd/index.js"></script>
   <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/umd/index.js"></script>
   <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/umd/index.js"></script>
   <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
@@ -269,7 +268,7 @@
           width: '300px',
           showMarker: false
         }),
-        defra.zoomControlsPlugin(),
+        
         defra.scaleBarPlugin({
 			    units: 'metric'
 		    })

@@ -1,0 +1,465 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Confirm land parcel – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+
+
+{% block head %}
+  <link href="/public/stylesheets/application.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/css/index.css" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block bodyStart %}
+  <script>document.body.classList.add('im-is-loading')</script>
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-l">
+    <span class="govuk-caption-l">AR FIELDING</span>
+      Confirm land parcel {{ data['parcel-id'] }}
+    </h1>
+    <!-- <p class="govuk-body">To find a land parcel either use the:</p>
+        <ul class="govuk-list govuk-list--bullet">
+            <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
+            <li>map search to enter a location, for example, the nearest city, town or postcode</li>
+        </ul> -->
+  </div>
+</div>
+<!-- <div class="govuk-grid-row">
+  <div class="ggovuk-grid-column-two-thirds">
+    <div id="map"></div>
+  </div>
+</div> -->
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-one-third">
+    <div id="parcel-data-container"></div>
+
+{% from "govuk/components/button/macro.njk" import govukButton %}
+      <form class="form" method="post">
+        {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+        {{ govukRadios({
+          name: "confirmLandParcel",
+          fieldset: {
+            legend: {
+              text: "Do you want to register this parcel?",
+              isPageHeading: false,
+              classes: "govuk-fieldset__legend--m"
+            }
+          },
+          hint: {
+            text: "Select one option"
+          },
+          items: [
+            {
+              value: "found-parcel-id",
+              text: "Yes"
+            },
+            {
+              value: "no",
+              text: "No",
+              hint: {
+                text: ""
+              }
+            }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+      </form>
+
+  </div>
+  <div class="govuk-grid-column-two-thirds">
+    <div id="map"></div>
+  </div>
+</div>
+{% endblock %}
+  
+{% block pageScripts %}
+  <!-- Defra library scripts -->
+  <script src="/plugin-assets/%40defra%2Finteractive-map/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/providers/maplibre/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/providers/open-names/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/umd/index.js"></script>
+  <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
+  <script src="/public/javascripts/request.js"></script>
+  <script src="/public/javascripts/searchCustomDatasets.js"></script>
+  
+  <script>
+  window.env = {
+    PARCEL_TILE_SERVICE_URL: '{{ data.PARCEL_TILE_SERVICE_URL | safe }}',
+    GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}', 
+    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}',
+    WFS_DATA_URL: '{{ data.WFS_DATA_URL | safe }}' || 'https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels'
+  }
+  
+  // Use fallback if WFS_DATA_URL is empty
+  if (!window.env.WFS_DATA_URL || window.env.WFS_DATA_URL.trim() === '') {
+    window.env.WFS_DATA_URL = 'https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels';
+  }
+
+  // Server-provided data
+  const TARGET_SBI = '{{ sbi }}';
+  const TARGET_PARCEL_ID = '{{ parcelId }}';
+  const LAND_COVERS = {{ landCovers | dump | safe }};
+  const HEDGEROWS = {{ hedgerows | dump | safe }};
+  const TOTAL_HEDGEROW_LENGTH = '{{ totalHedgerowLength }}';
+
+  // Store the target parcel feature globally
+  let targetParcelFeature = null;
+
+  function getBounds(geometry) {
+    const coords = [];
+
+    function extractCoords(g) {
+      if (!g) return;
+
+      switch (g.type) {
+        case 'Point':
+          coords.push(g.coordinates);
+          break;
+        case 'MultiPoint':
+        case 'LineString':
+          g.coordinates.forEach(c => coords.push(c));
+          break;
+        case 'MultiLineString':
+        case 'Polygon':
+          g.coordinates.forEach(ring => ring.forEach(c => coords.push(c)));
+          break;
+        case 'MultiPolygon':
+          g.coordinates.forEach(polygon => polygon.forEach(ring => ring.forEach(c => coords.push(c))));
+          break;
+        case 'GeometryCollection':
+          g.geometries.forEach(extractCoords);
+          break;
+        default:
+          throw new Error(`Unsupported geometry type: ${g.type}`);
+      }
+    }
+
+    extractCoords(geometry);
+
+    const lons = coords.map(c => c[0]);
+    const lats = coords.map(c => c[1]);
+
+    return [
+      Math.min(...lons),
+      Math.min(...lats),
+      Math.max(...lons),
+      Math.max(...lats)
+    ];
+  }
+
+  function calculateCenter(features) {
+    let totalLng = 0, totalLat = 0, count = 0;
+    
+    features.forEach(feature => {
+      if (feature.geometry && feature.geometry.coordinates) {
+        const coords = feature.geometry.type === 'Polygon' 
+          ? feature.geometry.coordinates[0] 
+          : feature.geometry.coordinates;
+        
+        coords.forEach(coord => {
+          totalLng += coord[0];
+          totalLat += coord[1];
+          count++;
+        });
+      }
+    });
+    
+    return count > 0 ? [totalLng / count, totalLat / count] : null;
+  }
+
+  function fetchSpecificParcel(sbi, parcelId) {
+    // Fetch from PARCEL_SERVICE_URL instead of WFS (no bbox required)
+    const url = `${window.env.PARCEL_SERVICE_URL}/${parcelId}`;
+    
+    console.log('Fetching parcel geometry from:', url);
+    
+    return fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data && data.geometry) {
+          // Convert to the format expected by the map
+          const feature = {
+            type: 'Feature',
+            properties: {
+              ID: data.properties.ngc,
+              SBI: data.properties.sbi,
+              SHEET_ID: data.properties.ngc.slice(0, 6),
+              PARCEL_ID: data.properties.ngc.slice(-4)
+            },
+            geometry: data.geometry
+          };
+          
+          targetParcelFeature = feature;
+          window.targetParcelFeature = targetParcelFeature;
+          
+          console.log('Target parcel feature set:', targetParcelFeature);
+          
+          return {
+            type: 'FeatureCollection',
+            features: [feature]
+          };
+        }
+        
+        return null;
+      })
+      .catch(error => {
+        console.error('Error fetching parcel:', error);
+        return null;
+      });
+  }
+
+  // Fetch the specific parcel and create the map
+  if (TARGET_PARCEL_ID && TARGET_PARCEL_ID.trim() !== '') {
+    fetchSpecificParcel(TARGET_SBI, TARGET_PARCEL_ID).then(data => {
+      let mapCenter = [-2.968, 54.425]; // Default center
+      let mapZoom = 15;
+      
+      if (data && data.features && data.features.length > 0) {
+        const center = calculateCenter(data.features);
+        
+        if (center) {
+          mapCenter = center;
+        }
+      }
+      
+      // Now create the map
+      createMap();
+    });
+  } else {
+    // Create map at default location
+    createMap();
+  }
+
+  function createMap() {
+    // Check if we have a target parcel, otherwise use default bounds
+    const bounds = window.targetParcelFeature 
+      ? getBounds(window.targetParcelFeature.geometry)
+      : [-3.5, 53.5, -2.5, 54.5]; // Default bounds for general area
+
+    const interactPlugin = defra.interactPlugin({
+      dataLayers: [{
+        layerId: 'field-parcels',
+        idProperty: 'ID',
+        selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
+      },{
+        layerId: 'linked-parcels',
+        idProperty: 'ID',
+        selectedFeatureStyle: { stroke: { outdoor: '#ff0000', dark: '#00ff00' }, strokeWidth: 2, fill: 'rgba(255, 0, 0, 0.1)' }
+      }],
+      markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
+      interactionMode: 'select',
+      multiSelect: true
+    })
+    
+    const interactiveMap = new defra.InteractiveMap('map', {
+      mapProvider: defra.maplibreProvider(),
+      reverseGeocodeProvider: defra.openNamesProvider({
+        url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
+      }),
+      behaviour: 'inline',
+      mapLabel: 'Ambleside',
+      minZoom: 6,
+      maxZoom: 18,
+      bounds: bounds,
+      containerHeight: '650px',
+      transformRequest: transformTileRequest,
+      hasExitButton: true,
+      mapStyle: {
+        url: 'https://tiles.openfreemap.org/styles/liberty',
+        attribution: 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
+        backgroundColor: '#f5f5f0'
+      },
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [{
+            id: 'outdoor',
+            label: 'Outdoor',
+            url: '{{ data.VTS_OUTDOOR_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
+            backgroundColor: '#f5f5f0'
+          }, {
+            id: 'dark',
+            label: 'Dark',
+            url: '{{ data.VTS_DARK_URL }}',
+            mapColorScheme: 'dark',
+            appColorScheme: 'dark',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/dark-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-white.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'black-and-white',
+            label: 'Black/White',
+            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/black-and-white-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-black.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'satellite',
+            label: 'Satellite',
+            url: '/satellite-style.json',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+          }]
+        }),
+        defra.datasetsPlugin({
+          transformRequest: transformDataRequest,
+          datasets: [
+            {
+              id: 'field-parcels',
+              label: 'Field parcels',
+              filter: ['==', ['get', 'ngc'], TARGET_PARCEL_ID],
+              tiles: ['{{ data.PARCEL_TILE_SERVICE_URL | safe }}'],
+              sourceLayer: 'field_parcels_filtered',
+              stroke: '#ff0000',
+              strokeWidth: 2,
+              fill: 'transparent',
+              minZoom: 15,
+              maxZoom: 24
+            }
+          ]
+        }),
+        defra.scaleBarPlugin({
+          units: 'metric'
+        })
+      ]
+    });
+    
+    interactiveMap.on('map:ready', () => {
+      displayLayerData();
+    })
+
+    interactiveMap.on('interact:selectionchange', (e) => {
+      console.log(e)
+    })
+    
+    window.interactiveMapInstance = interactiveMap;
+  }
+
+  // Function to display data using server-provided data
+  function displayLayerData() {
+    if (!targetParcelFeature) {
+      return;
+    }
+    
+    // Calculate total area from land covers
+    let totalArea = 0;
+    if (LAND_COVERS && LAND_COVERS.length > 0) {
+      totalArea = LAND_COVERS.reduce((sum, cover) => {
+        return sum + (parseFloat(cover.AREA_HA) || 0);
+      }, 0);
+    }
+    
+    // Build hedgerow HTML
+    let hedgerowHTML = 'None';
+    if (HEDGEROWS && HEDGEROWS.length > 0) {
+      hedgerowHTML = `${HEDGEROWS.length} (${TOTAL_HEDGEROW_LENGTH}m total)`;
+    }
+    
+    // Build land cover HTML
+    let landCoverHTML = 'None';
+    if (LAND_COVERS && LAND_COVERS.length > 0) {
+      const coverItems = LAND_COVERS.map(cover => {
+        const description = cover.DESCRIPTION || 'Unknown';
+        const area = cover.AREA_HA ? parseFloat(cover.AREA_HA).toFixed(4) : 'N/A';
+        return `${description}: ${area} ha`;
+      });
+      landCoverHTML = coverItems.join('<br>');
+    }
+    
+    // Update the display
+    const container = document.getElementById('parcel-data-container');
+    if (container && targetParcelFeature) {
+      const props = targetParcelFeature.properties;
+      const sheetId = props.SHEET_ID || 'N/A';
+      const parcelId = props.PARCEL_ID || 'N/A';
+      const combinedRef = sheetId !== 'N/A' && parcelId !== 'N/A' ? `${sheetId} ${parcelId}` : 'N/A';
+      
+      container.innerHTML = `
+        <h2 class="govuk-heading-m">Parcel details</h2>
+        <table class="govuk-table">
+          <tbody class="govuk-table__body">
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Area (ha)</th>
+              <td class="govuk-table__cell">${totalArea > 0 ? totalArea.toFixed(4) : 'N/A'}</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Hedgerows</th>
+              <td class="govuk-table__cell">${hedgerowHTML}</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header" colspan="2" style="border-bottom: none;">Land covers</th>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell" colspan="2">
+                <ul class="govuk-list govuk-list" style="margin-top:-16px;">
+                  ${landCoverHTML}
+                </ul>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Parcel type has changed – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: "Back",
+    href: "check-parcel-details"
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <form method="post">
+        {% if data.newParcelType == "registered" %}
+          {% set newTypeText = "registered and on the system" %}
+        {% elif data.newParcelType == "on-system-not-registered" %}
+          {% set newTypeText = "on the system but not registered" %}
+        {% else %}
+          {% set newTypeText = "not found on the system" %}
+        {% endif %}
+        
+        {% if data.originalParcelType == "registered" %}
+          {% set oldTypeText = "registered and on the system" %}
+        {% elif data.originalParcelType == "on-system-not-registered" %}
+          {% set oldTypeText = "on the system but not registered" %}
+        {% else %}
+          {% set oldTypeText = "not found on the system" %}
+        {% endif %}
+        
+        {{ govukWarningText({
+          text: "The parcel type has changed",
+          iconFallbackText: "Warning"
+        }) }}
+        
+        <h1 class="govuk-heading-l">The new parcel ID has a different status</h1>
+        
+        <p class="govuk-body">The parcel ID you entered has a different status to the original:</p>
+        
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: {
+                text: "Original parcel ID"
+              },
+              value: {
+                text: data.originalParcelID
+              }
+            },
+            {
+              key: {
+                text: "Original status"
+              },
+              value: {
+                text: oldTypeText
+              }
+            },
+            {
+              key: {
+                text: "New parcel ID"
+              },
+              value: {
+                text: data.parcelID
+              }
+            },
+            {
+              key: {
+                text: "New status"
+              },
+              value: {
+                text: newTypeText
+              }
+            }
+          ]
+        }) }}
+        
+        {% if data.newParcelType == "registered" %}
+          <p class="govuk-body">The new parcel is registered, so you'll only need to provide an effective from date.</p>
+        {% elif data.newParcelType == "on-system-not-registered" %}
+          <p class="govuk-body">The new parcel is on the system but not registered, so you'll need to find it on the map and provide an effective from date.</p>
+        {% else %}
+          <p class="govuk-body">The new parcel is not found on the system, so you'll need to upload a map and provide an effective from date.</p>
+        {% endif %}
+        
+        {{ govukRadios({
+          name: "continueEdit",
+          fieldset: {
+            legend: {
+              text: "Do you want to continue with this change?",
+              isPageHeading: false,
+              classes: "govuk-fieldset__legend--m"
+            }
+          },
+          items: [
+            {
+              value: "yes",
+              text: "Yes, continue with the new parcel ID"
+            },
+            {
+              value: "no",
+              text: "No, go back and keep the original parcel ID"
+            }
+          ]
+        }) }}
+        
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

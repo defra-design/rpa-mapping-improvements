@@ -1,0 +1,401 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Confirm estimated land parcel – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+{% block head %}
+  <link href="/public/stylesheets/application.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/css/index.css" rel="stylesheet" type="text/css">
+  <link href="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/css/index.css" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+  text: "Back",
+  href: "javascript:window.history.back()"
+}) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+        {% if parcelId %}
+          <h1 class="govuk-heading-l">You have selected land parcel {{ parcelId }}</h1>
+        {% else %}
+          <h1 class="govuk-heading-l">Continue to upload a map of this area</h1>
+
+          <p>You need to upload a map that shows the area you want to register as a parcel. This is because this area has never been registered as a land parcel before and so does not have a parcel ID.</p>
+
+          <p>Read the guidance on <a href="https://www.gov.uk/guidance/creating-a-sketch-map-to-register-land-or-update-your-digital-maps" class="govuk-link" rel="noreferrer noopener" target="_blank">Creating a sketch map to register land or update digital maps. (opens in new tab)</a></p>
+
+        {% endif %}
+      
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-third">
+        {% if parcelId %}
+      <div id="parcel-data-container"></div>
+      <form class="form" method="post">
+        {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+        {{ govukRadios({
+          name: "signIn",
+          fieldset: {
+            legend: {
+              text: "Do you want to register this parcel?",
+              isPageHeading: false,
+              classes: "govuk-fieldset__legend--m"
+            }
+          },
+          hint: {
+            text: "Select one option"
+          },
+          items: [
+            {
+              value: "found-parcel-id",
+              text: "Yes"
+            },
+            {
+              value: "back-to-map",
+              text: "No",
+              hint: {
+                text: ""
+              }
+            }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+      </form>
+
+        {% else %}
+
+      <h2 class="govuk-heading-m">Estimated parcel ID</h2>
+
+      <p>We will give you an estimated parcel ID which you can use as a reference until we confirm the official parcel ID. We will give you the official parcel ID when we process your registration details.</p>
+
+      <form class="form" method="post">
+        {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+        {{ govukRadios({
+          name: "signIn",
+          fieldset: {
+            legend: {
+              text: "Do you want to continue registering and upload a map of the parcel?",
+              isPageHeading: false,
+              classes: "govuk-fieldset__legend--m"
+            }
+          },
+          hint: {
+            text: "Select one option"
+          },
+          items: [
+            {
+              value: "no-parcel-id",
+              text: "Yes"
+            },
+            {
+              value: "back-to-map",
+              text: "No",
+              hint: {
+                text: "Go back to the map search and choose a different area"
+              }
+            }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+      </form>
+        {% endif %}
+    </div>
+    <div class="govuk-grid-column-two-thirds">
+      <div id="map"></div>
+      <br/>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block pageScripts %}
+<!-- Defra library scripts -->
+<script src="/plugin-assets/%40defra%2Finteractive-map/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/providers/maplibre/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/providers/open-names/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
+<script src="/public/javascripts/request.js"></script>
+<script src="/public/javascripts/searchCustomDatasets.js"></script>
+
+<script>
+  window.env = {
+    WFS_SERVICE_URL: '{{ data.WFS_SERVICE_URL | safe }}',
+    GRIDREF_SERVICE_URL: '{{ data.GRIDREF_SERVICE_URL | safe }}',
+    PARCEL_SERVICE_URL: '{{ data.PARCEL_SERVICE_URL | safe }}'
+  }
+
+  const TARGET_PARCEL_ID = '{{ parcelId }}'
+  const TARGET_PARCEL_BOUNDS = [{{ parcelBounds }}]
+  const LAND_COVERS = {{ landCovers | dump | safe }};
+  const HEDGEROWS = {{ hedgerows | dump | safe }};
+  const TOTAL_HEDGEROW_LENGTH = '{{ totalHedgerowLength }}';
+
+  console.log(TARGET_PARCEL_ID)
+  console.log(TARGET_PARCEL_BOUNDS)
+
+  // Function to display parcel data
+  function displayParcelData() {
+    if (!TARGET_PARCEL_ID) {
+      return;
+    }
+
+    // Calculate total area from land covers
+    let totalArea = 0;
+    if (LAND_COVERS && LAND_COVERS.length > 0) {
+      totalArea = LAND_COVERS.reduce((sum, cover) => {
+        return sum + (parseFloat(cover.AREA_HA) || 0);
+      }, 0);
+    }
+
+    // Build hedgerow HTML
+    let hedgerowHTML = 'None';
+    if (HEDGEROWS && HEDGEROWS.length > 0) {
+      hedgerowHTML = `${HEDGEROWS.length} (${TOTAL_HEDGEROW_LENGTH}m total)`;
+    }
+
+    // Build land cover HTML as a list
+    let landCoverHTML = '<li>None</li>';
+    if (LAND_COVERS && LAND_COVERS.length > 0) {
+      const coverItems = LAND_COVERS.map(cover => {
+        const description = cover.DESCRIPTION || 'Unknown';
+        const area = cover.AREA_HA ? parseFloat(cover.AREA_HA).toFixed(4) : 'N/A';
+        return `<li>${description}: ${area} ha</li>`;
+      });
+      landCoverHTML = coverItems.join('');
+    }
+
+    // Update the display
+    const container = document.getElementById('parcel-data-container');
+    if (container) {
+      container.innerHTML = `
+        <h2 class="govuk-heading-m">Parcel details</h2>
+        <table class="govuk-table">
+          <tbody class="govuk-table__body">
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Area (ha)</th>
+              <td class="govuk-table__cell">${totalArea > 0 ? totalArea.toFixed(4) : 'N/A'}</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Hedgerows</th>
+              <td class="govuk-table__cell">${hedgerowHTML}</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header" colspan="2" style="border-bottom: none;">Land covers</th>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell" colspan="2">
+                <ul class="govuk-list govuk-list" style="margin-top:-16px;">
+                  ${landCoverHTML}
+                </ul>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+  }
+
+  // Create the map
+  if (TARGET_PARCEL_ID) {
+    const defraMap = new defra.InteractiveMap('map', {
+      mapProvider: defra.maplibreProvider(),
+      reverseGeocodeProvider: defra.openNamesProvider({
+        url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
+      }),
+      behaviour: 'inline',
+      minZoom: 6,
+      maxZoom: 18,
+      bounds: TARGET_PARCEL_BOUNDS,
+      containerHeight: '650px',
+      transformRequest: transformTileRequest,
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [{
+            id: 'outdoor',
+            label: 'Outdoor',
+            url: '{{ data.VTS_OUTDOOR_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
+            backgroundColor: '#f5f5f0'
+          }, {
+            id: 'dark',
+            label: 'Dark',
+            url: '{{ data.VTS_DARK_URL }}',
+            mapColorScheme: 'dark',
+            appColorScheme: 'dark',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/dark-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-white.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'black-and-white',
+            label: 'Black/White',
+            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/black-and-white-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-black.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'satellite',
+            label: 'Satellite',
+            url: '/satellite-style.json',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+          }]
+        }),
+        defra.datasetsPlugin({
+          datasets: [ {
+              id: 'field-parcels',
+              label: 'Field parcels',
+              filter: ['==', ['get', 'ngc'], TARGET_PARCEL_ID],
+              tiles: ['{{ data.PARCEL_TILE_SERVICE_URL | safe }}'],
+              sourceLayer: 'field_parcels_filtered',
+              stroke: '#ff0000',
+              strokeWidth: 2,
+              fill: 'transparent',
+              minZoom: 10,
+              maxZoom: 24
+            }]
+          }),
+        defra.scaleBarPlugin({
+          units: 'metric'
+        })
+      ]
+    })
+
+    defraMap.on('map:ready', () => {
+      displayParcelData();
+    })
+  } else {
+    const coords = [{{ coords }}]
+    const defraMap = new defra.InteractiveMap('map', {
+      mapProvider: defra.maplibreProvider(),
+      reverseGeocodeProvider: defra.openNamesProvider({
+        url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
+      }),
+      behaviour: 'inline',
+      minZoom: 6,
+      maxZoom: 18,
+      zoom: {{ zoom }},
+      center: coords,
+      //bounds: TARGET_PARCEL_BOUNDS,
+      containerHeight: '650px',
+      transformRequest: transformTileRequest,
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [{
+            id: 'outdoor',
+            label: 'Outdoor',
+            url: '{{ data.VTS_OUTDOOR_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: `Contains OS data ${String.fromCharCode(169)} Crown copyright and database rights ${(new Date()).getFullYear()}`,
+            backgroundColor: '#f5f5f0'
+          }, {
+            id: 'dark',
+            label: 'Dark',
+            url: '{{ data.VTS_DARK_URL }}',
+            mapColorScheme: 'dark',
+            appColorScheme: 'dark',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/dark-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-white.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'black-and-white',
+            label: 'Black/White',
+            url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/black-and-white-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-black.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Test'
+          }, {
+            id: 'satellite',
+            label: 'Satellite',
+            url: '/satellite-style.json',
+            thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+            logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
+            logoAltText: 'Ordnance survey logo',
+            attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+          }]
+        }),
+        defra.datasetsPlugin({
+          datasets: [ {
+              id: 'field-parcels',
+              label: 'Field parcels',
+              filter: ['==', ['get', 'ngc'], TARGET_PARCEL_ID],
+              tiles: ['{{ data.PARCEL_TILE_SERVICE_URL | safe }}'],
+              sourceLayer: 'field_parcels_filtered',
+              stroke: '#ff0000',
+              strokeWidth: 2,
+              fill: 'transparent',
+              minZoom: 10,
+              maxZoom: 24
+            }]
+          }),
+        defra.scaleBarPlugin({
+          units: 'metric'
+        })
+      ]
+    })
+    defraMap.on('map:ready', () => {
+      defraMap.addMarker('pin', coords)
+    })
+  }
+
+  </script>
+{% endblock %}

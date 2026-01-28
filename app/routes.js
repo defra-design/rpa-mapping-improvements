@@ -22,6 +22,9 @@ router.use("register-land-v2", rl2);
 const rl3 = require("./views/register-land-v3/_routes");
 router.use("register-land-v3", rl3);
 
+const rl4 = require("./views/register-land-v4/_routes");
+router.use("register-land-v3", rl4);
+
 const dm1 = require("./views/download-maps-v1/_routes");
 router.use("download-maps", dm1);
 

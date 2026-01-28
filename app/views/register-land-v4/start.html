@@ -1,0 +1,59 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Register land – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Register land
+      </h1>
+
+      <p class="govuk-body">Use this service to register land to your business. This can be:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>new land</li>
+        <li>land that does not have a parcel ID yet</li>
+        <li>land you have bought or taken over management of</li>
+      </ul>
+
+      {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+      {{ govukInsetText({
+        html: "There's a different process to transfer your land to another person or business. Use <a href='#'>Transfer land</a>."
+      }) }}
+
+      {% from "govuk/components/button/macro.njk" import govukButton %}
+
+      {{ govukButton({
+        text: "Start now",
+        href: "know-parcel-id",
+        isStartButton: true
+      }) }}
+
+      <h2 class="govuk-heading-m">
+        Before you start
+      </h2>
+
+      <p>
+        Read the guidance <a href="#">Register rural land on the Rural Payments service</a>.
+      </p>
+
+      <p class="govuk-body">For land you want to register you will need either:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>a parcel ID</li>
+        <li>details of the land's location</li>
+      </ul>
+      <p>
+      You need to know the date the change applies from. To register changes that happened more than 12 months ago, complete an <a href="https://www.gov.uk/government/publications/tell-the-rural-payments-agency-about-land-changes-and-entitlement-transfers">RLE1 form</a> instead.
+      </p>
+      <p>
+      If the land is new or has never been registered, you might need to upload a map to show us the change. We will tell you if you need to do this.</p>
+    </div>
+  </div>
+
+{% endblock %}

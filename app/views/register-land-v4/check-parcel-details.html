@@ -1,0 +1,203 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Check parcel details before submitting – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds-from-desktop">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Check your answers
+      </h1>
+
+
+
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+<!-- Check if the 'parcels' array exists and has items -->
+<!-- <p>DEBUG: parcels exists: {{ data['parcels'] }}</p>
+<p>DEBUG: parcels length: {{ data['parcels'].length }}</p> -->
+
+{% if data['parcels'] and data['parcels'].length %}
+<!-- Loop through each parcel object in the 'parcels' array -->
+  {% for parcel in data['parcels'] %}
+{% set imageNumber = (loop.index0 % 4) + 1 %}
+{% set imagePath = '/public/images/land-parcel-placeholder-' + imageNumber + '.png' %}
+    <!-- <p>DEBUG: Processing parcel {{ loop.index }}: {{ parcel | dump }}</p>
+    <p>DEBUG: fileUpload value: {{ parcel.fileUpload }}</p> -->
+    
+    {% set summaryRows = [
+      {
+        key: {
+          text: "Parcel ID"
+        },
+        value: {
+          html: parcel.id 
+        },
+        actions: {
+          items: [
+            {
+              href: "#",
+              text: "Change",
+              visuallyHiddenText: "parcel ID for land parcel"
+            }
+          ]
+        }
+      },
+      {
+        key: {
+          text: "Registered date"
+        },
+        value: {
+          html: "today" | govukDate
+        },
+        actions: {
+          items: [
+            {
+              href: "#",
+              text: "Change",
+              visuallyHiddenText: "registered date for land parcel " + loop.index
+            }
+          ]
+        }
+      },
+      {
+        key: {
+          text: "Land parcel"
+        },
+        value: {
+          html: "<div class='parcel-map-container' data-parcel-index='" + loop.index0 + "'><img src='" + imagePath + "' alt='Map showing land parcel " + loop.index + "' class='govuk-!-margin-bottom-0 govuk-!-margin-top-1' style='display: block; max-width: 100%;'></div>"
+        },
+        actions: {
+          items: [
+            {
+              href: "#",
+              text: "Change",
+              visuallyHiddenText: "map of land parcel"
+            }
+          ]
+        },
+        classes: "govuk-summary-list__row--align-top"
+      }
+    ] %}
+    
+    <!-- <p>DEBUG: summaryRows before concat: {{ summaryRows.length }}</p> -->
+    
+    {% if parcel.fileUpload or parcel.isEstimated or parcel.needsChanges %}
+      {% set summaryRows = summaryRows.concat([{
+        key: {
+          text: "Map upload"
+        },
+        value: {
+          html: parcel.fileUpload or "map-of-land-parcel-" + parcel.id + ".pdf"
+        },
+        actions: {
+          items: [
+            {
+              href: "upload-land-parcel-map?parcelIndex=" + loop.index0,
+              text: "Change",
+              visuallyHiddenText: "file upload for land parcel " + loop.index
+            }
+          ]
+        }
+      }]) %}
+    {% endif %}
+    
+    {{ govukSummaryList({
+      card: {
+        title: {
+          text: "Land parcel " + loop.index
+        },
+        actions: {
+          items: [
+            {
+              href: "delete-parcel?deleteIndex=" + loop.index0,
+              text: "Delete parcel",
+              visuallyHiddenText: "parcel " + loop.index,
+              attributes: {
+                'data-bypass': 'true'
+              }
+            }
+          ]
+        }
+      },
+      rows: summaryRows
+    }) }}
+  {% endfor %}
+{% else %}
+<p class="govuk-body">You have not added any parcels.</p>
+{% endif %}
+
+
+      {% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+      <form method="post">
+        
+      {{ govukRadios({
+        name: "registerAnotherParcel",
+        fieldset: {
+          legend: {
+            text: "Do you want to register any more land?",
+            isPageHeading: false,
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        items: [
+          {
+            value: "yes",
+            text: "Yes",
+            checked: checked("registerAnotherParcel", "yes")
+          },
+          {
+            value: "no",
+            text: "No",
+            checked: checked("registerAnotherParcel", "no")
+          }
+        ]
+      }) }}
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+
+    </form>
+<!-- <p>{{ data | dump }}</p> -->
+    </div>
+  </div>
+{% endblock %}
+
+{% block pageScripts %}
+<style>
+.govuk-summary-list__row--align-top .govuk-summary-list__key,
+.govuk-summary-list__row--align-top .govuk-summary-list__value,
+.govuk-summary-list__row--align-top .govuk-summary-list__actions {
+  vertical-align: top;
+}
+</style>
+
+{% endblock %}

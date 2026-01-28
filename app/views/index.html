@@ -20,7 +20,34 @@
   items: [
   {
       heading: {
-        text: "Register land version 03"
+        text: "Register land v04"
+      },
+      content: {
+        html: '
+        <p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="/register-land-v4/start">Continue to prototype start page</a></p>
+        <h3 class="govuk-heading-s">Added</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Defra mapping component</li>
+          <li>Image of land parcel to be registered</li>
+          <li></li>
+        </ul>
+        <h3 class="govuk-heading-s">Removed</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li></li>
+          <li></li>
+        </ul>
+        
+        <h3 class="govuk-heading-s">Updated</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li></li>
+          <li></li>
+        </ul>
+        '
+      }
+    },
+  {
+      heading: {
+        text: "Register land v03"
       },
       content: {
         html: '
@@ -47,7 +74,7 @@
     },
     {
       heading: {
-        text: "Register land version 02"
+        text: "Register land v02"
       },
       content: {
         html: '
@@ -79,7 +106,7 @@
     },
     {
       heading: {
-        text: "Register land version 01"
+        text: "Register land v01"
       },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="register-land-v1/business-overview">Continue to prototype start page</a></p><h3 class="govuk-heading-s">Customer Journeys</h3><ol class="govuk-list govuk-list--number govuk-list--spaced"><li>Land parcel registered, parcel ID known, enter parcel ID, enter date to link to business, check details, declaration, request submitted</li><li>Land parcel registered, parcel ID not known, find parcel ID, parcel registered, enter date to link to business, check details, declaration, request submitted</li><li>Land parcel not registered, parcel ID known, enter parcel ID, upload parcel map, enter date to link to business, check details, declaration, request submitted</li><li>Land parcel not registered, parcel ID not known, estimate parcel ID, upload parcel map, enter date to link to business, check details, declaration, request submitted</li><li>Don&#39;t know if land parcel is registered, check if land parcel is registered, land parcel is registered, add land parcel, enter date to link to business, check details, declaration, request submitted</li><li>Don&#39;t know if land parcel is registered, check if land parcel is registered, land parcel is not registered, upload parcel map, enter date to link to business, check details, declaration, request submitted</li></ol>'
@@ -88,30 +115,87 @@
 
     {
       heading: {
-        text: "Download maps version 05"
+        text: "Download maps POC-5 (DEFRA Interactive Map)"
       },
       content: {
-        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/start">Continue to prototype start page</a></p>
+        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/get-maps-of-your-land-poc-5">View DEFRA component prototype</a></p>
+         <p class="govuk-body"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/get-maps-of-your-land-poc-5-simple">Simplified test page (no custom layout CSS)</a></p>
+         <p class="govuk-body"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/get-maps-of-your-land-poc-5-debug">CSS debug page (toggle individual rules)</a></p>
          <h3 class="govuk-heading-s">Added</h3>
           <ul class="govuk-list govuk-list--bullet">
-            <li></li> 
-          </ul>       
-         <h3 class="govuk-heading-s">Updated</h3>
+            <li>DEFRA @defra/interactive-map component with interact plugin</li>
+            <li>Built-in map style switching (Map/Satellite)</li>
+            <li>Built-in search with custom parcel search dataset</li>
+            <li>Multi-select parcel selection via interact plugin</li>
+            <li>Two-way sync between map clicks and sidebar checkboxes</li>
+          </ul>
+         <h3 class="govuk-heading-s">Simplified from POC-4</h3>
           <ul class="govuk-list govuk-list--bullet">
-            <li></li> 
-            
-
-          </ul>      
-         <h3 class="govuk-heading-s">Removed</h3>
+            <li>Selection state managed by interact plugin instead of custom GeoJSON source</li>
+            <li>Zoom controls via enableZoomControls option</li>
+            <li>Style toggle via mapStylesPlugin</li>
+          </ul>
+         <h3 class="govuk-heading-s">Kept from POC-4</h3>
           <ul class="govuk-list govuk-list--bullet">
-            <li></li> 
+            <li>Sidebar accordion structure</li>
+            <li>Land cover and hedgerow filtering</li>
+            <li>Form submission to confirmation page</li>
           </ul>
         '
       }
     },
     {
       heading: {
-        text: "Download maps version 04"
+        text: "Download maps POC-4 (Fullscreen Layout)"
+      },
+      content: {
+        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/get-maps-of-your-land-poc-4">View fullscreen map prototype</a></p>
+         <h3 class="govuk-heading-s">Added</h3>
+          <ul class="govuk-list govuk-list--bullet">
+            <li>Full-viewport map layout (similar to Flood Map for Planning service)</li>
+            <li>Collapsible overlay panel for controls</li>
+            <li>Mobile-responsive bottom sheet pattern</li>
+            <li>Keyboard navigation (Escape to collapse panel)</li>
+          </ul>
+         <h3 class="govuk-heading-s">Updated</h3>
+          <ul class="govuk-list govuk-list--bullet">
+            <li>Map fills available viewport below GOV.UK header</li>
+            <li>Search and legend overlays repositioned to top-right</li>
+            <li>Footer removed for immersive map experience</li>
+          </ul>
+         <h3 class="govuk-heading-s">Based on</h3>
+          <ul class="govuk-list govuk-list--bullet">
+            <li>POC-3 with all existing functionality preserved</li>
+          </ul>
+        '
+      }
+    },
+    {
+      heading: {
+        text: "Get maps of your land v05"
+      },
+      content: {
+        html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/start">Continue to prototype start page</a></p>
+         <h3 class="govuk-heading-s">Added</h3>
+          <ul class="govuk-list govuk-list--bullet">
+            <li></li>
+          </ul>
+         <h3 class="govuk-heading-s">Updated</h3>
+          <ul class="govuk-list govuk-list--bullet">
+            <li></li>
+
+
+          </ul>
+         <h3 class="govuk-heading-s">Removed</h3>
+          <ul class="govuk-list govuk-list--bullet">
+            <li></li>
+          </ul>
+        '
+      }
+    },
+    {
+      heading: {
+        text: "Get maps of your land v04"
       },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v4/start">Continue to prototype start page</a></p>
@@ -140,7 +224,7 @@
 
     {
       heading: {
-        text: "Download maps version 03"
+        text: "Get maps of your land v03"
       },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v3/start">Continue to prototype start page</a></p>
@@ -167,7 +251,7 @@
     },
     {
       heading: {
-        text: "Download maps version 02"
+        text: "Get maps of your land v02"
       },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v2/start">Continue to prototype start page</a></p>
@@ -191,7 +275,7 @@
     },
     {
       heading: {
-        text: "Download maps version 01"
+        text: "Get maps of your land v01"
       },
       content: {
         html: '<p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v1/what-maps">Continue to prototype start page</a></p>

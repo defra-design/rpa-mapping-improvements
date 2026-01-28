@@ -1,0 +1,61 @@
+{% extends "layouts/main.html" %}
+
+{% set excludeBackLink = true %}
+
+{% block pageTitle %}
+  Register land request submitted – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ govukPanel({
+        titleText: "Request submitted",
+        html: "Your submission ID<br><strong>1745 839 186</strong>"
+      }) }}
+
+      <h2 class="govuk-heading-m">
+        What happens next
+      </h2>
+
+      <p>
+        We will aim to action your request within 5 working days. This may take longer if we need to contact you for more information.
+      </p>
+
+      <ul class="govuk-list">
+        <!-- <li>
+          <a class="govuk-link" href="../business-overview">Return to business overview</a>
+        </li> -->
+        <li>
+          <a class="govuk-link" href="submitted-change-requests">Submitted change requests</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+{% endblock %}

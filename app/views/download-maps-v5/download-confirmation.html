@@ -1,0 +1,367 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Download confirmation – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+    <h1 class="govuk-heading-xl">Your map selections</h1>
+
+    {% set parcelsData = data['selected-parcels'] | default('{"type":"FeatureCollection","features":[]}') %}
+    {% set parcelsGeoJson = parcelsData | fromJson %}
+
+    {% set landCoversData = data['selected-land-covers'] | default('{"type":"FeatureCollection","features":[]}') %}
+    {% set landCoversGeoJson = landCoversData | fromJson %}
+
+    {% set hedgerowsData = data['selected-hedgerows'] | default('{"type":"FeatureCollection","features":[]}') %}
+    {% set hedgerowsGeoJson = hedgerowsData | fromJson %}
+
+    <h2 class="govuk-heading-m">Selected parcels ({{ parcelsGeoJson.features | length }})</h2>
+
+    {% if parcelsGeoJson.features and parcelsGeoJson.features.length > 0 %}
+      <div class="parcel-cards">
+        {% for feature in parcelsGeoJson.features %}
+          {% set parcelId = feature.properties.SHEET_ID + feature.properties.PARCEL_ID %}
+          <div class="parcel-card" data-parcel-id="{{ parcelId }}">
+            <div class="parcel-card__image">
+              <div class="parcel-svg-container"
+                   data-geometry="{{ feature.geometry | dump }}"
+                   data-size="large">
+              </div>
+            </div>
+            <div class="parcel-card__details">
+              <div class="parcel-card__header">
+                <h3 class="govuk-heading-m govuk-!-margin-bottom-0">{{ parcelId }}</h3>
+                <div class="parcel-card__stats">
+                  <div class="parcel-card__stat">
+                    <span class="govuk-heading-m govuk-!-margin-bottom-0 govuk-!-display-block">{{ feature.properties.AREA_HA | default(0) | round(2) }}</span>
+                    <span class="govuk-body-s govuk-hint govuk-!-margin-bottom-0">Hectares</span>
+                  </div>
+                  <div class="parcel-card__stat">
+                    <span class="govuk-heading-m govuk-!-margin-bottom-0 govuk-!-display-block">{{ feature.properties.SHAPE_PERIMETER | default(0) | round(0) }}</span>
+                    <span class="govuk-body-s govuk-hint govuk-!-margin-bottom-0">Perimeter (m)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="parcel-card__sections">
+                <!-- Land covers for this parcel -->
+                <div class="parcel-card__section">
+                  <h4 class="govuk-heading-s govuk-!-margin-bottom-2">Land covers</h4>
+                  <div class="land-covers-list" data-parcel-id="{{ parcelId }}">
+                    <p class="govuk-body-s govuk-hint govuk-!-margin-bottom-0">No land covers</p>
+                  </div>
+                </div>
+
+                <!-- Hedgerows for this parcel -->
+                <div class="parcel-card__section">
+                  <h4 class="govuk-heading-s govuk-!-margin-bottom-2">Hedgerows</h4>
+                  <div class="hedgerows-list" data-parcel-id="{{ parcelId }}">
+                    <p class="govuk-body-s govuk-hint govuk-!-margin-bottom-0">No hedgerows</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="govuk-body govuk-hint">No parcels selected</p>
+    {% endif %}
+
+    <!-- Store data for JavaScript processing -->
+    <script type="application/json" id="land-covers-data">{{ landCoversData | safe }}</script>
+    <script type="application/json" id="hedgerows-data">{{ hedgerowsData | safe }}</script>
+
+    <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+    <p class="govuk-body">
+      <a href="/download-maps-v5/get-maps-of-your-land-poc-4" class="govuk-link">Back to map</a>
+    </p>
+
+  </div>
+</div>
+
+<style>
+.parcel-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.parcel-card {
+  border: 1px solid #b1b4b6;
+  background-color: #ffffff;
+}
+
+.parcel-card__image {
+  background-color: #f3f2f1;
+  padding: 20px;
+  border-bottom: 1px solid #b1b4b6;
+}
+
+.parcel-card__image .parcel-svg-container {
+  display: flex;
+  justify-content: center;
+}
+
+.parcel-card__details {
+  padding: 20px;
+}
+
+.parcel-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.parcel-card__stats {
+  display: flex;
+  gap: 30px;
+}
+
+.parcel-card__stat {
+  text-align: left;
+}
+
+.parcel-card__sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #b1b4b6;
+}
+
+.land-cover-item,
+.hedgerow-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.parcel-svg-container svg {
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .parcel-card__header {
+    flex-direction: column;
+  }
+
+  .parcel-card__sections {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Render SVG for each parcel
+  document.querySelectorAll('.parcel-svg-container').forEach(function(container) {
+    try {
+      var geometry = JSON.parse(container.dataset.geometry);
+      var isLarge = container.dataset.size === 'large';
+      var width = isLarge ? 500 : 200;
+      var height = isLarge ? 300 : 150;
+      var svg = createParcelSvg(geometry, width, height);
+      container.appendChild(svg);
+    } catch (e) {
+      console.error('Error rendering parcel SVG:', e);
+    }
+  });
+
+  // Load and display land covers for each parcel
+  try {
+    var landCoversDataEl = document.getElementById('land-covers-data');
+    var landCoversData = landCoversDataEl ? JSON.parse(landCoversDataEl.textContent) : null;
+
+    if (landCoversData && landCoversData.features && landCoversData.features.length > 0) {
+      document.querySelectorAll('.land-covers-list').forEach(function(container) {
+        var parcelId = container.dataset.parcelId;
+        var parcelLandCovers = landCoversData.features.filter(function(f) {
+          return (f.properties.SHEET_ID + f.properties.PARCEL_ID) === parcelId;
+        });
+
+        if (parcelLandCovers.length > 0) {
+          var html = parcelLandCovers.map(function(f) {
+            var area = parseFloat(f.properties.AREA_HA || 0).toFixed(4);
+            return '<div class="land-cover-item">' +
+              '<span class="govuk-body-s govuk-!-margin-bottom-0">' + (f.properties.DESCRIPTION || 'Unknown') + '</span>' +
+              '<span class="govuk-body-s govuk-hint govuk-!-margin-bottom-0">' + area + ' ha</span>' +
+              '</div>';
+          }).join('');
+          container.innerHTML = html;
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error loading land covers:', e);
+  }
+
+  // Load and display hedgerows for each parcel
+  try {
+    var hedgerowsDataEl = document.getElementById('hedgerows-data');
+    var hedgerowsData = hedgerowsDataEl ? JSON.parse(hedgerowsDataEl.textContent) : null;
+
+    if (hedgerowsData && hedgerowsData.features && hedgerowsData.features.length > 0) {
+      document.querySelectorAll('.hedgerows-list').forEach(function(container) {
+        var parcelId = container.dataset.parcelId;
+        var parcelHedgerows = hedgerowsData.features.filter(function(f) {
+          // Hedgerows use REF_PARCEL_SHEET_ID and REF_PARCEL_PARCEL_ID
+          return (f.properties.REF_PARCEL_SHEET_ID + f.properties.REF_PARCEL_PARCEL_ID) === parcelId;
+        });
+
+        if (parcelHedgerows.length > 0) {
+          var totalLength = parcelHedgerows.reduce(function(sum, f) {
+            return sum + (parseFloat(f.properties.LENGTH) || 0);
+          }, 0);
+
+          var html = '<div class="hedgerow-item">' +
+            '<span class="govuk-body-s govuk-!-margin-bottom-0">' + parcelHedgerows.length + ' hedgerow' + (parcelHedgerows.length !== 1 ? 's' : '') + '</span>' +
+            '<span class="govuk-body-s govuk-hint govuk-!-margin-bottom-0">' + totalLength.toFixed(2) + ' m total</span>' +
+            '</div>';
+          container.innerHTML = html;
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error loading hedgerows:', e);
+  }
+});
+
+function createParcelSvg(geometry, width, height) {
+  // Get all coordinates - handle both Polygon and MultiPolygon
+  var allCoords = [];
+
+  if (geometry.type === 'Polygon') {
+    allCoords = geometry.coordinates[0];
+  } else if (geometry.type === 'MultiPolygon') {
+    geometry.coordinates.forEach(function(polygon) {
+      allCoords = allCoords.concat(polygon[0]);
+    });
+  }
+
+  if (allCoords.length === 0) {
+    return createEmptySvg(width, height);
+  }
+
+  // Calculate center latitude for projection correction
+  var lats = allCoords.map(function(c) { return c[1]; });
+  var centerLat = (Math.min.apply(null, lats) + Math.max.apply(null, lats)) / 2;
+
+  // Apply Web Mercator-like projection correction
+  // At higher latitudes, longitude degrees cover less distance
+  var latCorrection = Math.cos(centerLat * Math.PI / 180);
+
+  // Project coordinates to approximate Web Mercator
+  var projectedCoords = allCoords.map(function(c) {
+    return [c[0] * latCorrection, c[1]];
+  });
+
+  // Calculate bounds of projected coordinates
+  var projLngs = projectedCoords.map(function(c) { return c[0]; });
+  var projLats = projectedCoords.map(function(c) { return c[1]; });
+  var bounds = {
+    minLng: Math.min.apply(null, projLngs),
+    maxLng: Math.max.apply(null, projLngs),
+    minLat: Math.min.apply(null, projLats),
+    maxLat: Math.max.apply(null, projLats)
+  };
+
+  // Calculate scale with padding
+  var padding = 15;
+  var availableWidth = width - 2 * padding;
+  var availableHeight = height - 2 * padding;
+
+  var lngRange = bounds.maxLng - bounds.minLng;
+  var latRange = bounds.maxLat - bounds.minLat;
+
+  if (lngRange === 0 || latRange === 0) {
+    return createEmptySvg(width, height);
+  }
+
+  var scaleX = availableWidth / lngRange;
+  var scaleY = availableHeight / latRange;
+  var scale = Math.min(scaleX, scaleY);
+
+  // Center the shape
+  var scaledWidth = lngRange * scale;
+  var scaledHeight = latRange * scale;
+  var offsetX = padding + (availableWidth - scaledWidth) / 2;
+  var offsetY = padding + (availableHeight - scaledHeight) / 2;
+
+  // Create SVG element
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+  svg.style.border = '1px solid #b1b4b6';
+  svg.style.backgroundColor = '#f8f8f8';
+
+  // Build paths using projected coordinates
+  if (geometry.type === 'Polygon') {
+    var projRing = geometry.coordinates[0].map(function(c) {
+      return [c[0] * latCorrection, c[1]];
+    });
+    var pathD = buildPathD(projRing, bounds, scale, offsetX, offsetY);
+    appendPath(svg, pathD);
+  } else if (geometry.type === 'MultiPolygon') {
+    geometry.coordinates.forEach(function(polygon) {
+      var projRing = polygon[0].map(function(c) {
+        return [c[0] * latCorrection, c[1]];
+      });
+      var pathD = buildPathD(projRing, bounds, scale, offsetX, offsetY);
+      appendPath(svg, pathD);
+    });
+  }
+
+  return svg;
+}
+
+function buildPathD(coords, bounds, scale, offsetX, offsetY) {
+  var pathPoints = coords.map(function(coord) {
+    var x = offsetX + (coord[0] - bounds.minLng) * scale;
+    var y = offsetY + (bounds.maxLat - coord[1]) * scale; // Flip Y axis
+    return x.toFixed(2) + ',' + y.toFixed(2);
+  });
+  return 'M ' + pathPoints.join(' L ') + ' Z';
+}
+
+function appendPath(svg, pathD) {
+  var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', pathD);
+  path.setAttribute('fill', '#1d70b8');
+  path.setAttribute('fill-opacity', '0.3');
+  path.setAttribute('stroke', '#1d70b8');
+  path.setAttribute('stroke-width', '2');
+  svg.appendChild(path);
+}
+
+function createEmptySvg(width, height) {
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  svg.style.border = '1px solid #b1b4b6';
+  svg.style.backgroundColor = '#f8f8f8';
+
+  var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  text.setAttribute('x', width / 2);
+  text.setAttribute('y', height / 2);
+  text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('fill', '#666');
+  text.textContent = 'No geometry';
+  svg.appendChild(text);
+
+  return svg;
+}
+</script>
+
+{% endblock %}

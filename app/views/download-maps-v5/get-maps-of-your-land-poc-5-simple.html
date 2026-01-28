@@ -1,0 +1,424 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Simple Map Test - DEFRA Component
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <!-- DEFRA Interactive Map Component CSS -->
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/css/index.css">
+{% endblock %}
+
+{% block content %}
+<h1 class="govuk-heading-l">Simple Map Test</h1>
+<p class="govuk-body">This is a simplified version of POC-5 with no custom layout CSS to test DEFRA component visibility.</p>
+
+<!-- Simple map container - no custom positioning -->
+<div id="map" class="im-is-loading" style="height: 600px; width: 100%;"></div>
+
+<div class="govuk-!-margin-top-4">
+  <h2 class="govuk-heading-m">Test Controls</h2>
+  <div class="govuk-checkboxes govuk-checkboxes--small">
+    <div class="govuk-checkboxes__item">
+      <input class="govuk-checkboxes__input" id="test-land-cover" name="test-land-cover" type="checkbox">
+      <label class="govuk-label govuk-checkboxes__label" for="test-land-cover">
+        Add Land Cover dataset (Permanent Grassland)
+      </label>
+    </div>
+    <div class="govuk-checkboxes__item">
+      <input class="govuk-checkboxes__input" id="test-hedgerows" name="test-hedgerows" type="checkbox">
+      <label class="govuk-label govuk-checkboxes__label" for="test-hedgerows">
+        Add Hedgerows dataset
+      </label>
+    </div>
+  </div>
+</div>
+
+<p class="govuk-body govuk-!-margin-top-4">
+  <a class="govuk-link" href="/download-maps-v5/get-maps-of-your-land-poc-5">Back to full POC-5</a>
+</p>
+{% endblock %}
+
+{% block pageScripts %}
+<!-- DEFRA Interactive Map Component JS -->
+<script src="/plugin-assets/%40defra%2Finteractive-map/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/providers/maplibre/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // =====================================================
+    // DATA CONFIGURATION
+    // =====================================================
+    const SBI = '106332870';
+    let landParcelsData = null;
+    let landCoversData = null;
+    let hedgeControlData = null;
+    let mapInstance = null;
+    let datasetsReady = false;
+
+    const landCoverColors = {
+      'Permanent Grassland': '#00703c',
+      'Arable Land': '#d4351c',
+      'default': '#1d70b8'
+    };
+
+    // =====================================================
+    // DATA FETCHING
+    // =====================================================
+    async function fetchLandParcels() {
+      try {
+        const url = `https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels&cql_filter=SBI=${SBI}&srsname=EPSG:4326&outputFormat=application/json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        const data = await response.json();
+        data.features.forEach(feature => {
+          feature.properties.ngc = `${feature.properties.SHEET_ID}${feature.properties.PARCEL_ID}`;
+        });
+        console.log('Loaded parcels:', data.features.length);
+        return data;
+      } catch (error) {
+        console.error('Error fetching land parcels:', error);
+        return null;
+      }
+    }
+
+    async function fetchLandCovers() {
+      try {
+        const url = `https://environment.data.gov.uk/data-services/RPA/LandCovers/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandCovers&cql_filter=SBI=${SBI}&srsname=EPSG:4326&outputFormat=application/json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        const data = await response.json();
+        console.log('Loaded land covers:', data.features.length);
+        return data;
+      } catch (error) {
+        console.error('Error fetching land covers:', error);
+        return null;
+      }
+    }
+
+    async function fetchHedgeControl() {
+      try {
+        const url = `https://environment.data.gov.uk/data-services/RPA/HedgeControl/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:HedgeControl&cql_filter=SBI=${SBI}&srsname=EPSG:4326&outputFormat=application/json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        const data = await response.json();
+        console.log('Loaded hedgerows:', data.features.length);
+        return data;
+      } catch (error) {
+        console.error('Error fetching hedge control:', error);
+        return null;
+      }
+    }
+
+    // =====================================================
+    // ADD PARCELS TO MAP
+    // =====================================================
+    function addParcelsToMap(map, data) {
+      if (!data || !data.features || data.features.length === 0) return;
+
+      map.addSource('parcels', {
+        type: 'geojson',
+        data: data,
+        promoteId: 'ngc'
+      });
+
+      map.addLayer({
+        id: 'parcels-fill',
+        type: 'fill',
+        source: 'parcels',
+        paint: {
+          'fill-color': '#1d70b8',
+          'fill-opacity': 0.3
+        }
+      });
+
+      map.addLayer({
+        id: 'parcels-outline',
+        type: 'line',
+        source: 'parcels',
+        paint: {
+          'line-color': '#1d70b8',
+          'line-width': 2
+        }
+      });
+
+      // Enable interact plugin
+      console.log('Enabling interact plugin...');
+      interactPlugin.enable();
+
+      // Calculate bounds and fit
+      let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+      data.features.forEach(feature => {
+        const processCoords = (coords) => {
+          coords.forEach(coord => {
+            if (Array.isArray(coord[0])) {
+              processCoords(coord);
+            } else {
+              minLng = Math.min(minLng, coord[0]);
+              maxLng = Math.max(maxLng, coord[0]);
+              minLat = Math.min(minLat, coord[1]);
+              maxLat = Math.max(maxLat, coord[1]);
+            }
+          });
+        };
+        processCoords(feature.geometry.coordinates);
+      });
+
+      map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 50, duration: 0 });
+      document.getElementById('map').classList.remove('im-is-loading');
+    }
+
+    // =====================================================
+    // PLUGINS SETUP
+    // =====================================================
+
+    // Datasets plugin with placeholder for Key button
+    const datasetsPlugin = defra.datasetsPlugin({
+      datasets: [{
+        id: 'placeholder',
+        label: 'placeholder',
+        geojson: { type: 'FeatureCollection', features: [] },
+        showInKey: true,
+        showInLayers: false,
+        visibility: 'hidden'
+      }]
+    });
+
+    // Interact plugin for parcel selection
+    const interactPlugin = defra.interactPlugin({
+      dataLayers: [{
+        layerId: 'parcels-fill',
+        idProperty: 'ngc',
+        selectedFeatureStyle: {
+          stroke: { outdoor: '#0b0c0c', dark: '#ffdd00' },
+          'stroke-width': 3,
+          fill: 'rgba(255, 221, 0, 0.5)'
+        }
+      }],
+      interactionMode: 'select',
+      multiSelect: true,
+      closeOnDone: false,
+      closeOnCancel: false
+    });
+
+    // =====================================================
+    // INITIALIZE MAP
+    // =====================================================
+    const interactiveMap = new defra.InteractiveMap('map', {
+      mapProvider: defra.maplibreProvider(),
+      behaviour: 'inline',
+      minZoom: 6,
+      maxZoom: 20,
+      enableZoomControls: true,
+      containerHeight: '600px',
+      mapStyle: {
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '© OpenStreetMap contributors',
+        backgroundColor: '#f5f5f0'
+      },
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [
+            {
+              id: 'outdoor',
+              label: 'Map',
+              url: {
+                version: 8,
+                sources: {
+                  'raster-tiles': {
+                    type: 'raster',
+                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '© OpenStreetMap contributors'
+                  }
+                },
+                layers: [{
+                  id: 'simple-tiles',
+                  type: 'raster',
+                  source: 'raster-tiles',
+                  minzoom: 0,
+                  maxzoom: 22
+                }]
+              },
+              thumbnail: '/public/images/map.svg',
+              attribution: '© OpenStreetMap contributors',
+              backgroundColor: '#f5f5f0',
+              mapColorScheme: 'light',
+              appColorScheme: 'light'
+            },
+            {
+              id: 'satellite',
+              label: 'Satellite',
+              url: {
+                version: 8,
+                sources: {
+                  'satellite-tiles': {
+                    type: 'raster',
+                    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                    tileSize: 256,
+                    attribution: '© Esri, Maxar, Earthstar Geographics'
+                  }
+                },
+                layers: [{
+                  id: 'satellite',
+                  type: 'raster',
+                  source: 'satellite-tiles',
+                  minzoom: 0,
+                  maxzoom: 22
+                }]
+              },
+              thumbnail: '/public/images/map.svg',
+              attribution: '© Esri, Maxar, Earthstar Geographics',
+              backgroundColor: '#1a1a1a',
+              mapColorScheme: 'dark',
+              appColorScheme: 'dark'
+            }
+          ]
+        }),
+        interactPlugin,
+        datasetsPlugin,
+        defra.searchPlugin({
+          osNamesURL: '/api/geocode-proxy?query={query}',
+          width: '300px',
+          showMarker: true,
+          isExpanded: false
+        }),
+        defra.scaleBarPlugin({ units: 'metric' })
+      ]
+    });
+
+    window.interactiveMap = interactiveMap;
+
+    // =====================================================
+    // EVENT HANDLERS
+    // =====================================================
+    interactiveMap.on('datasets:ready', () => {
+      console.log('Datasets plugin ready');
+      datasetsReady = true;
+    });
+
+    interactiveMap.on('interact:selectionchange', (e) => {
+      console.log('Selection changed:', e.selectedFeatures?.length || 0, 'features selected');
+    });
+
+    interactiveMap.on('map:ready', async (e) => {
+      mapInstance = e.map;
+      console.log('Map ready');
+
+      // Fetch data
+      const [parcelsData, coversData, hedgesData] = await Promise.all([
+        fetchLandParcels(),
+        fetchLandCovers(),
+        fetchHedgeControl()
+      ]);
+
+      landParcelsData = parcelsData;
+      landCoversData = coversData;
+      hedgeControlData = hedgesData;
+
+      if (parcelsData) {
+        addParcelsToMap(mapInstance, parcelsData);
+      }
+    });
+
+    // Re-add parcels after style change
+    interactiveMap.on('map:stylechange', (e) => {
+      console.log('Style changed');
+      setTimeout(() => {
+        if (mapInstance && landParcelsData && !mapInstance.getSource('parcels')) {
+          mapInstance.addSource('parcels', {
+            type: 'geojson',
+            data: landParcelsData,
+            promoteId: 'ngc'
+          });
+
+          mapInstance.addLayer({
+            id: 'parcels-fill',
+            type: 'fill',
+            source: 'parcels',
+            paint: { 'fill-color': '#1d70b8', 'fill-opacity': 0.3 }
+          });
+
+          mapInstance.addLayer({
+            id: 'parcels-outline',
+            type: 'line',
+            source: 'parcels',
+            paint: { 'line-color': '#1d70b8', 'line-width': 2 }
+          });
+
+          interactPlugin.enable();
+        }
+      }, 500);
+    });
+
+    // =====================================================
+    // TEST CONTROLS
+    // =====================================================
+    document.getElementById('test-land-cover').addEventListener('change', function() {
+      if (!datasetsReady || !landCoversData) {
+        console.warn('Not ready');
+        return;
+      }
+
+      if (this.checked) {
+        const filteredFeatures = landCoversData.features.filter(
+          f => f.properties.DESCRIPTION === 'Permanent Grassland'
+        );
+        datasetsPlugin.addDataset({
+          id: 'test-land-cover',
+          label: 'Permanent Grassland',
+          geojson: { type: 'FeatureCollection', features: filteredFeatures },
+          fill: '#00703c',
+          stroke: '#0b0c0c',
+          strokeWidth: 1.5,
+          showInKey: true,
+          showInLayers: false,
+          minZoom: 0,
+          maxZoom: 24
+        });
+        console.log('Added land cover dataset');
+      } else {
+        datasetsPlugin.removeDataset('test-land-cover');
+        console.log('Removed land cover dataset');
+      }
+    });
+
+    document.getElementById('test-hedgerows').addEventListener('change', function() {
+      if (!datasetsReady || !hedgeControlData) {
+        console.warn('Not ready');
+        return;
+      }
+
+      if (this.checked) {
+        datasetsPlugin.addDataset({
+          id: 'test-hedgerows',
+          label: 'Hedgerows',
+          geojson: hedgeControlData,
+          stroke: '#912b88',
+          strokeWidth: 3,
+          showInKey: true,
+          showInLayers: false,
+          keySymbolShape: 'line',
+          minZoom: 0,
+          maxZoom: 24
+        });
+        console.log('Added hedgerows dataset');
+      } else {
+        datasetsPlugin.removeDataset('test-hedgerows');
+        console.log('Removed hedgerows dataset');
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -76,12 +76,14 @@ The application integrates with multiple external services via proxy endpoints i
 
 ### Map Component Integration
 
-The application uses `@defra/defra-map` component (configured in `app/config.json`). Maps are rendered in view templates and support:
+The application uses `@defra/interactive-map` component (configured in `app/config.json`). Maps are rendered in view templates and support:
 
 - OS Vector Tile API styles (Outdoor, Dark, B&W) loaded from `.env` URLs
 - Satellite imagery from ArcGIS (configured in `/satellite-style.json` route)
 - Interactive parcel selection and drawing
 - MapLibre GL geocoder integration
+
+**Repository:** https://github.com/DEFRA/interactive-map
 
 **See [DEFRA-MAP-COMPONENT.md](DEFRA-MAP-COMPONENT.md) for comprehensive documentation** on the DEFRA map component including all plugins, providers, configuration options, and usage examples.
 
@@ -171,7 +173,7 @@ When adding new routes:
 
 When implementing map functionality:
 
-1. Use the `@defra/defra-map` component (already configured in `config.json`)
+1. Use the `@defra/interactive-map` component (already configured in `config.json`)
 2. Access OS tiles via `/api/map-proxy` to keep API key server-side
 3. Use environment variables for map style URLs (VTS_OUTDOOR_URL, etc.)
 4. For parcel data, use `PARCEL_TILE_SERVICE_URL` for vector tiles

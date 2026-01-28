@@ -1,0 +1,71 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Enter the date you want to link the land parcel to your business – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <!-- <p>{{ data | dump }}</p> -->
+      
+
+      <form method="post">
+
+        {% from "govuk/components/date-input/macro.njk" import govukDateInput %}
+
+        {{ govukDateInput({
+        id: "date-to-link",
+        namePrefix: "date-to-link",
+        fieldset: {
+            legend: {
+            html: "<span class='govuk-caption-l'>AR FIELDING</span>When do you want to register parcel number " + (data['parcel-id'] | default('RD6920 2871')) + " to your business?",
+            isPageHeading: true,
+            classes: "govuk-fieldset__legend--l"
+            }
+        },
+        formGroup: {
+        beforeInputs: {
+            html: "<p class='govuk-body'>This date needs to be within the past 12 months. To register changes that happened more than 12 months ago, complete an <a href='https://www.gov.uk/government/publications/tell-the-rural-payments-agency-about-land-changes-and-entitlement-transfers'>RLE1 form</a> instead.</p>
+                    <div class='govuk-hint'>For example, 27 3 2024</div>"
+        }
+        }
+        }) }}
+              {{ govukButton({
+                text: "Continue"
+              }) }}
+      </form>
+
+<!-- <p>{{ data | dump }}</p> -->
+
+    </div>
+  </div>
+
+{% endblock %}
+
+

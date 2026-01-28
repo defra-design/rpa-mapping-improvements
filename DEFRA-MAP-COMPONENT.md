@@ -1,6 +1,9 @@
-# DEFRA Map Component Documentation
+# DEFRA Interactive Map Component Documentation
 
-Comprehensive guide for the `@defra/defra-map` component (v1.0.0-alpha.1) - an accessible mapping library for UK government digital services.
+Comprehensive guide for the `@defra/interactive-map` component - an accessible mapping library for UK government digital services.
+
+**Repository:** https://github.com/DEFRA/interactive-map
+**Status:** Beta (API may change)
 
 ## Table of Contents
 
@@ -39,16 +42,16 @@ The DEFRA Map component is a React/JavaScript mapping library built on MapLibre 
 
 ## Installation
 
-### Via npm (if published)
+### Via npm
 ```bash
-npm install @defra/defra-map
+npm install @defra/interactive-map
 ```
 
-### Via GitHub (current method)
+### Via GitHub
 ```json
 {
   "dependencies": {
-    "@defra/defra-map": "github:DEFRA/defra-map#main-v1"
+    "@defra/interactive-map": "github:DEFRA/interactive-map"
   }
 }
 ```
@@ -58,12 +61,12 @@ npm install @defra/defra-map
 Include these CSS files in your HTML `<head>`:
 
 ```html
-<link href="/plugin-assets/@defra/defra-map/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/defra-map/plugins/map-styles/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/defra-map/plugins/search/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/defra-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/defra-map/plugins/datasets/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/defra-map/plugins/interact/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/plugins/map-styles/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/plugins/search/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/plugins/datasets/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/plugins/interact/dist/css/index.css" rel="stylesheet">
 ```
 
 ### Required Scripts (UMD)
@@ -72,19 +75,18 @@ Load scripts before your initialization code:
 
 ```html
 <!-- Core library -->
-<script src="/plugin-assets/@defra/defra-map/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/dist/umd/index.js"></script>
 
 <!-- Providers -->
-<script src="/plugin-assets/@defra/defra-map/providers/maplibre/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/defra-map/providers/open-names/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/providers/maplibre/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/providers/open-names/dist/umd/index.js"></script>
 
 <!-- Plugins -->
-<script src="/plugin-assets/@defra/defra-map/plugins/map-styles/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/defra-map/plugins/search/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/defra-map/plugins/zoom-controls/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/defra-map/plugins/scale-bar/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/defra-map/plugins/datasets/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/defra-map/plugins/interact/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/plugins/map-styles/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/plugins/search/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/plugins/scale-bar/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/plugins/datasets/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/plugins/interact/dist/umd/index.js"></script>
 ```
 
 ---
@@ -156,7 +158,6 @@ const interactiveMap = new defra.InteractiveMap('map', {
     defra.searchPlugin({
       osNamesURL: '/api/geocode-proxy?query={query}'
     }),
-    defra.zoomControlsPlugin(),
     defra.scaleBarPlugin({ units: 'metric' })
   ]
 });
@@ -286,15 +287,16 @@ defra.searchPlugin({
 }]
 ```
 
-### Zoom Controls Plugin
+### Zoom Controls
 
-Standard +/- zoom buttons.
+Zoom controls are now built into the core component. Enable them via the `enableZoomControls` option:
 
 ```javascript
-defra.zoomControlsPlugin()
+new defra.InteractiveMap('map', {
+  enableZoomControls: true,
+  // ... other options
+});
 ```
-
-No configuration options.
 
 ### Scale Bar Plugin
 
@@ -306,22 +308,24 @@ defra.scaleBarPlugin({
 })
 ```
 
-### Data Layers Plugin (ML)
+### Datasets Plugin
 
-Display vector tile layers on the map.
+Display vector tile layers on the map (renamed from `dataLayersPlugin`).
 
 ```javascript
-defra.dataLayersPlugin({
-  layers: [{
-    id: 'layer-id',
-    name: 'Layer Name',
-    sourceUrl: 'https://tiles.example.com/{z}/{x}/{y}',
-    visible: true,
-    style: {
-      stroke: '#0000ff',
-      strokeWidth: 2,
-      fill: 'rgba(0, 0, 255, 0.1)'
-    }
+defra.datasetsPlugin({
+  transformRequest: transformDataRequest,  // Optional request transformer
+  datasets: [{
+    id: 'field-parcels',
+    label: 'Field parcels',
+    tiles: ['https://tiles.example.com/{z}/{x}/{y}.pbf'],
+    sourceLayer: 'layer_name',
+    filter: ['==', ['get', 'property'], 'value'],  // Optional MapLibre filter
+    stroke: '#0000ff',
+    strokeWidth: 2,
+    fill: 'rgba(0, 0, 255, 0.1)',
+    minZoom: 10,
+    maxZoom: 24
   }]
 })
 ```
@@ -332,24 +336,156 @@ Allows user interaction with map features (selection, markers).
 
 ```javascript
 const interactPlugin = defra.interactPlugin({
-  dataLayers: [{
+  datasets: [{
     layerId: 'field-parcels',
     idProperty: 'ID',
     selectedFeatureStyle: {
       stroke: { outdoor: '#ff0000', dark: '#00ff00' },
-      strokeWidth: 3,
+      'stroke-width': 2,
       fill: 'rgba(255, 0, 0, 0.2)'
     }
   }],
   markerColor: { outdoor: '#ff0000', dark: '#00ff00' },
-  interactionMode: 'marker'  // 'marker' or 'select'
+  interactionMode: 'select',  // 'marker' or 'select'
+  multiSelect: true,          // Allow multiple feature selection
+  hasSubsequentAction: false, // Show Done button outside fullscreen
+  closeOnDone: true,          // Close app on Done
+  closeOnCancel: true         // Close app on Cancel
 })
 ```
 
 **Options**:
-- `dataLayers` - Layers that can be interacted with
+- `datasets` - Layers that can be interacted with (renamed from `dataLayers`)
 - `markerColor` - Marker color (can be object for different themes)
 - `interactionMode` - Type of interaction: `'marker'` (click to place marker) or `'select'` (click to select features)
+- `multiSelect` - Allow selecting multiple features (default: false)
+- `hasSubsequentAction` - Show Done button when not in fullscreen mode
+- `closeOnDone` - Close the map app when Done is clicked (default: true)
+- `closeOnCancel` - Close the map app when Cancel is clicked (default: true)
+
+#### Interact Plugin API Methods
+
+Programmatically select or unselect features:
+
+```javascript
+// Select a feature
+interactiveMap.api.interact.selectFeature({
+  featureId: 'NY12345678',
+  layerId: 'field-parcels',
+  idProperty: 'ID'
+})
+
+// Unselect a feature
+interactiveMap.api.interact.unselectFeature({
+  featureId: 'NY12345678',
+  layerId: 'field-parcels',
+  idProperty: 'ID'
+})
+```
+
+#### Interact Plugin Events
+
+```javascript
+// Fired when user clicks Done - contains selection data
+interactiveMap.on('interact:done', (e) => {
+  console.log('Coordinates:', e.coords);           // If marker mode
+  console.log('Selected:', e.selectedFeatures);    // Array of selected features
+  console.log('Bounds:', e.selectionBounds);       // [minX, minY, maxX, maxY]
+})
+
+// Fired when user clicks Cancel
+interactiveMap.on('interact:cancel', () => {
+  console.log('Selection cancelled');
+})
+```
+
+#### Selection State Structure
+
+Each selected feature contains:
+```javascript
+{
+  featureId: 'NY12345678',
+  layerId: 'field-parcels',
+  idProperty: 'ID',
+  properties: { /* feature properties */ },
+  geometry: { /* GeoJSON geometry */ }
+}
+```
+
+### Draw Plugin (MapLibre)
+
+Drawing tools for creating and editing polygons on the map.
+
+```javascript
+defra.drawMLPlugin({
+  // Options (if any)
+})
+```
+
+**Features**:
+- Draw new polygons with vertex-by-vertex placement
+- Edit existing features (move vertices)
+- Delete vertices from shapes
+- Snap to existing points
+- Undo support
+- Keyboard and touch support
+
+**Buttons provided**:
+- `Done` - Complete the current drawing
+- `Add point` - Add vertex (touch/keyboard mode)
+- `Close shape` - Complete polygon (requires 3+ vertices)
+- `Delete point` - Remove selected vertex
+- `Snap to point` - Toggle snapping to existing points
+- `Cancel` - Cancel current drawing
+
+**Events**:
+```javascript
+// Listen for drawing completion
+interactiveMap.on('draw:done', (e) => {
+  console.log('Drawing completed:', e.feature);
+})
+```
+
+### Use Location Plugin
+
+Adds a "Use your location" button that centers the map on the user's GPS location.
+
+```javascript
+defra.useLocationPlugin()
+```
+
+**Features**:
+- Uses browser Geolocation API
+- Button hidden if geolocation not supported
+- Shows error panel if location access fails
+
+**Usage**:
+```javascript
+const interactiveMap = new defra.InteractiveMap('map', {
+  plugins: [
+    defra.useLocationPlugin()
+  ]
+});
+```
+
+### Frame Plugin
+
+Adds a frame/border overlay to the map, useful for print layouts or highlighting areas.
+
+```javascript
+defra.framePlugin({
+  // Options (if any)
+})
+```
+
+**API Methods**:
+```javascript
+// Add a frame to the map
+interactiveMap.api.frame.addFrame(options)
+
+// Edit the frame
+interactiveMap.api.frame.editFeature(options)
+```
 
 ---
 
@@ -546,7 +682,6 @@ const interactiveMap = new defra.InteractiveMap('map', {
       width: '300px',
       isExpanded: true
     }),
-    defra.zoomControlsPlugin(),
     defra.scaleBarPlugin({ units: 'metric' })
   ]
 });
@@ -590,7 +725,6 @@ const interactiveMap = new defra.InteractiveMap('map', {
   behaviour: 'inline',
   containerHeight: '500px',
   plugins: [
-    defra.zoomControlsPlugin(),
     defra.scaleBarPlugin({ units: 'metric' })
   ]
 });
@@ -751,6 +885,85 @@ The component supports modern browsers:
 
 ---
 
+## Known Issues
+
+### Overlay Components Not Visible on Initial Load
+
+**Issue**: Some overlay components (Search, Key button, Layers button) may not be visible when the page first loads. They only appear after the browser window is resized.
+
+**Affected components**:
+- Search plugin search box
+- Key button (from datasetsPlugin with `showInKey: true`)
+- Layers button (from datasetsPlugin with `showInLayers: true`)
+
+**Symptoms**:
+- The component's container exists in the DOM but is not visible
+- Resizing the browser window makes the component appear
+- The component works correctly once visible
+
+**Status**: Reported to component developer (January 2026)
+
+**Workaround**: None currently. The components become visible after any browser resize event. A programmatic `window.dispatchEvent(new Event('resize'))` does not resolve the issue.
+
+### Key Button Requires Initial Dataset Configuration
+
+**Issue**: The Key button only appears if at least one dataset with `showInKey: true` is included in the initial `datasetsPlugin` configuration. Dynamically adding datasets with `showInKey: true` via `datasetsPlugin.addDataset()` does not make the Key button appear.
+
+**Workaround**: Include a placeholder dataset in the initial configuration:
+
+```javascript
+const datasetsPlugin = defra.datasetsPlugin({
+  datasets: [{
+    id: 'placeholder',
+    label: 'placeholder',
+    geojson: { type: 'FeatureCollection', features: [] },
+    showInKey: true,
+    showInLayers: false,
+    visibility: 'hidden'
+  }]
+});
+```
+
+The placeholder will not display in the Key (no features), but it enables the Key button to appear.
+
+### Search Plugin Hides Other Overlays When Expanded
+
+**Issue**: When the search input is expanded (by clicking the search icon), all other overlay buttons (Key, Map Styles, Zoom controls) disappear from the map.
+
+**Symptoms**:
+- Click the search icon to expand the search input
+- Other overlay buttons (Key, Map Styles, Zoom +/-) disappear
+- Closing the search input makes the other overlays reappear
+
+**Affected components**:
+- Key button (datasetsPlugin)
+- Map Styles button (mapStylesPlugin)
+- Zoom controls
+
+**Status**: Observed in all layouts (inline, fullscreen, with/without custom CSS). This appears to be component behavior rather than a CSS conflict.
+
+**Workaround**: None currently. Users must close the search input to access other map controls.
+
+---
+
+### Interact Plugin Must Be Explicitly Enabled
+
+**Issue**: The interact plugin does not automatically enable when included in the plugins array. You must call `interactPlugin.enable()` after the map and target layers are ready.
+
+**Example**:
+```javascript
+interactiveMap.on('map:ready', async (e) => {
+  // Add your layers first
+  map.addSource('parcels', { type: 'geojson', data: geojsonData });
+  map.addLayer({ id: 'parcels-fill', type: 'fill', source: 'parcels', ... });
+
+  // Then enable the interact plugin
+  interactPlugin.enable();
+});
+```
+
+---
+
 ## Performance Tips
 
 1. **Limit initial zoom extent** - Use `minZoom` and `maxZoom` to prevent loading unnecessary tiles
@@ -784,12 +997,40 @@ Ensure you:
 - [MapLibre GL JS Documentation](https://maplibre.org/maplibre-gl-js-docs/api/)
 - [GOV.UK Design System](https://design-system.service.gov.uk/)
 - [Ordnance Survey APIs](https://osdatahub.os.uk/)
-- [DEFRA Map GitHub Repository](https://github.com/DEFRA/defra-map/tree/main-v1)
+- [DEFRA Interactive Map GitHub Repository](https://github.com/DEFRA/interactive-map)
+
+---
+
+## Feature Requests for Plugin Developer
+
+The following features would improve GeoJSON workflow support:
+
+### 1. GeoJSON Support for Interact Plugin
+
+**Current limitation**: The `interactPlugin` only works with layers created by `datasetsPlugin` (vector tiles). It cannot detect clicks on GeoJSON layers added manually via `map.addLayer()`.
+
+**Requested feature**: Allow `interactPlugin` to work with any layer on the map, including dynamically added GeoJSON layers.
+
+**Use case**: Selecting land parcels loaded from WFS endpoints as GeoJSON, with automatic selection state management and `interact:selectionchange` events.
+
+**Current workaround**: Manual click handlers on the GeoJSON layer with custom selection state management.
+
+### 2. GeoJSON Support for showInKey (Legend)
+
+**Current limitation**: The `showInKey: true` property in `datasetsPlugin` only works with vector tile datasets. GeoJSON layers added manually cannot be included in the automatic legend/key.
+
+**Requested feature**: Allow dynamically added GeoJSON layers to register with the key/legend system, either through:
+- A new plugin method: `interactiveMap.api.key.addLayer({ id, label, fill, stroke })`
+- Or extending `datasetsPlugin` to support GeoJSON sources
+
+**Use case**: Displaying land cover types with their colours in an automatic legend, without hardcoding colour mappings in the application.
+
+**Current workaround**: Hardcoded legend component with manual colour mapping that must be kept in sync with layer paint properties.
 
 ---
 
 ## Version
 
-This documentation is for **@defra/defra-map v1.0.0-alpha.1** (main-v1 branch).
+This documentation is for **@defra/interactive-map v0.0.1-alpha**.
 
-**Status**: Alpha - API may change in future releases.
+**Status**: Beta - API may change in future releases. Full documentation will be published when the project reaches stable release.

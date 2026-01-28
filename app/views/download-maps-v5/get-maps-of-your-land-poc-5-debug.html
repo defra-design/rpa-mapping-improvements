@@ -1,0 +1,573 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  CSS Debug Test - DEFRA Component
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <!-- DEFRA Interactive Map Component CSS -->
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/css/index.css">
+  <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/css/index.css">
+{% endblock %}
+
+{% block content %}
+<div id="controls-panel">
+  <h1 class="govuk-heading-l">CSS Debug Test</h1>
+  <p class="govuk-body">Toggle rules and <strong>reload page</strong> after each change.</p>
+
+  <div class="govuk-!-margin-bottom-4">
+    <h2 class="govuk-heading-s">Levels (cumulative)</h2>
+    <div class="govuk-checkboxes govuk-checkboxes--small">
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input css-toggle" id="css-1" name="css-1" type="checkbox" data-level="1">
+        <label class="govuk-label govuk-checkboxes__label" for="css-1">
+          1: <code>overflow: hidden</code>
+        </label>
+      </div>
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input css-toggle" id="css-2" name="css-2" type="checkbox" data-level="2">
+        <label class="govuk-label govuk-checkboxes__label" for="css-2">
+          2: <code>position: fixed</code> container
+        </label>
+      </div>
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input css-toggle" id="css-3" name="css-3" type="checkbox" data-level="3">
+        <label class="govuk-label govuk-checkboxes__label" for="css-3">
+          3: Sidebar panel
+        </label>
+      </div>
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input css-toggle" id="css-4" name="css-4" type="checkbox" data-level="4">
+        <label class="govuk-label govuk-checkboxes__label" for="css-4">
+          4: <code>height: 100% !important</code>
+        </label>
+      </div>
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input css-toggle" id="css-5" name="css-5" type="checkbox" data-level="5">
+        <label class="govuk-label govuk-checkboxes__label" for="css-5">
+          5: Overlay <code>left: 700px</code>
+        </label>
+      </div>
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input css-toggle" id="css-6" name="css-6" type="checkbox" data-level="6">
+        <label class="govuk-label govuk-checkboxes__label" for="css-6">
+          6: Dynamic <code>--header-height</code> JS
+        </label>
+      </div>
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input css-toggle" id="css-7" name="css-7" type="checkbox" data-level="7">
+        <label class="govuk-label govuk-checkboxes__label" for="css-7">
+          7: <code>containerHeight</code> option
+        </label>
+      </div>
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input css-toggle" id="css-8" name="css-8" type="checkbox" data-level="8">
+        <label class="govuk-label govuk-checkboxes__label" for="css-8">
+          8: Hide footer
+        </label>
+      </div>
+    </div>
+    <p class="govuk-body govuk-!-margin-top-2">
+      <strong>Level:</strong> <span id="current-level">0</span>
+    </p>
+    <p class="govuk-body">
+      <a class="govuk-link" href="/download-maps-v5/get-maps-of-your-land-poc-5-simple">Simple</a> |
+      <a class="govuk-link" href="/download-maps-v5/get-maps-of-your-land-poc-5">Full POC-5</a>
+    </p>
+  </div>
+</div>
+
+<!-- Fullscreen container (structure matches POC-5) -->
+<div class="app-map-fullscreen" id="map-wrapper">
+  <div id="map" class="app-map-fullscreen__map im-is-loading"></div>
+
+  <div class="app-map-fullscreen__panel" id="sidebar-panel">
+    <div class="app-map-fullscreen__panel-content">
+      <h3 class="govuk-heading-s">Test Sidebar</h3>
+      <p class="govuk-body-s">Width: 400px</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block pageScripts %}
+<!-- DEFRA Interactive Map Component JS -->
+<script src="/plugin-assets/%40defra%2Finteractive-map/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/providers/maplibre/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/map-styles/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/search/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/umd/index.js"></script>
+<script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
+
+<script>
+  // =====================================================
+  // READ LEVEL BEFORE DOM READY (for map init options)
+  // =====================================================
+  const savedLevel = parseInt(localStorage.getItem('cssDebugLevel') || '0');
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // =====================================================
+    // CSS LEVEL SYSTEM (cumulative)
+    // =====================================================
+    const styleElement = document.createElement('style');
+    styleElement.id = 'debug-styles';
+    document.head.appendChild(styleElement);
+
+    const MAX_LEVEL = 8;
+
+    // Set checkboxes based on saved level
+    for (let i = 1; i <= MAX_LEVEL; i++) {
+      const checkbox = document.querySelector(`[data-level="${i}"]`);
+      if (checkbox) {
+        checkbox.checked = i <= savedLevel;
+      }
+    }
+
+    function getMaxLevel() {
+      let maxLevel = 0;
+      document.querySelectorAll('.css-toggle').forEach(checkbox => {
+        if (checkbox.checked) {
+          maxLevel = Math.max(maxLevel, parseInt(checkbox.dataset.level));
+        }
+      });
+      return maxLevel;
+    }
+
+    function updateStyles() {
+      const level = getMaxLevel();
+      let css = '';
+
+      // Base styles (always applied)
+      css += `
+        #controls-panel {
+          position: fixed;
+          bottom: 10px;
+          right: 10px;
+          width: 280px;
+          padding: 12px;
+          background: #ffffff;
+          border: 2px solid #0b0c0c;
+          z-index: 1000;
+          max-height: 60vh;
+          overflow-y: auto;
+          font-size: 13px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        #controls-panel h1 { font-size: 1.1rem; margin-bottom: 8px; }
+        #controls-panel h2 { font-size: 0.95rem; margin-bottom: 8px; }
+        #controls-panel .govuk-body { font-size: 13px; margin-bottom: 8px; }
+        #controls-panel .govuk-checkboxes__label { font-size: 13px; }
+        #controls-panel .govuk-checkboxes__item { margin-bottom: 0; }
+        code {
+          background: #f3f2f1;
+          padding: 1px 3px;
+          font-family: monospace;
+          font-size: 0.85em;
+        }
+      `;
+
+      // Level 0: Default (no fullscreen layout)
+      if (level === 0) {
+        css += `
+          .app-map-fullscreen {
+            position: relative;
+            height: 400px;
+            margin: 15px;
+          }
+          .app-map-fullscreen__map {
+            height: 100%;
+            width: 100%;
+          }
+          .app-map-fullscreen__panel {
+            display: none;
+          }
+        `;
+      }
+
+      // Level 1: overflow hidden
+      if (level >= 1) {
+        css += `
+          html, body {
+            overflow: hidden;
+            overscroll-behavior: none;
+            height: 100%;
+          }
+        `;
+      }
+
+      // Level 2: position fixed container
+      if (level >= 2) {
+        css += `
+          :root {
+            --header-height: 200px;
+          }
+          .app-map-fullscreen {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            overflow: hidden;
+          }
+          .app-map-fullscreen__map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+          }
+          .app-map-fullscreen__panel {
+            display: none;
+          }
+        `;
+      } else if (level >= 1) {
+        css += `
+          .app-map-fullscreen {
+            position: relative;
+            height: 400px;
+            margin: 15px;
+          }
+          .app-map-fullscreen__map {
+            height: 100%;
+            width: 100%;
+          }
+          .app-map-fullscreen__panel {
+            display: none;
+          }
+        `;
+      }
+
+      // Level 3: sidebar panel
+      if (level >= 3) {
+        css += `
+          .app-map-fullscreen__panel {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 400px;
+            background: #ffffff;
+            border-right: 1px solid #b1b4b6;
+            z-index: 10;
+          }
+          .app-map-fullscreen__panel-content {
+            padding: 15px;
+          }
+        `;
+      }
+
+      // Level 4: Force DEFRA component height
+      if (level >= 4) {
+        css += `
+          #map {
+            height: 100% !important;
+          }
+          #map .im-o-app,
+          #map .im-c-viewport {
+            border-top: none !important;
+          }
+          #map .im-o-app {
+            height: 100% !important;
+          }
+        `;
+      }
+
+      // Level 5: Reposition overlay
+      if (level >= 5) {
+        css += `
+          #map .im-o-app__overlay--top-left {
+            left: 700px !important;
+          }
+        `;
+      }
+
+      // Level 6: Dynamic --header-height is handled in JS below
+
+      // Level 7: containerHeight is handled in map init
+
+      // Level 8: Hide footer
+      if (level >= 8) {
+        css += `
+          .govuk-footer {
+            display: none !important;
+          }
+        `;
+      }
+
+      styleElement.textContent = css;
+      localStorage.setItem('cssDebugLevel', level.toString());
+      document.getElementById('current-level').textContent = level;
+    }
+
+    // Level 6: Dynamic --header-height calculation
+    if (savedLevel >= 6) {
+      const govukHeader = document.querySelector('.govuk-header');
+      const serviceNav = document.querySelector('.govuk-service-navigation');
+      const headerHeight = (govukHeader?.offsetHeight || 0) + (serviceNav?.offsetHeight || 0);
+      document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+      console.log('Level 6: Set --header-height to', headerHeight + 'px');
+    }
+
+    // Initial style application
+    updateStyles();
+
+    // Add change listeners
+    document.querySelectorAll('.css-toggle').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const level = parseInt(this.dataset.level);
+
+        if (this.checked) {
+          for (let i = 1; i <= level; i++) {
+            document.querySelector(`[data-level="${i}"]`).checked = true;
+          }
+        } else {
+          for (let i = level; i <= MAX_LEVEL; i++) {
+            document.querySelector(`[data-level="${i}"]`).checked = false;
+          }
+        }
+
+        updateStyles();
+      });
+    });
+
+    // =====================================================
+    // MAP INITIALIZATION
+    // =====================================================
+    const SBI = '106332870';
+    let landParcelsData = null;
+    let mapInstance = null;
+
+    async function fetchLandParcels() {
+      try {
+        const url = `https://environment.data.gov.uk/data-services/RPA/LandParcels/wfs?version=2.0.0&request=GetFeature&typeNames=RPA:LandParcels&cql_filter=SBI=${SBI}&srsname=EPSG:4326&outputFormat=application/json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        const data = await response.json();
+        data.features.forEach(feature => {
+          feature.properties.ngc = `${feature.properties.SHEET_ID}${feature.properties.PARCEL_ID}`;
+        });
+        return data;
+      } catch (error) {
+        console.error('Error fetching land parcels:', error);
+        return null;
+      }
+    }
+
+    function addParcelsToMap(map, data) {
+      if (!data || !data.features || data.features.length === 0) return;
+
+      map.addSource('parcels', {
+        type: 'geojson',
+        data: data,
+        promoteId: 'ngc'
+      });
+
+      map.addLayer({
+        id: 'parcels-fill',
+        type: 'fill',
+        source: 'parcels',
+        paint: { 'fill-color': '#1d70b8', 'fill-opacity': 0.3 }
+      });
+
+      map.addLayer({
+        id: 'parcels-outline',
+        type: 'line',
+        source: 'parcels',
+        paint: { 'line-color': '#1d70b8', 'line-width': 2 }
+      });
+
+      interactPlugin.enable();
+
+      let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+      data.features.forEach(feature => {
+        const processCoords = (coords) => {
+          coords.forEach(coord => {
+            if (Array.isArray(coord[0])) {
+              processCoords(coord);
+            } else {
+              minLng = Math.min(minLng, coord[0]);
+              maxLng = Math.max(maxLng, coord[0]);
+              minLat = Math.min(minLat, coord[1]);
+              maxLat = Math.max(maxLat, coord[1]);
+            }
+          });
+        };
+        processCoords(feature.geometry.coordinates);
+      });
+
+      map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 50, duration: 0 });
+      document.getElementById('map').classList.remove('im-is-loading');
+    }
+
+    // Plugins
+    const datasetsPlugin = defra.datasetsPlugin({
+      datasets: [{
+        id: 'placeholder',
+        label: 'placeholder',
+        geojson: { type: 'FeatureCollection', features: [] },
+        showInKey: true,
+        showInLayers: false,
+        visibility: 'hidden'
+      }]
+    });
+
+    const interactPlugin = defra.interactPlugin({
+      dataLayers: [{
+        layerId: 'parcels-fill',
+        idProperty: 'ngc',
+        selectedFeatureStyle: {
+          stroke: { outdoor: '#0b0c0c', dark: '#ffdd00' },
+          'stroke-width': 3,
+          fill: 'rgba(255, 221, 0, 0.5)'
+        }
+      }],
+      interactionMode: 'select',
+      multiSelect: true,
+      closeOnDone: false,
+      closeOnCancel: false
+    });
+
+    // Build map options - Level 7 adds containerHeight
+    const mapOptions = {
+      mapProvider: defra.maplibreProvider(),
+      behaviour: 'inline',
+      minZoom: 6,
+      maxZoom: 20,
+      enableZoomControls: true,
+      mapStyle: {
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '© OpenStreetMap contributors',
+        backgroundColor: '#f5f5f0'
+      },
+      plugins: [
+        defra.mapStylesPlugin({
+          mapStyles: [
+            {
+              id: 'outdoor',
+              label: 'Map',
+              url: {
+                version: 8,
+                sources: {
+                  'raster-tiles': {
+                    type: 'raster',
+                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '© OpenStreetMap contributors'
+                  }
+                },
+                layers: [{
+                  id: 'simple-tiles',
+                  type: 'raster',
+                  source: 'raster-tiles',
+                  minzoom: 0,
+                  maxzoom: 22
+                }]
+              },
+              thumbnail: '/public/images/map.svg',
+              attribution: '© OpenStreetMap contributors',
+              backgroundColor: '#f5f5f0',
+              mapColorScheme: 'light',
+              appColorScheme: 'light'
+            },
+            {
+              id: 'satellite',
+              label: 'Satellite',
+              url: {
+                version: 8,
+                sources: {
+                  'satellite-tiles': {
+                    type: 'raster',
+                    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                    tileSize: 256,
+                    attribution: '© Esri, Maxar, Earthstar Geographics'
+                  }
+                },
+                layers: [{
+                  id: 'satellite',
+                  type: 'raster',
+                  source: 'satellite-tiles',
+                  minzoom: 0,
+                  maxzoom: 22
+                }]
+              },
+              thumbnail: '/public/images/map.svg',
+              attribution: '© Esri, Maxar, Earthstar Geographics',
+              backgroundColor: '#1a1a1a',
+              mapColorScheme: 'dark',
+              appColorScheme: 'dark'
+            }
+          ]
+        }),
+        interactPlugin,
+        datasetsPlugin,
+        defra.searchPlugin({
+          osNamesURL: '/api/geocode-proxy?query={query}',
+          width: '300px',
+          showMarker: true,
+          isExpanded: false
+        }),
+        defra.scaleBarPlugin({ units: 'metric' })
+      ]
+    };
+
+    // Level 7: Add containerHeight option
+    if (savedLevel >= 7) {
+      const govukHeader = document.querySelector('.govuk-header');
+      const serviceNav = document.querySelector('.govuk-service-navigation');
+      const headerHeight = (govukHeader?.offsetHeight || 0) + (serviceNav?.offsetHeight || 0);
+      const mapHeight = window.innerHeight - headerHeight;
+      mapOptions.containerHeight = mapHeight + 'px';
+      console.log('Level 7: Set containerHeight to', mapHeight + 'px');
+    }
+
+    // Initialize map
+    const interactiveMap = new defra.InteractiveMap('map', mapOptions);
+    window.interactiveMap = interactiveMap;
+
+    interactiveMap.on('map:ready', async (e) => {
+      mapInstance = e.map;
+      console.log('Map ready');
+
+      landParcelsData = await fetchLandParcels();
+      if (landParcelsData) {
+        addParcelsToMap(mapInstance, landParcelsData);
+      }
+    });
+
+    interactiveMap.on('map:stylechange', () => {
+      setTimeout(() => {
+        if (mapInstance && landParcelsData && !mapInstance.getSource('parcels')) {
+          mapInstance.addSource('parcels', {
+            type: 'geojson',
+            data: landParcelsData,
+            promoteId: 'ngc'
+          });
+          mapInstance.addLayer({
+            id: 'parcels-fill',
+            type: 'fill',
+            source: 'parcels',
+            paint: { 'fill-color': '#1d70b8', 'fill-opacity': 0.3 }
+          });
+          mapInstance.addLayer({
+            id: 'parcels-outline',
+            type: 'line',
+            source: 'parcels',
+            paint: { 'line-color': '#1d70b8', 'line-width': 2 }
+          });
+          interactPlugin.enable();
+        }
+      }, 500);
+    });
+  });
+</script>
+{% endblock %}

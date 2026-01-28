@@ -55,12 +55,11 @@
       <span class="govuk-caption-l">AR FIELDING</span>
       Find the land you want to register 
     </h1>
-    <p class="govuk-body">To find a land parcel either use the:</p>
+    <!-- <p class="govuk-body">To find a land parcel either use the:</p>
     <ul class="govuk-list govuk-list--bullet">
       <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
       <li>map search to enter a location, for example, the nearest city, town or postcode</li>
-      <!-- <li>click on a parcel to select it and view its details</li> -->
-    </ul>
+    </ul> -->
   </div>
 </div>
 
@@ -159,7 +158,7 @@
   });
 
   // Create the map
-  const interactiveMap = new defra.InteractiveMap('map', {
+  const defraMap = new defra.InteractiveMap('map', {
     mapProvider: defra.maplibreProvider(),
     reverseGeocodeProvider: defra.openNamesProvider({
       url: '/api/reverse-geocode-proxy?easting={easting}&northing={northing}'
@@ -169,7 +168,6 @@
     maxZoom: 18,
     containerHeight: '650px',
     transformRequest: transformTileRequest,
-    enableZoomControls: true,
     mapStyle: {
       url: 'https://tiles.openfreemap.org/styles/liberty',
       attribution: 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap',
@@ -222,13 +220,14 @@
         showMarker: false,
         isExpanded: true
       }),
+      
       defra.scaleBarPlugin({
         units: 'metric'
       })
     ]
   });
 
-  interactiveMap.on('map:ready', (e) => {
+  defraMap.on('map:ready', (e) => {
     const map = e.map
     const zoomInput = document.querySelector('#zoom')
     zoomInput.value = map.getZoom()
@@ -239,7 +238,7 @@
   })
 
 
-  interactiveMap.on('interact:markerchange', (e) => {
+  defraMap.on('interact:markerchange', (e) => {
     const coords = document.querySelector('#coords')
     coords.value = JSON.stringify(e.coords)
     const continueButton = document.querySelector('#continue-btn')

@@ -1,0 +1,138 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Upload land parcel map – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader() }}
+{{ govukServiceNavigation({
+  serviceName: "Land and farm",
+  serviceUrl: "#",
+  navigation: [
+    {
+      href: "#",
+      text: "Get maps of your land"
+    },
+    {
+      href: "start",
+      text: "Register land",
+      active: true
+    },
+    {
+      href: "#",
+      text: "Transfer land"
+    }
+  ]
+}) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">AR FIELDING</span>
+        Upload a map for land parcel {{ data['parcel-id'] or "RD6920 2871" }}
+      </h1>
+
+      <!-- <p>Upload a map that shows the land you want to register. For guidance see <a href="#">Creating a sketch map to register land or update digital maps</a>.</p> -->
+      <p>Upload a map that shows the land you want to register. Read the guidance on <a href="https://www.gov.uk/guidance/creating-a-sketch-map-to-register-land-or-update-your-digital-maps" class="govuk-link" rel="noreferrer noopener" target="_blank">Creating a sketch map to register land or update digital maps. (opens in new tab)</a></p>
+
+      <p class="govuk-body">Your map can be either:</p>
+        <ul class="govuk-list govuk-list--bullet">
+            <li>an annotated image of an existing map</li>
+            <li>a hand drawn sketch of the land</li>
+        </ul>
+      
+      <p class="govuk-body">The name of your  map must:</p>
+        <ul class="govuk-list govuk-list--bullet">
+            <li>be unique</li>
+            <li>be no longer than 20 characters</li>
+            <li>contain only letters or numbers (no spaces)</li>
+        </ul>
+
+        <p class="govuk-body">We can only accept sketch maps that are:</p>
+        <ul class="govuk-list govuk-list--bullet">
+            <li>10MB or less</li>
+            <li>in an accepted format (jpg, jpeg, png, pdf, doc or docx)</li>
+        </ul>
+
+        {% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+      <form method="post">
+        {{ govukFileUpload({
+        id: "file-upload-1",
+        name: "fileUpload",
+        label: {
+            html: "<h2 class='govuk-heading-m'>Upload a file</h2>"
+        },
+        javascript: true
+        }) }}
+
+      
+        {{ govukButton({
+            text: "Continue"
+        }) }}
+      </form>
+
+      <!-- <p>{{ data | dump }}</p> -->
+
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block pageScripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dropZone = document.querySelector('.govuk-drop-zone')
+  if (!dropZone) return
+  
+  const fileInput = dropZone.querySelector('input[type="file"]')
+  if (!fileInput) return
+  
+  fileInput.addEventListener('change', function() {
+    const existingButton = document.getElementById('remove-file-button')
+    if (existingButton) existingButton.remove()
+    
+    if (this.files.length > 0) {
+      const buttonWrapper = document.createElement('div')
+      buttonWrapper.id = 'remove-file-button'
+      buttonWrapper.className = 'govuk-!-margin-top-3'
+      
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'govuk-button govuk-button--secondary govuk-button--warning'
+      button.textContent = 'Remove file'
+      
+      button.addEventListener('click', function() {
+        fileInput.value = ''
+        buttonWrapper.remove()
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }))
+      })
+      
+      buttonWrapper.appendChild(button)
+      fileInput.closest('.govuk-form-group').insertAdjacentElement('afterend', buttonWrapper)
+    }
+  })
+})
+</script>
+
+<style>
+  .govuk-button--warning {
+    background-color: #d4351c;
+    box-shadow: 0 2px 0 #55150b;
+  }
+
+  .govuk-button--warning:hover {
+    background-color: #aa2a16;
+  }
+
+  .govuk-button--warning:active {
+    background-color: #aa2a16;
+    box-shadow: 0 0 0 #55150b;
+    top: 2px;
+  }
+</style>
+{% endblock %}
