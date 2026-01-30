@@ -54,6 +54,7 @@
 <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/scale-bar/dist/umd/index.js"></script>
 <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/datasets/dist/umd/index.js"></script>
 <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
+<script src="/public/javascripts/request.js"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -223,36 +224,46 @@
       enableZoomControls: true,
       containerHeight: '600px',
       mapStyle: {
-        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        attribution: '© OpenStreetMap contributors',
+        url: '{{ data.VTS_OUTDOOR_URL }}',
+        attribution: `Contains OS data \u00A9 Crown copyright and database rights ${new Date().getFullYear()}`,
         backgroundColor: '#f5f5f0'
       },
+      transformRequest: transformTileRequest,
       plugins: [
         defra.mapStylesPlugin({
           mapStyles: [
             {
               id: 'outdoor',
-              label: 'Map',
-              url: {
-                version: 8,
-                sources: {
-                  'raster-tiles': {
-                    type: 'raster',
-                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                    tileSize: 256,
-                    attribution: '© OpenStreetMap contributors'
-                  }
-                },
-                layers: [{
-                  id: 'simple-tiles',
-                  type: 'raster',
-                  source: 'raster-tiles',
-                  minzoom: 0,
-                  maxzoom: 22
-                }]
-              },
-              thumbnail: '/public/images/map.svg',
-              attribution: '© OpenStreetMap contributors',
+              label: 'Outdoor',
+              url: '{{ data.VTS_OUTDOOR_URL }}',
+              thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+              logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
+              logoAltText: 'Ordnance Survey logo',
+              attribution: `Contains OS data \u00A9 Crown copyright and database rights ${new Date().getFullYear()}`,
+              backgroundColor: '#f5f5f0',
+              mapColorScheme: 'light',
+              appColorScheme: 'light'
+            },
+            {
+              id: 'dark',
+              label: 'Dark',
+              url: '{{ data.VTS_DARK_URL }}',
+              thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/dark-map-thumb.jpg',
+              logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo-white.svg',
+              logoAltText: 'Ordnance Survey logo',
+              attribution: `Contains OS data \u00A9 Crown copyright and database rights ${new Date().getFullYear()}`,
+              backgroundColor: '#1a1a1a',
+              mapColorScheme: 'dark',
+              appColorScheme: 'dark'
+            },
+            {
+              id: 'black-and-white',
+              label: 'Black/White',
+              url: '{{ data.VTS_BLACK_AND_WHITE_URL }}',
+              thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/black-and-white-map-thumb.jpg',
+              logo: '/plugin-assets/%40defra%2Finteractive-map/assets/images/os-logo.svg',
+              logoAltText: 'Ordnance Survey logo',
+              attribution: `Contains OS data \u00A9 Crown copyright and database rights ${new Date().getFullYear()}`,
               backgroundColor: '#f5f5f0',
               mapColorScheme: 'light',
               appColorScheme: 'light'
@@ -260,26 +271,9 @@
             {
               id: 'satellite',
               label: 'Satellite',
-              url: {
-                version: 8,
-                sources: {
-                  'satellite-tiles': {
-                    type: 'raster',
-                    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-                    tileSize: 256,
-                    attribution: '© Esri, Maxar, Earthstar Geographics'
-                  }
-                },
-                layers: [{
-                  id: 'satellite',
-                  type: 'raster',
-                  source: 'satellite-tiles',
-                  minzoom: 0,
-                  maxzoom: 22
-                }]
-              },
-              thumbnail: '/public/images/map.svg',
-              attribution: '© Esri, Maxar, Earthstar Geographics',
+              url: '/satellite-style.json',
+              thumbnail: '/plugin-assets/%40defra%2Finteractive-map/assets/images/outdoor-map-thumb.jpg',
+              attribution: '\u00A9 Esri, Maxar, Earthstar Geographics',
               backgroundColor: '#1a1a1a',
               mapColorScheme: 'dark',
               appColorScheme: 'dark'
