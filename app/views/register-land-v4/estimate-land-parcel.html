@@ -229,6 +229,7 @@
 
   defraMap.on('map:ready', (e) => {
     const map = e.map
+    interactPlugin.enable()
     const zoomInput = document.querySelector('#zoom')
     zoomInput.value = map.getZoom()
     map.on('zoom', () => {

@@ -59,14 +59,6 @@
     <ul class="govuk-list govuk-list--bullet">
       <li>+/- icons on the map, or keyboard controls to zoom in and out</li>
       <li>map search to enter a location, for example, the nearest city, town or postcode</li>
-<<<<<<< Updated upstream
-      <!-- <li>click on a parcel to select it and view its details</li> -->
-=======
-<<<<<<< HEAD
-=======
-      <!-- <li>click on a parcel to select it and view its details</li> -->
->>>>>>> 485526622b524688670f33b255478326084cf7a3
->>>>>>> Stashed changes
     </ul>
   </div>
 </div>
@@ -237,6 +229,7 @@
 
   interactiveMap.on('map:ready', (e) => {
     const map = e.map
+    interactPlugin.enable()
     const zoomInput = document.querySelector('#zoom')
     zoomInput.value = map.getZoom()
     map.on('zoom', () => {
