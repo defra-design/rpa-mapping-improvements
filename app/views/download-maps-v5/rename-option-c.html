@@ -65,7 +65,7 @@
     </button>
     <div class="app-map-fullscreen__panel-content" id="panel-content">
       <!-- Title -->
-      <h1 class="govuk-heading-m govuk-!-margin-bottom-2 govuk-!-margin-top-1">Cannon Hall Farm</h1>
+      <h1 class="govuk-heading-m govuk-!-margin-bottom-2 govuk-!-margin-top-1">{{ data['farm-name'] | default('Cannon Hall Farm') }}</h1>
 
       <!-- Whole holding information -->
       <p class="govuk-body-s govuk-!-margin-bottom-1">
@@ -278,7 +278,7 @@
     // =====================================================
     // DATA CONFIGURATION
     // =====================================================
-    const SBI = '106332870'; // Test SBI
+    const SBI = '{{ data['sbi'] | default('106332870') }}';
     let landParcelsData = null;
     let landCoversData = null;
     let hedgeControlData = null;

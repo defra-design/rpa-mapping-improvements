@@ -8,6 +8,18 @@ const router = govukPrototypeKit.requests.setupRouter()
 
 // Add your routes here
 
+// Demo start page - set defaults if fields are empty
+router.post('/download-maps-v5/demo-start', function (req, res) {
+  // Use defaults if fields are empty
+  if (!req.session.data['farm-name'] || req.session.data['farm-name'].trim() === '') {
+    req.session.data['farm-name'] = 'Cannon Hall Farm';
+  }
+  if (!req.session.data['sbi'] || req.session.data['sbi'].trim() === '') {
+    req.session.data['sbi'] = '106332870';
+  }
+  res.redirect('/download-maps-v5/start');
+});
+
 // Main map page
 router.post('/download-maps-v5/get-maps-of-your-land', function (req, res) {
   console.log('Saved selections:', {

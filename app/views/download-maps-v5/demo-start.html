@@ -1,0 +1,73 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Demo configuration – Get maps of your land - {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader() }}
+{% endblock %}
+
+{% set excludeBackLink = true %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">
+        <span class='govuk-caption-l'>Demo configuration</span>
+        Get maps of your land
+      </h1>
+
+
+      <p class="govuk-body">Enter a farm name and SBI to use in the prototype. Leave blank to use the defaults.</p>
+
+      <form method="post">
+
+        {{ govukInput({
+          label: {
+            text: "Farm name",
+            classes: "govuk-label--m govuk-!-static-margin-bottom-0"
+          },
+          hint: {
+            text: "Default: Cannon Hall Farm"
+          },
+          id: "farm-name",
+          name: "farm-name",
+          value: data['farm-name'],
+          classes: "govuk-input--width-20"
+        }) }}
+
+        {{ govukInput({
+          label: {
+            text: "Single business identifier (SBI)",
+            classes: "govuk-label--m govuk-!-static-margin-bottom-0"
+          },
+          hint: {
+            text: "Default: 106332870"
+          },
+          id: "sbi",
+          name: "sbi",
+          value: data['sbi'],
+          classes: "govuk-input--width-10"
+        }) }}
+
+        {{ govukButton({
+          text: "Continue",
+          isStartButton: true
+        }) }}
+
+      </form>
+
+<!-- 
+80 parcels: 106200212
+50 parcels: 106172811
+33 parcels: 106332870
+29 parcels: 106200859 
+-->
+
+    </div>
+  </div>
+
+{% endblock %}

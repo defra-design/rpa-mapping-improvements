@@ -61,7 +61,7 @@
     // =====================================================
     // DATA CONFIGURATION
     // =====================================================
-    const SBI = '106332870';
+    const SBI = '{{ data['sbi'] | default('106332870') }}';
     let landParcelsData = null;
     let landCoversData = null;
     let hedgeControlData = null;
