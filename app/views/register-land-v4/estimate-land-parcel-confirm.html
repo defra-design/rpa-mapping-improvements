@@ -51,9 +51,11 @@
         {% if parcelId %}
           <h1 class="govuk-heading-l">You have selected land parcel {{ parcelId }}</h1>
         {% else %}
-          <h1 class="govuk-heading-l">Continue to upload a map of this area</h1>
+          <h1 class="govuk-heading-l">Continue to upload a map of the area</h1>
 
-          <p>You need to upload a map that shows the area you want to register as a parcel. This is because this area has never been registered as a land parcel before and so does not have a parcel ID.</p>
+          <p>You need to upload a map that shows the area you want to register to your business.</p> 
+          
+          <p>This is because this area has never been registered as a land parcel before, and does not have a parcel ID.</p>
 
           <p>Read the guidance on <a href="https://www.gov.uk/guidance/creating-a-sketch-map-to-register-land-or-update-your-digital-maps" class="govuk-link" rel="noreferrer noopener" target="_blank">Creating a sketch map to register land or update digital maps. (opens in new tab)</a></p>
 
@@ -73,7 +75,7 @@
           name: "signIn",
           fieldset: {
             legend: {
-              text: "Do you want to register this parcel?",
+              text: "Is this the area you want to register?",
               isPageHeading: false,
               classes: "govuk-fieldset__legend--m"
             }
@@ -115,7 +117,7 @@
           name: "signIn",
           fieldset: {
             legend: {
-              text: "Do you want to continue registering and upload a map of the parcel?",
+              text: "Is this the area you want to register?",
               isPageHeading: false,
               classes: "govuk-fieldset__legend--m"
             }
@@ -127,12 +129,15 @@
             {
               value: "no-parcel-id",
               text: "Yes"
+              hint: {
+                text: "Select to continue and upload a map"
+              }
             },
             {
               value: "back-to-map",
               text: "No",
               hint: {
-                text: "Go back to the map search and choose a different area"
+                text: "Go back and select a different area to register"
               }
             }
           ]
