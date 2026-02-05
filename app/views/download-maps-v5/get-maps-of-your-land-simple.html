@@ -23,26 +23,23 @@
 <div id="map" class="im-is-loading" style="height: 600px; width: 100%;"></div>
 
 <div class="govuk-!-margin-top-4">
-  <h2 class="govuk-heading-m">Test Controls</h2>
+  <h2 class="govuk-heading-m">Land Cover Layers</h2>
+  <p class="govuk-body-s">Each layer shows a color fill with a distinguishing pattern for accessibility.</p>
+  <div id="land-covers-list">
+    <p class="govuk-body-s">Loading land cover data...</p>
+  </div>
+
+  <h2 class="govuk-heading-m govuk-!-margin-top-4">Other Layers</h2>
   <div class="govuk-checkboxes govuk-checkboxes--small">
-    <div class="govuk-checkboxes__item">
-      <input class="govuk-checkboxes__input" id="test-land-cover" name="test-land-cover" type="checkbox">
-      <label class="govuk-label govuk-checkboxes__label" for="test-land-cover">
-        Add Land Cover dataset (Permanent Grassland)
-      </label>
-    </div>
     <div class="govuk-checkboxes__item">
       <input class="govuk-checkboxes__input" id="test-hedgerows" name="test-hedgerows" type="checkbox">
       <label class="govuk-label govuk-checkboxes__label" for="test-hedgerows">
-        Add Hedgerows dataset
+        Hedgerows
       </label>
     </div>
   </div>
 </div>
 
-<p class="govuk-body govuk-!-margin-top-4">
-  <a class="govuk-link" href="/download-maps-v5/get-maps-of-your-land-poc-5">Back to full POC-5</a>
-</p>
 {% endblock %}
 
 {% block pageScripts %}
@@ -71,8 +68,317 @@
     const landCoverColors = {
       'Permanent Grassland': '#00703c',
       'Arable Land': '#d4351c',
+      'Temporary Grassland': '#85994b',
+      'Woodland': '#005a30',
+      'Scrub - Ungrazeable': '#f47738',
+      'Notional - Scrub': '#fd0',
+      'Track - Natural Surface': '#b58840',
+      'Metalled track': '#505a5f',
+      'Residential Gardens': '#912b88',
+      'Hard Standings': '#626a6e',
+      'Farm Building': '#b1b4b6',
+      'Permanent Crops': '#4c2c92',
+      'Fallow': '#f3f2f1',
+      'Fallow Land': '#f3f2f1',
       'default': '#1d70b8'
     };
+
+    // Pattern type for each land cover (used for accessibility)
+    const landCoverPatterns = {
+      'Permanent Grassland': 'diagonal-hatch',
+      'Arable Land': 'crosshatch',
+      'Temporary Grassland': 'horizontal-lines',
+      'Woodland': 'dense-dots',
+      'Scrub - Ungrazeable': 'vertical-lines',
+      'Notional - Scrub': 'sparse-dots',
+      'Track - Natural Surface': 'dashes',
+      'Metalled track': 'dashes',
+      'Residential Gardens': 'diagonal-reverse',
+      'Hard Standings': 'grid',
+      'Farm Building': 'grid',
+      'Permanent Crops': 'circles',
+      'Fallow': 'stipple',
+      'Fallow Land': 'stipple'
+    };
+
+    // Track active land covers for style change re-application
+    // Map<landCoverType, { datasetId, features }>
+    const activeLandCovers = new Map();
+
+    // =====================================================
+    // PATTERN GENERATION
+    // =====================================================
+
+    // Create a tileable pattern image on a transparent background
+    function createPattern(type, size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, size, size);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.65)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+      ctx.lineWidth = 1.5;
+
+      switch (type) {
+        case 'diagonal-hatch':
+          for (let i = -size; i < size * 2; i += 8) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i + size, size);
+            ctx.stroke();
+          }
+          break;
+        case 'crosshatch':
+          for (let i = -size; i < size * 2; i += 8) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i + size, size);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(i + size, 0);
+            ctx.lineTo(i, size);
+            ctx.stroke();
+          }
+          break;
+        case 'horizontal-lines':
+          for (let y = 0; y < size; y += 8) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(size, y);
+            ctx.stroke();
+          }
+          break;
+        case 'dense-dots':
+          for (let x = 2; x < size; x += 6) {
+            for (let y = 2; y < size; y += 6) {
+              ctx.beginPath();
+              ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          break;
+        case 'vertical-lines':
+          for (let x = 0; x < size; x += 8) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, size);
+            ctx.stroke();
+          }
+          break;
+        case 'sparse-dots':
+          for (let x = 5; x < size; x += 10) {
+            for (let y = 5; y < size; y += 10) {
+              ctx.beginPath();
+              ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          break;
+        case 'dashes':
+          ctx.setLineDash([6, 4]);
+          for (let y = 4; y < size; y += 8) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(size, y);
+            ctx.stroke();
+          }
+          ctx.setLineDash([]);
+          break;
+        case 'grid':
+          for (let i = 0; i < size; i += 8) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, size);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(size, i);
+            ctx.stroke();
+          }
+          break;
+        case 'diagonal-reverse':
+          for (let i = -size; i < size * 2; i += 8) {
+            ctx.beginPath();
+            ctx.moveTo(i + size, 0);
+            ctx.lineTo(i, size);
+            ctx.stroke();
+          }
+          break;
+        case 'circles':
+          ctx.lineWidth = 1;
+          for (let x = 6; x < size; x += 12) {
+            for (let y = 6; y < size; y += 12) {
+              ctx.beginPath();
+              ctx.arc(x, y, 3, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
+          break;
+        case 'stipple': {
+          const positions = [
+            [2,3],[8,1],[15,5],[22,2],[28,6],
+            [5,10],[12,8],[19,12],[25,9],[30,11],
+            [1,16],[7,14],[14,18],[20,15],[27,17],
+            [4,22],[10,20],[17,24],[23,21],[29,23],
+            [3,28],[9,26],[16,30],[22,27],[28,29]
+          ];
+          positions.forEach(([x, y]) => {
+            if (x < size && y < size) {
+              ctx.beginPath();
+              ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          });
+          break;
+        }
+      }
+      return ctx.getImageData(0, 0, size, size);
+    }
+
+    // Register all unique pattern images with MapLibre
+    function registerPatterns(map) {
+      const patternSize = 32;
+      const registered = new Set();
+      Object.values(landCoverPatterns).forEach(patternType => {
+        if (registered.has(patternType)) return;
+        registered.add(patternType);
+        const patternId = `pattern-${patternType}`;
+        if (map.hasImage(patternId)) return;
+        const imageData = createPattern(patternType, patternSize);
+        map.addImage(patternId, { width: patternSize, height: patternSize, data: imageData.data });
+      });
+    }
+
+    // Add a fill-pattern overlay layer for a land cover dataset
+    function addPatternOverlay(map, datasetId, landCoverType, features) {
+      const patternType = landCoverPatterns[landCoverType];
+      if (!patternType || !map) return;
+      const sourceId = `${datasetId}-pattern-source`;
+      const layerId = `${datasetId}-pattern`;
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: features }
+      });
+      map.addLayer({
+        id: layerId,
+        type: 'fill',
+        source: sourceId,
+        paint: {
+          'fill-pattern': `pattern-${patternType}`,
+          'fill-opacity': 0.7
+        }
+      });
+    }
+
+    // Remove a fill-pattern overlay layer
+    function removePatternOverlay(map, datasetId) {
+      const layerId = `${datasetId}-pattern`;
+      const sourceId = `${datasetId}-pattern-source`;
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+    }
+
+    // Draw a color + pattern swatch on a small canvas element
+    function drawPatternSwatch(canvas, patternType, color) {
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, w, h);
+      if (patternType) {
+        const patternData = createPattern(patternType, 32);
+        const tmp = document.createElement('canvas');
+        tmp.width = 32;
+        tmp.height = 32;
+        tmp.getContext('2d').putImageData(patternData, 0, 0);
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = ctx.createPattern(tmp, 'repeat');
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Populate land cover checkboxes from fetched data
+    function populateLandCoverCheckboxes() {
+      const container = document.getElementById('land-covers-list');
+      if (!container || !landCoversData) return;
+
+      const landCoverCounts = {};
+      landCoversData.features.forEach(f => {
+        const type = f.properties.DESCRIPTION;
+        landCoverCounts[type] = (landCoverCounts[type] || 0) + 1;
+      });
+
+      const types = Object.keys(landCoverCounts).sort();
+
+      const html = types.map(type => {
+        const id = type.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        const count = landCoverCounts[type];
+        const color = landCoverColors[type] || landCoverColors['default'];
+        return `
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input land-cover-checkbox"
+                   id="land-cover-${id}"
+                   name="land-cover"
+                   type="checkbox"
+                   value="${type}">
+            <label class="govuk-label govuk-checkboxes__label" for="land-cover-${id}">
+              <canvas class="land-cover-swatch" data-type="${type}" data-color="${color}" width="20" height="20"
+                style="vertical-align: middle; margin-right: 4px; border: 1px solid #0b0c0c;"></canvas>
+              ${type} (${count})
+            </label>
+          </div>`;
+      }).join('');
+
+      container.innerHTML = '<div class="govuk-checkboxes govuk-checkboxes--small">' + html + '</div>';
+
+      // Draw swatches
+      document.querySelectorAll('.land-cover-swatch').forEach(canvas => {
+        const type = canvas.dataset.type;
+        drawPatternSwatch(canvas, landCoverPatterns[type], canvas.dataset.color);
+      });
+
+      // Wire up checkboxes
+      document.querySelectorAll('.land-cover-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          if (!datasetsReady) return;
+          const landCoverType = this.value;
+          const datasetId = 'land-cover-' + landCoverType.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+
+          if (this.checked) {
+            const filteredFeatures = landCoversData.features.filter(
+              f => f.properties.DESCRIPTION === landCoverType
+            );
+            if (filteredFeatures.length === 0) return;
+
+            const color = landCoverColors[landCoverType] || landCoverColors['default'];
+            datasetsPlugin.addDataset({
+              id: datasetId,
+              label: landCoverType,
+              geojson: { type: 'FeatureCollection', features: filteredFeatures },
+              fill: color,
+              stroke: '#0b0c0c',
+              strokeWidth: 1.5,
+              showInKey: true,
+              showInLayers: false,
+              minZoom: 0,
+              maxZoom: 24
+            });
+            addPatternOverlay(mapInstance, datasetId, landCoverType, filteredFeatures);
+            activeLandCovers.set(landCoverType, { datasetId, features: filteredFeatures });
+            console.log('Added land cover:', landCoverType);
+          } else {
+            datasetsPlugin.removeDataset(datasetId);
+            removePatternOverlay(mapInstance, datasetId);
+            activeLandCovers.delete(landCoverType);
+            console.log('Removed land cover:', landCoverType);
+          }
+        });
+      });
+    }
 
     // =====================================================
     // DATA FETCHING
@@ -310,6 +616,9 @@
       mapInstance = e.map;
       console.log('Map ready');
 
+      // Register fill patterns with MapLibre
+      registerPatterns(mapInstance);
+
       // Fetch data
       const [parcelsData, coversData, hedgesData] = await Promise.all([
         fetchLandParcels(),
@@ -324,70 +633,60 @@
       if (parcelsData) {
         addParcelsToMap(mapInstance, parcelsData);
       }
+
+      // Populate land cover checkboxes from fetched data
+      if (landCoversData) {
+        populateLandCoverCheckboxes();
+      }
     });
 
-    // Re-add parcels after style change
+    // Re-add parcels and patterns after style change
     interactiveMap.on('map:stylechange', (e) => {
       console.log('Style changed');
       setTimeout(() => {
-        if (mapInstance && landParcelsData && !mapInstance.getSource('parcels')) {
-          mapInstance.addSource('parcels', {
-            type: 'geojson',
-            data: landParcelsData,
-            promoteId: 'ngc'
-          });
+        if (mapInstance) {
+          // Re-register pattern images (lost on style change)
+          registerPatterns(mapInstance);
 
-          mapInstance.addLayer({
-            id: 'parcels-fill',
-            type: 'fill',
-            source: 'parcels',
-            paint: { 'fill-color': '#1d70b8', 'fill-opacity': 0 }
-          });
+          // Re-add parcels layer
+          if (landParcelsData && !mapInstance.getSource('parcels')) {
+            mapInstance.addSource('parcels', {
+              type: 'geojson',
+              data: landParcelsData,
+              promoteId: 'ngc'
+            });
 
-          mapInstance.addLayer({
-            id: 'parcels-outline',
-            type: 'line',
-            source: 'parcels',
-            paint: { 'line-color': '#1d70b8', 'line-width': 2 }
-          });
+            mapInstance.addLayer({
+              id: 'parcels-fill',
+              type: 'fill',
+              source: 'parcels',
+              paint: { 'fill-color': '#1d70b8', 'fill-opacity': 0 }
+            });
 
-          interactPlugin.enable();
+            mapInstance.addLayer({
+              id: 'parcels-outline',
+              type: 'line',
+              source: 'parcels',
+              paint: { 'line-color': '#1d70b8', 'line-width': 2 }
+            });
+
+            interactPlugin.enable();
+          }
+
+          // Re-add active pattern overlay layers
+          // (datasetsPlugin re-adds its own color fills; patterns need manual re-add)
+          setTimeout(() => {
+            activeLandCovers.forEach(({ datasetId, features }, landCoverType) => {
+              addPatternOverlay(mapInstance, datasetId, landCoverType, features);
+            });
+          }, 300);
         }
       }, 500);
     });
 
     // =====================================================
-    // TEST CONTROLS
+    // HEDGEROWS TOGGLE
     // =====================================================
-    document.getElementById('test-land-cover').addEventListener('change', function() {
-      if (!datasetsReady || !landCoversData) {
-        console.warn('Not ready');
-        return;
-      }
-
-      if (this.checked) {
-        const filteredFeatures = landCoversData.features.filter(
-          f => f.properties.DESCRIPTION === 'Permanent Grassland'
-        );
-        datasetsPlugin.addDataset({
-          id: 'test-land-cover',
-          label: 'Permanent Grassland',
-          geojson: { type: 'FeatureCollection', features: filteredFeatures },
-          fill: '#00703c',
-          stroke: '#0b0c0c',
-          strokeWidth: 1.5,
-          showInKey: true,
-          showInLayers: false,
-          minZoom: 0,
-          maxZoom: 24
-        });
-        console.log('Added land cover dataset');
-      } else {
-        datasetsPlugin.removeDataset('test-land-cover');
-        console.log('Removed land cover dataset');
-      }
-    });
-
     document.getElementById('test-hedgerows').addEventListener('change', function() {
       if (!datasetsReady || !hedgeControlData) {
         console.warn('Not ready');
