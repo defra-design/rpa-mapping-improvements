@@ -71,7 +71,7 @@
       <p class="govuk-body-s govuk-!-margin-bottom-1">
         Total area (ha) <span id="sidebar-total-area">0.0000</span>
       </p>
-      <p class="govuk-body-s govuk-!-margin-bottom-0">
+      <p class="govuk-body-s">
         Total parcels <span id="sidebar-total-parcels">0</span>
       </p>
 
@@ -84,14 +84,14 @@
             label: "Land parcels",
             id: "land-parcels",
             panel: {
-              html: '<p class="govuk-body-s govuk-!-margin-bottom-1">Selected area (ha) <span id="sidebar-selected-area">0.0000</span></p><p class="govuk-body-s govuk-!-margin-bottom-0">Selected <span id="sidebar-selected-count">0 of 0</span></p><div class="parcel-controls-row" style="margin-top: 10px;"><div class="govuk-form-group govuk-!-margin-bottom-0 filter-input-wrapper"><label class="govuk-label govuk-label--s govuk-!-margin-bottom-1" for="parcel-filter">Filter</label><input class="govuk-input" id="parcel-filter" name="parcelFilter" type="text"></div><div id="select-all-container"><div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="select-all-parcels" name="selectAllParcels" type="checkbox"><label class="govuk-label govuk-checkboxes__label" for="select-all-parcels">Select all</label></div></div></div></div><div class="scrollable-checkbox-container" id="parcels-list"><p class="govuk-body-s">Loading</p></div>'
+              html: '<p class="govuk-body-s govuk-!-margin-bottom-1 govuk-!-margin-top-0">Selected area (ha) <span id="sidebar-selected-area">0.0000</span></p><p class="govuk-body-s govuk-!-margin-bottom-2">Selected <span id="sidebar-selected-count">0 of 0</span></p><div class="scrollable-checkbox-container" id="parcels-list"><p class="govuk-body-s">Loading</p></div>'
             }
           },
           {
             label: "Land covers",
             id: "land-covers",
             panel: {
-              html: 'Selected <span id="land-covers-selected-count">0</span><div class="scrollable-checkbox-container" id="land-covers-list"></div>'
+              html: '<p class="govuk-body-s">Selected <span id="land-covers-selected-count">0</span></p><div class="scrollable-checkbox-container" id="land-covers-list"></div>'
             }
           },
           {
@@ -526,11 +526,38 @@
       parcels.sort((a, b) => a.id.localeCompare(b.id));
 
       const totalArea = parcels.reduce((sum, p) => sum + parseFloat(p.area || 0), 0);
+      const totalLandCovers = landCoversData && landCoversData.features ? landCoversData.features.length : 0;
+      const totalHedgerows = hedgeControlData && hedgeControlData.features ? hedgeControlData.features.length : 0;
+
       document.getElementById('sidebar-total-area').textContent = totalArea.toFixed(4);
       document.getElementById('sidebar-total-parcels').textContent = parcels.length;
       document.getElementById('sidebar-selected-count').textContent = `0 of ${parcels.length}`;
 
+      // Build "Select all" item with totals
+      let selectAllHint = `Total area (ha) ${totalArea.toFixed(4)}`;
+      selectAllHint += `<br>Parcels ${parcels.length}`;
+      selectAllHint += `<br>Land covers ${totalLandCovers}`;
+      selectAllHint += `<br>Hedgerows ${totalHedgerows}`;
+
       let checkboxesHTML = '<div class="govuk-checkboxes govuk-checkboxes--small parcels-bordered-list" data-module="govuk-checkboxes">';
+
+      // Select all as first item in the list
+      checkboxesHTML += `
+        <div class="parcel-item-wrapper">
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input"
+                   id="select-all-parcels"
+                   name="selectAllParcels"
+                   type="checkbox">
+            <label class="govuk-label govuk-checkboxes__label" for="select-all-parcels">
+              Select all
+            </label>
+            <div class="govuk-hint govuk-checkboxes__hint" id="select-all-hint">
+              ${selectAllHint}
+            </div>
+          </div>
+        </div>
+      `;
 
       parcels.forEach(parcel => {
         let landCoverInfo = '';
@@ -626,7 +653,8 @@
       document.querySelectorAll('.parcel-item-wrapper').forEach(wrapper => {
         wrapper.addEventListener('click', function(e) {
           if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL') return;
-          const checkbox = this.querySelector('.parcel-checkbox');
+          // Check for parcel checkbox or select all checkbox
+          const checkbox = this.querySelector('.parcel-checkbox') || this.querySelector('#select-all-parcels');
           if (checkbox) {
             checkbox.checked = !checkbox.checked;
             checkbox.dispatchEvent(new Event('change'));
@@ -858,15 +886,10 @@
             const checkbox = wrapper.querySelector('.parcel-checkbox');
             if (!checkbox) return;
             const parcelId = checkbox.value;
-            const label = wrapper.querySelector('.govuk-checkboxes__label');
-            const labelText = label ? label.textContent.toLowerCase() : '';
-            const filterInput = document.getElementById('parcel-filter');
-            const filterValue = filterInput ? filterInput.value.toLowerCase() : '';
 
             let matchesHedgerows = hedgerowValidParcelIds === null || hedgerowValidParcelIds.has(parcelId);
-            let matchesTextFilter = filterValue === '' || labelText.includes(filterValue);
 
-            wrapper.style.display = (matchesHedgerows && matchesTextFilter) ? '' : 'none';
+            wrapper.style.display = matchesHedgerows ? '' : 'none';
           });
           updateSelectAllCheckboxState();
           return;
@@ -885,16 +908,11 @@
           const checkbox = wrapper.querySelector('.parcel-checkbox');
           if (!checkbox) return;
           const parcelId = checkbox.value;
-          const label = wrapper.querySelector('.govuk-checkboxes__label');
-          const labelText = label ? label.textContent.toLowerCase() : '';
-          const filterInput = document.getElementById('parcel-filter');
-          const filterValue = filterInput ? filterInput.value.toLowerCase() : '';
 
           let matchesLandCover = validParcelIds.has(parcelId);
           let matchesHedgerows = hedgerowValidParcelIds === null || hedgerowValidParcelIds.has(parcelId);
-          let matchesTextFilter = filterValue === '' || labelText.includes(filterValue);
 
-          wrapper.style.display = (matchesLandCover && matchesHedgerows && matchesTextFilter) ? '' : 'none';
+          wrapper.style.display = (matchesLandCover && matchesHedgerows) ? '' : 'none';
         });
         updateSelectAllCheckboxState();
       }
@@ -948,11 +966,11 @@
         console.log('Removed hedgerows dataset');
       }
 
-      // Text filter
-      const filterInput = document.getElementById('parcel-filter');
-      if (filterInput) {
-        filterInput.addEventListener('input', debounce(() => filterParcelsByLandCover(), 150));
-      }
+      // Text filter (currently disabled)
+      // const filterInput = document.getElementById('parcel-filter');
+      // if (filterInput) {
+      //   filterInput.addEventListener('input', debounce(() => filterParcelsByLandCover(), 150));
+      // }
     }
 
     function debounce(func, wait) {
@@ -1334,7 +1352,7 @@
   }
 
   .app-map-fullscreen__panel {
-    width: 500px;
+    width: 700px;
     max-width: 100vw;
     background: #ffffff;
     /* border-right: 1px solid #b1b4b6; */
@@ -1542,6 +1560,7 @@
     background: #555;
   }
 
+  /* Filter input styles (currently disabled)
   .parcel-controls-row {
     display: flex;
     gap: 15px;
@@ -1550,27 +1569,7 @@
   }
 
   .filter-input-wrapper {
-    flex: 0 0 50%;
-  }
-
-  #select-all-container {
     flex: 1;
-    display: flex;
-    align-items: flex-end;
-  }
-
-  #select-all-container .govuk-checkboxes {
-    margin-bottom: 0;
-  }
-
-  #select-all-container .govuk-checkboxes__item {
-    margin-bottom: -10px;
-    padding-bottom: 0;
-  }
-
-  #select-all-container .govuk-checkboxes__label {
-    font-size: 1rem;
-    white-space: nowrap;
   }
 
   #parcel-filter {
@@ -1578,6 +1577,7 @@
     line-height: 1.25;
     text-transform: uppercase;
   }
+  */
 
   #hedgerows-checkbox + .govuk-checkboxes__label {
     font-size: 1rem;
