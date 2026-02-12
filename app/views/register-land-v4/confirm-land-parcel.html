@@ -95,6 +95,13 @@
               text: "Yes"
             },
             {
+              value: "changes-to-found-parcel",
+              text: "Yes with some changes",
+              hint: {
+                text: "Upload a map with changes, for example to the size or shape"
+              }
+            },
+            {
               value: "no",
               text: "No",
               hint: {
@@ -439,15 +446,15 @@
         <table class="govuk-table">
           <tbody class="govuk-table__body">
             <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">Area (ha)</th>
-              <td class="govuk-table__cell">${totalArea > 0 ? totalArea.toFixed(4) : 'N/A'}</td>
+              <th scope="row" class="govuk-table__header">Area</th>
+              <td class="govuk-table__cell">${totalArea > 0 ? totalArea.toFixed(4) + ' ha' : 'N/A'}</td>
             </tr>
             <tr class="govuk-table__row">
               <th scope="row" class="govuk-table__header">Hedgerows</th>
               <td class="govuk-table__cell">${hedgerowHTML}</td>
             </tr>
             <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header" colspan="2" style="border-bottom: none;">Land covers</th>
+              <th scope="row" class="govuk-table__header" colspan="2" style="border-bottom: none;">Land cover</th>
             </tr>
             <tr class="govuk-table__row">
               <td class="govuk-table__cell" colspan="2">

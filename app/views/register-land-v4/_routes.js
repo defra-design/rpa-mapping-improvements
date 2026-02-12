@@ -288,6 +288,29 @@ router.post("/register-land-v4/confirm-land-parcel", function (req, res) {
     return res.redirect("know-parcel-id");
   }
 
+  if (confirmLandParcel === 'changes-to-found-parcel') {
+    // User wants to register with changes - add parcel and redirect to upload map
+    if (!req.session.data['parcels']) {
+      req.session.data['parcels'] = [];
+    }
+
+    const parcelId = req.session.data['parcel-id'];
+    const parcelBounds = req.session.data['parcel-bounds'];
+
+    const newParcel = {
+      id: parcelId,
+      registeredDate: 'today',
+      isEstimated: false,
+      needsChanges: true,
+      bounds: parcelBounds
+    };
+
+    req.session.data['parcels'].push(newParcel);
+    console.log('Added parcel with changes needed. Total parcels:', req.session.data['parcels'].length);
+
+    return res.redirect("upload-land-parcel-map");
+  }
+
   // User confirmed yes - add the parcel
   // Initialize the parcels array if it doesn't exist
   if (!req.session.data['parcels']) {
