@@ -42,7 +42,7 @@ router.get("/register-land-v4/know-parcel-id", async function (req, res) {
 router.post("/register-land-v4/know-parcel-id", async function (req, res) {
   // Check if a radio option was selected
   if (!req.session.data['knowParcelID']) {
-    req.session.data['know-parcel-id-radio-error'] = { text: 'Select Yes if you know the Parcel Id' };
+    req.session.data['know-parcel-id-radio-error'] = { text: 'Select yes if you know the parcel ID' };
     return res.redirect('/register-land-v4/know-parcel-id');
   }
 
@@ -51,7 +51,7 @@ router.post("/register-land-v4/know-parcel-id", async function (req, res) {
 
     // Check if parcel ID was entered
     if (!userEnteredId) {
-      req.session.data['know-parcel-id-input-error'] = { text: 'Enter the parcel ID' };
+      req.session.data['know-parcel-id-input-error'] = { text: 'Enter a parcel ID or select no if you do not know it' };
       req.session.data['know-parcel-id-value'] = '';
       return res.redirect('/register-land-v4/know-parcel-id');
     }
