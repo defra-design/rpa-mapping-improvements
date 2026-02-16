@@ -30,8 +30,19 @@
         <p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="/register-land-v4/start">Continue to prototype start page</a></p>
         <h3 class="govuk-heading-s">Added</h3>
         <ul class="govuk-list govuk-list--bullet">
-          <li>Defra mapping component</li>
-          <li>Image of land parcel to be registered</li>
+          <li>Display land parcel data for estimated land parcel</li>
+          <li>Option to make changes to known land parcel</li>
+        </ul>
+
+        <h3 class="govuk-heading-s">Updated</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>2 column map screens</li>
+          <li>Validation error messages</li>
+        </ul>
+
+        <h3 class="govuk-heading-s">Removed</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Estimated parcel ID copy</li>
         </ul>
         '
       }
@@ -48,8 +59,12 @@
         <p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="/register-land-v3/start">Continue to prototype start page</a></p>
         <h3 class="govuk-heading-s">Added</h3>
         <ul class="govuk-list govuk-list--bullet">
-          <li>Defra mapping component</li>
-          <li>Image of land parcel to be registered</li>
+          <li>Map component with interact plugin</li>
+          <li>Map style switching (Map/Satellite)</li>
+          <li>Search with custom parcel search dataset</li>
+          <li>Add marker (pin) to map to select land parcel or land area</li>
+          <li>Display land parcel data for known land parcel ID</li>
+          <li>Image of land parcel to be registered on CYA</li>
         </ul>
         '
       }
@@ -107,20 +122,82 @@
       content: {
         html: '
         <p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/start">Continue to prototype start page</a></p>
-        <p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/demo-start">Demo configuration (custom farm name and SBI)</a></p>
 
         <h3 class="govuk-heading-s">Updated</h3>
         <ul class="govuk-list govuk-list--bullet">
-          <li>DEFRA @defra/interactive-map component with interact plugin</li>
-          <li>Full-viewport map layout with collapsible sidebar</li>
+          <li>Map component with interact plugin</li>
+          <li>Full viewport map layout</li>
           <li>Built-in map style switching (Map/Satellite)</li>
           <li>Built-in search with custom parcel search dataset</li>
           <li>Multi-select parcel selection via interact plugin</li>
-          <li>Two-way sync between map clicks and sidebar checkboxes</li>
+          <li>Sync between map clicks and sidebar checkboxes</li>
           <li>Sidebar accordion with land cover and hedgerow filtering</li>
-          <li>Mobile-responsive bottom sheet pattern</li>
           <li>Form submission to map pack contents page</li>
         </ul>
+
+        <h3 class="govuk-heading-s">Demo with custom farm name and SBI</h3>
+
+      <p class="govuk-body govuk-!-font-weight-bold"><a class="govuk-link govuk-link--no-visited-state" href="download-maps-v5/demo-start">Continue to demo configuration</a></p>
+
+        <table class="govuk-table">
+          <caption class="govuk-table__caption govuk-table__caption--s">Demo SBI\'s</caption>
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">SBI</th>
+              <th scope="col" class="govuk-table__header">Parcels</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">107172777</td>
+              <td class="govuk-table__cell">21</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">106290790</td>
+              <td class="govuk-table__cell">23</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">109050730</td>
+              <td class="govuk-table__cell">25</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">106200859</td>
+              <td class="govuk-table__cell">29</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">106332870</td>
+              <td class="govuk-table__cell">33</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">106623360</td>
+              <td class="govuk-table__cell">40</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">106172811</td>
+              <td class="govuk-table__cell">50</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">107034018</td>
+              <td class="govuk-table__cell">65</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">106200212</td>
+              <td class="govuk-table__cell">80</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">111089693</td>
+              <td class="govuk-table__cell">104</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">113319980</td>
+              <td class="govuk-table__cell">151</td>
+            </tr>
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">106327021</td>
+              <td class="govuk-table__cell">13,143 - National Trust</td>
+            </tr>
+          </tbody>
+        </table>
 
         <h3 class="govuk-heading-s">Parcel rename options</h3>
         <ul class="govuk-list govuk-list--bullet">
