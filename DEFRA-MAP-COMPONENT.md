@@ -62,10 +62,10 @@ Include these CSS files in your HTML `<head>`:
 
 ```html
 <link href="/plugin-assets/@defra/interactive-map/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/interactive-map/plugins/map-styles/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/plugins/beta/map-styles/dist/css/index.css" rel="stylesheet">
 <link href="/plugin-assets/@defra/interactive-map/plugins/search/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/interactive-map/plugins/scale-bar/dist/css/index.css" rel="stylesheet">
-<link href="/plugin-assets/@defra/interactive-map/plugins/datasets/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/plugins/beta/scale-bar/dist/css/index.css" rel="stylesheet">
+<link href="/plugin-assets/@defra/interactive-map/plugins/beta/datasets/dist/css/index.css" rel="stylesheet">
 <link href="/plugin-assets/@defra/interactive-map/plugins/interact/dist/css/index.css" rel="stylesheet">
 ```
 
@@ -82,10 +82,10 @@ Load scripts before your initialization code:
 <script src="/plugin-assets/@defra/interactive-map/providers/open-names/dist/umd/index.js"></script>
 
 <!-- Plugins -->
-<script src="/plugin-assets/@defra/interactive-map/plugins/map-styles/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/plugins/beta/map-styles/dist/umd/index.js"></script>
 <script src="/plugin-assets/@defra/interactive-map/plugins/search/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/interactive-map/plugins/scale-bar/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/interactive-map/plugins/datasets/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/plugins/beta/scale-bar/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/plugins/beta/datasets/dist/umd/index.js"></script>
 <script src="/plugin-assets/@defra/interactive-map/plugins/interact/dist/umd/index.js"></script>
 ```
 
