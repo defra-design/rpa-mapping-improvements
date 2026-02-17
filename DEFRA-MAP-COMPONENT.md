@@ -179,7 +179,7 @@ new defra.InteractiveMap(containerId, options)
 |--------|------|-------------|---------|
 | `mapProvider` | Provider | Map rendering provider (required) | - |
 | `reverseGeocodeProvider` | Provider | Reverse geocoding service | - |
-| `behaviour` | String | Map display mode: `'inline'`, `'fullscreen'`, `'overlay'` | `'inline'` |
+| `behaviour` | String | Map display mode: `'inline'`, `'mapOnly'`, `'buttonFirst'`, `'hybrid'` | `'buttonFirst'` |
 | `minZoom` | Number | Minimum zoom level | `0` |
 | `maxZoom` | Number | Maximum zoom level | `22` |
 | `containerHeight` | String | CSS height value | `'500px'` |
