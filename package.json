@@ -5,7 +5,7 @@
     "start": "govuk-prototype-kit start"
   },
   "dependencies": {
-    "@defra/interactive-map": "^0.0.3-alpha",
+    "@defra/interactive-map": "^0.0.5-alpha",
     "@govuk-prototype-kit/common-templates": "2.0.1",
     "@maplibre/maplibre-gl-geocoder": "^1.9.1",
     "@x-govuk/govuk-prototype-filters": "^2.0.0",
