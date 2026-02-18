@@ -79,7 +79,7 @@ Load scripts before your initialization code:
 
 <!-- Providers -->
 <script src="/plugin-assets/@defra/interactive-map/providers/maplibre/dist/umd/index.js"></script>
-<script src="/plugin-assets/@defra/interactive-map/providers/open-names/dist/umd/index.js"></script>
+<script src="/plugin-assets/@defra/interactive-map/providers/beta/open-names/dist/umd/index.js"></script>
 
 <!-- Plugins -->
 <script src="/plugin-assets/@defra/interactive-map/plugins/beta/map-styles/dist/umd/index.js"></script>
@@ -1086,6 +1086,6 @@ The following features would improve GeoJSON workflow support:
 
 ## Version
 
-This documentation is for **@defra/interactive-map v0.0.1-alpha**.
+This documentation is for **@defra/interactive-map v0.0.5-alpha**.
 
 **Status**: Beta - API may change in future releases. Full documentation will be published when the project reaches stable release.
