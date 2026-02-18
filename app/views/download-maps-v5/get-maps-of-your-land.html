@@ -648,39 +648,21 @@
     // Select feature using interact plugin API
     function selectFeatureOnMap(featureId) {
       selectedParcelIds.add(featureId);
-      // Try interact plugin API
-      if (interactPlugin && typeof interactPlugin.selectFeature === 'function') {
-        interactPlugin.selectFeature({
-          featureId: featureId,
-          layerId: 'parcels-fill',
-          idProperty: 'ngc'
-        });
-      } else if (interactiveMap && interactiveMap.api && interactiveMap.api.interact) {
-        interactiveMap.api.interact.selectFeature({
-          featureId: featureId,
-          layerId: 'parcels-fill',
-          idProperty: 'ngc'
-        });
-      }
+      interactPlugin.selectFeature({
+        featureId: featureId,
+        layerId: 'parcels-fill',
+        idProperty: 'ngc'
+      });
     }
 
     // Unselect feature using interact plugin API
     function unselectFeatureOnMap(featureId) {
       selectedParcelIds.delete(featureId);
-      // Try interact plugin API
-      if (interactPlugin && typeof interactPlugin.unselectFeature === 'function') {
-        interactPlugin.unselectFeature({
-          featureId: featureId,
-          layerId: 'parcels-fill',
-          idProperty: 'ngc'
-        });
-      } else if (interactiveMap && interactiveMap.api && interactiveMap.api.interact) {
-        interactiveMap.api.interact.unselectFeature({
-          featureId: featureId,
-          layerId: 'parcels-fill',
-          idProperty: 'ngc'
-        });
-      }
+      interactPlugin.unselectFeature({
+        featureId: featureId,
+        layerId: 'parcels-fill',
+        idProperty: 'ngc'
+      });
     }
 
     function updateSidebarStats() {
