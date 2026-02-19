@@ -41,7 +41,6 @@
           { text: parcelId, classes: "govuk-!-font-weight-bold" },
           { text: fieldName },
           { text: feature.properties.AREA_HA | default(0) | round(4), format: "numeric" },
-          { text: feature.properties.SHAPE_PERIMETER | default(0) | round(0), format: "numeric" },
           { html: '<span class="land-covers-cell" data-parcel-id="' + parcelNgc + '">—</span>' },
           { html: '<span class="hedgerows-cell" data-parcel-id="' + parcelNgc + '">—</span>' }
         ]), tableRows) %}
@@ -55,7 +54,6 @@
           { text: "Parcel ID" },
           { text: "Field name" },
           { text: "Area (ha)", format: "numeric" },
-          { text: "Perimeter (m)", format: "numeric" },
           { text: "Land covers" },
           { text: "Hedgerows" }
         ],
