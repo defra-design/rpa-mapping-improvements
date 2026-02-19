@@ -390,14 +390,14 @@ Programmatically select or unselect features:
 
 ```javascript
 // Select a feature
-interactiveMap.api.interact.selectFeature({
+interactPlugin.selectFeature({
   featureId: 'NY12345678',
   layerId: 'field-parcels',
   idProperty: 'ID'
 })
 
 // Unselect a feature
-interactiveMap.api.interact.unselectFeature({
+interactPlugin.unselectFeature({
   featureId: 'NY12345678',
   layerId: 'field-parcels',
   idProperty: 'ID'
@@ -502,10 +502,10 @@ defra.framePlugin({
 **API Methods**:
 ```javascript
 // Add a frame to the map
-interactiveMap.api.frame.addFrame(options)
+framePlugin.addFrame(options)
 
 // Edit the frame
-interactiveMap.api.frame.editFeature(options)
+framePlugin.editFeature(options)
 ```
 
 ---
@@ -1075,7 +1075,7 @@ The following features would improve GeoJSON workflow support:
 **Current limitation**: The `showInKey: true` property in `datasetsPlugin` only works with vector tile datasets. GeoJSON layers added manually cannot be included in the automatic legend/key.
 
 **Requested feature**: Allow dynamically added GeoJSON layers to register with the key/legend system, either through:
-- A new plugin method: `interactiveMap.api.key.addLayer({ id, label, fill, stroke })`
+- A new plugin method: `datasetsPlugin.addToKey({ id, label, fill, stroke })`
 - Or extending `datasetsPlugin` to support GeoJSON sources
 
 **Use case**: Displaying land cover types with their colours in an automatic legend, without hardcoding colour mappings in the application.
