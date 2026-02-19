@@ -25,8 +25,6 @@
 }) }}
 {% endblock %}
 
-{% set excludeBeforeContent = true %}
-
 {% block head %}
   {{ super() }}
   <!-- DEFRA Interactive Map Component CSS -->
@@ -36,6 +34,465 @@
   <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/beta/scale-bar/dist/css/index.css">
   <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/beta/datasets/dist/css/index.css">
   <link rel="stylesheet" href="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/css/index.css">
+
+  <style>
+  /* =====================================================
+     FULLSCREEN MAP LAYOUT STYLES (POC-5)
+     ===================================================== */
+
+  :root {
+    --header-height: 100px;
+  }
+
+  html, body {
+    overflow: hidden;
+    overscroll-behavior: none;
+    height: 100%;
+  }
+
+  /* Ensure service navigation dropdown appears above the map on mobile */
+  .govuk-service-navigation {
+    position: relative;
+    z-index: 100;
+  }
+
+  /* Hide header and service navigation when DEFRA map is fullscreen */
+  html.im-is-fullscreen .govuk-header,
+  html.im-is-fullscreen .govuk-service-navigation {
+    display: none;
+  }
+
+  /* Hide the DEFRA component's own Map view button - we proxy it via our own */
+  .im-c-open-map-button {
+    display: none !important;
+  }
+
+  /* Our Map view button - only visible on mobile */
+  .app-map-view-button {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #505a5f;
+    background: #ffffff;
+    font-family: "GDS Transport", arial, sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #0b0c0c;
+    cursor: pointer;
+    margin-bottom: 15px;
+  }
+
+  .app-map-view-button:hover {
+    background-color: #f3f2f1;
+  }
+
+  .app-map-view-button:focus-visible {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    background-color: #ffdd00;
+  }
+
+  @media (max-width: 640px) {
+    .app-map-view-button {
+      display: inline-flex;
+    }
+  }
+
+  .app-map-fullscreen {
+    position: fixed;
+    display: flex;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .app-map-fullscreen__map {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* DEFRA map container styling - ensure full height */
+  #map {
+    height: 100% !important;
+  }
+
+  /* Remove top border from DEFRA map component */
+  #map .im-o-app,
+  #map .im-c-viewport {
+    border-top: none !important;
+  }
+
+  /* Ensure DEFRA component fills container */
+  #map .im-o-app {
+    height: 100% !important;
+  }
+
+  .app-map-fullscreen__panel {
+    width: 500px;
+    max-width: 100vw;
+    background: #ffffff;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+  }
+
+  .app-map-fullscreen__panel--closed {
+    transform: translateX(-100%);
+  }
+
+  .app-map-fullscreen__panel-content {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 15px 15px;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 0;
+  }
+
+  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .app-map-fullscreen__panel-close {
+    display: none;
+  }
+
+  .app-map-fullscreen__menu-btn {
+    display: none;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 5;
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    padding: 8px 12px;
+    cursor: pointer;
+    align-items: center;
+    gap: 8px;
+    font-family: "GDS Transport", arial, sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #0b0c0c;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .app-map-fullscreen__menu-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .app-map-fullscreen__menu-btn:hover {
+    background-color: #f3f2f1;
+  }
+
+  .app-map-fullscreen__menu-btn:focus-visible {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    background-color: #ffdd00;
+  }
+
+  @media (max-width: 640px) {
+    .app-map-fullscreen {
+      z-index: 101;
+    }
+
+    .app-map-fullscreen__panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 100vw;
+    }
+
+    .app-map-fullscreen__panel-close {
+      display: flex;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 44px;
+      height: 44px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      line-height: 1;
+      color: #0b0c0c;
+      z-index: 11;
+    }
+
+    .app-map-fullscreen__panel-close:hover {
+      background-color: #f3f2f1;
+    }
+
+    .app-map-fullscreen__panel-close:focus-visible {
+      outline: 3px solid #ffdd00;
+      outline-offset: 0;
+      background-color: #ffdd00;
+    }
+
+    .app-map-fullscreen__panel-content {
+      padding-top: 15px;
+    }
+
+    .app-map-fullscreen__panel-content > .govuk-heading-m {
+      font-size: 1.5rem;
+      line-height: 1.25;
+    }
+
+    .app-map-fullscreen__panel--closed ~ .app-map-fullscreen__menu-btn {
+      display: flex;
+    }
+
+    .app-map-fullscreen__panel:not(.app-map-fullscreen__panel--closed) ~ .app-map-fullscreen__menu-btn {
+      display: none;
+    }
+  }
+
+  /* =====================================================
+     SIDEBAR STYLES
+     ===================================================== */
+
+  .scrollable-checkbox-container {
+    max-height: 325px;
+    overflow-y: auto;
+    overflow-x: visible;
+    margin-left: -15px;
+    padding-left: 15px;
+    padding-right: 10px;
+    margin-bottom: 30px;
+  }
+
+  #parcels-list .govuk-checkboxes,
+  #land-covers-list .govuk-checkboxes {
+    display: block;
+  }
+
+  .scrollable-checkbox-container .govuk-checkboxes__label {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .scrollable-checkbox-container .govuk-checkboxes__hint {
+    font-size: 1rem;
+    line-height: 1.25;
+    padding-right: 0px;
+    margin-top: -14px;
+  }
+
+  #parcels-list .govuk-checkboxes__hint {
+    margin-bottom: 0;
+    line-height: 1.4;
+  }
+
+  .parcel-item-wrapper {
+    margin-bottom: 5px;
+    border: 1px solid #d4d7db;
+    padding: 0px 5px 10px 8px;
+    cursor: pointer;
+  }
+
+  .parcel-item-wrapper:has(input:checked) {
+    background-color: #f4f8fb;
+  }
+
+  .parcel-item-wrapper .govuk-checkboxes__item {
+    margin-bottom: 0;
+  }
+
+  .parcel-item-wrapper .govuk-checkboxes__label {
+    align-items: flex-start;
+    padding-top: 0;
+    min-height: auto;
+  }
+
+  .govuk-radios__label {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .scrollable-checkbox-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollable-checkbox-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .scrollable-checkbox-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 0px;
+  }
+
+  .scrollable-checkbox-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .parcel-controls-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+    margin-bottom: 15px;
+  }
+
+  .filter-input-wrapper {
+    flex: 0 0 50%;
+  }
+
+  #select-all-container {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  #select-all-container .govuk-checkboxes {
+    margin-bottom: 0;
+  }
+
+  #select-all-container .govuk-checkboxes__item {
+    margin-bottom: -10px;
+    padding-bottom: 0;
+  }
+
+  #select-all-container .govuk-checkboxes__label {
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+
+  #parcel-filter {
+    font-size: 1rem;
+    line-height: 1.25;
+    text-transform: uppercase;
+  }
+
+  #hedgerows-checkbox + .govuk-checkboxes__label {
+    font-size: 1rem;
+  }
+
+  .govuk-button {
+    font-size: 1rem;
+    line-height: 1.25;
+    margin-bottom: 3px;
+  }
+
+  .govuk-checkboxes__hint {
+    margin-top: -14px;
+  }
+
+  /* =====================================================
+     ACCORDION STYLES
+     ===================================================== */
+
+  .govuk-accordion__section-button {
+    font-size: 1.25rem;
+  }
+
+  .govuk-accordion__section-summary {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .govuk-accordion__show-all,
+  .govuk-accordion__show-all-text,
+  .govuk-accordion__section-toggle,
+  .govuk-accordion__section-toggle-text {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  /* Custom popup styles */
+  .custom-popup {
+    position: absolute;
+    z-index: 100;
+    background: #ffffff;
+    padding: 15px 20px;
+    padding-right: 45px;
+    font-size: 1rem;
+    line-height: 1.25;
+    min-width: 200px;
+    max-width: 300px;
+    font-family: "GDS Transport", arial, sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .custom-popup__close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 28px;
+    line-height: 1;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0b0c0c;
+    font-family: "GDS Transport", arial, sans-serif;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  .custom-popup__close:hover {
+    background-color: #f3f2f1;
+  }
+
+  .custom-popup__close:focus {
+    outline: none;
+  }
+
+  .custom-popup__close:focus-visible {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    background-color: #ffdd00;
+  }
+
+  .custom-popup__content strong {
+    font-size: 1.1875rem;
+    line-height: 1.25;
+    display: block;
+    margin-bottom: 2px;
+    font-weight: 700;
+  }
+
+  /* =====================================================
+     FULL WIDTH LAYOUT
+     ===================================================== */
+
+  .govuk-header__container, .govuk-width-container, .app-full-width-container {
+    max-width: 100%;
+    padding: 0 15px;
+  }
+
+  .govuk-grid-column-one-third {
+    padding-left: 0;
+  }
+
+  .govuk-grid-column-one-third > .govuk-body {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+  </style>
 {% endblock %}
 
 {% block pageTitle %}
@@ -44,9 +501,8 @@
 
 {% block footer %}{% endblock %}
 
-{% block content %}
-
-<div class="app-map-fullscreen">
+{% block main %}
+<main class="app-map-fullscreen" id="main-content">
 
     <!-- Menu button (visible when panel is closed on mobile) -->
   <button class="app-map-fullscreen__menu-btn" id="menu-btn" aria-label="Open menu">
@@ -65,7 +521,7 @@
     </button>
     <div class="app-map-fullscreen__panel-content" id="panel-content">
       <!-- Title -->
-      <h1 class="govuk-heading-m govuk-!-margin-bottom-2 govuk-!-margin-top-1">{{ data['farm-name'] | default('Cannon Hall Farm') }}</h1>
+      <h1 class="govuk-heading-m govuk-!-margin-bottom-2 govuk-!-margin-top-4">{{ data['farm-name'] | default('Cannon Hall Farm') }}</h1>
 
       <!-- Whole holding information -->
       <p class="govuk-body-s govuk-!-margin-bottom-1">
@@ -114,6 +570,11 @@
         ]
       }) }}
 
+      <button type="button" class="app-map-view-button" id="panel-map-view-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Map view
+      </button>
+
       {% from "govuk/components/button/macro.njk" import govukButton %}
       <form method="post" id="selections-form">
         <input type="hidden" name="selected-parcels" id="selected-parcels-input" value="{{ data['selected-parcels'] | default('') }}">
@@ -133,8 +594,7 @@
   <div id="map" class="app-map-fullscreen__map"></div>
 
 
-</div>
-
+</main>
 {% endblock %}
 
 {% block pageScripts %}
@@ -223,15 +683,13 @@
     const panelClose = document.getElementById('panel-close');
     const menuBtn = document.getElementById('menu-btn');
 
-    // Close panel (mobile)
-    if (panelClose && mapPanel) {
+    // Close panel (mobile) - trigger Map view to enter fullscreen
+    if (panelClose) {
       panelClose.addEventListener('click', function() {
-        mapPanel.classList.add('app-map-fullscreen__panel--closed');
-        setTimeout(() => {
-          if (window.interactiveMap && window.interactiveMap.api && window.interactiveMap.api.map) {
-            window.interactiveMap.api.map.resize();
-          }
-        }, 350);
+        const mapViewButton = document.querySelector('.im-c-open-map-button');
+        if (mapViewButton) {
+          mapViewButton.click();
+        }
       });
     }
 
@@ -1078,10 +1536,11 @@
 
     interactiveMap = new defra.InteractiveMap('map', {
       mapProvider: defra.maplibreProvider(),
-      behaviour: 'inline',
+      behaviour: 'hybrid',
       minZoom: 6,
       maxZoom: 20,
       enableZoomControls: true,
+      preserveStateOnClose: true,
       containerHeight: mapHeight + 'px',
       mapStyle: {
         url: '{{ data.VTS_OUTDOOR_URL }}',
@@ -1154,6 +1613,15 @@
     });
 
     window.interactiveMap = interactiveMap;
+
+    // Proxy: our panel "Map view" button clicks the hidden DEFRA button
+    const panelMapViewBtn = document.getElementById('panel-map-view-btn');
+    if (panelMapViewBtn) {
+      panelMapViewBtn.addEventListener('click', function() {
+        const defraButton = document.querySelector('.im-c-open-map-button');
+        if (defraButton) defraButton.click();
+      });
+    }
 
     // =====================================================
     // DATASETS PLUGIN READY EVENT
@@ -1282,420 +1750,4 @@
     });
   });
 </script>
-
-<style>
-  /* =====================================================
-     FULLSCREEN MAP LAYOUT STYLES (POC-5)
-     ===================================================== */
-
-  :root {
-    --header-height: 100px;
-  }
-
-  html, body {
-    overflow: hidden;
-    overscroll-behavior: none;
-    height: 100%;
-  }
-
-  /* Ensure service navigation dropdown appears above the map on mobile */
-  .govuk-service-navigation {
-    position: relative;
-    z-index: 100;
-  }
-
-  .app-map-fullscreen {
-    position: fixed;
-    display: flex;
-    top: var(--header-height);
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
-
-  .app-map-fullscreen__map {
-    /* position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0; */
-    width: 100%;
-    height: 100%;
-  }
-
-  /* DEFRA map container styling - ensure full height */
-  #map {
-    height: 100% !important;
-  }
-
-  /* Remove top border from DEFRA map component */
-  #map .im-o-app,
-  #map .im-c-viewport {
-    border-top: none !important;
-  }
-
-  /* Ensure DEFRA component fills container */
-  #map .im-o-app {
-    height: 100% !important;
-  }
-
-  .app-map-fullscreen__panel {
-    width: 500px;
-    max-width: 100vw;
-    background: #ffffff;
-    /* border-right: 1px solid #b1b4b6; */
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease;
-  }
-
-  .app-map-fullscreen__panel--closed {
-    transform: translateX(-100%);
-  }
-
-  .app-map-fullscreen__panel-content {
-    flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 15px;
-  }
-
-  .app-map-fullscreen__panel-content::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .app-map-fullscreen__panel-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-
-  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 0;
-  }
-
-  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
-
-  .app-map-fullscreen__panel-close {
-    display: none;
-  }
-
-  .app-map-fullscreen__menu-btn {
-    display: none;
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 5;
-    background: #ffffff;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    padding: 8px 12px;
-    cursor: pointer;
-    align-items: center;
-    gap: 8px;
-    font-family: "GDS Transport", arial, sans-serif;
-    font-size: 1rem;
-    font-weight: 400;
-    color: #0b0c0c;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-
-  .app-map-fullscreen__menu-btn svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-
-  .app-map-fullscreen__menu-btn:hover {
-    background-color: #f3f2f1;
-  }
-
-  .app-map-fullscreen__menu-btn:focus-visible {
-    outline: 3px solid #ffdd00;
-    outline-offset: 0;
-    background-color: #ffdd00;
-  }
-
-  @media (max-width: 640px) {
-    .app-map-fullscreen__panel {
-      position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-      width: 400px;
-      max-width: calc(100vw - 60px);
-    }
-
-    .app-map-fullscreen__panel-close {
-      display: flex;
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 44px;
-      height: 44px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      line-height: 1;
-      color: #0b0c0c;
-      z-index: 11;
-    }
-
-    .app-map-fullscreen__panel-close:hover {
-      background-color: #f3f2f1;
-    }
-
-    .app-map-fullscreen__panel-close:focus-visible {
-      outline: 3px solid #ffdd00;
-      outline-offset: 0;
-      background-color: #ffdd00;
-    }
-
-    .app-map-fullscreen__panel-content {
-      padding-top: 15px;
-      padding-right: 50px;
-    }
-
-    .app-map-fullscreen__panel--closed ~ .app-map-fullscreen__menu-btn {
-      display: flex;
-    }
-
-    .app-map-fullscreen__panel:not(.app-map-fullscreen__panel--closed) ~ .app-map-fullscreen__menu-btn {
-      display: none;
-    }
-  }
-
-  /* =====================================================
-     SIDEBAR STYLES
-     ===================================================== */
-
-  .scrollable-checkbox-container {
-    max-height: 325px;
-    overflow-y: auto;
-    overflow-x: visible;
-    margin-left: -15px;
-    padding-left: 15px;
-    padding-right: 10px;
-    margin-bottom: 30px;
-  }
-
-  #parcels-list .govuk-checkboxes,
-  #land-covers-list .govuk-checkboxes {
-    display: block;
-  }
-
-  .scrollable-checkbox-container .govuk-checkboxes__label {
-    font-size: 1rem;
-    line-height: 1.25;
-  }
-
-  .scrollable-checkbox-container .govuk-checkboxes__hint {
-    font-size: 1rem;
-    line-height: 1.25;
-    padding-right: 0px;
-    margin-top: -14px;
-  }
-
-  #parcels-list .govuk-checkboxes__hint {
-    margin-bottom: 0;
-    line-height: 1.4;
-  }
-
-  .parcel-item-wrapper {
-    margin-bottom: 5px;
-    border: 1px solid #d4d7db;
-    padding: 0px 5px 10px 8px;
-    cursor: pointer;
-  }
-
-  .parcel-item-wrapper:has(input:checked) {
-    background-color: #f4f8fb;
-  }
-
-  .parcel-item-wrapper .govuk-checkboxes__item {
-    margin-bottom: 0;
-  }
-
-  .parcel-item-wrapper .govuk-checkboxes__label {
-    align-items: flex-start;
-    padding-top: 0;
-    min-height: auto;
-  }
-
-  .govuk-radios__label {
-    font-size: 1rem;
-    line-height: 1.25;
-  }
-
-  .scrollable-checkbox-container::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .scrollable-checkbox-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-
-  .scrollable-checkbox-container::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 0px;
-  }
-
-  .scrollable-checkbox-container::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
-
-  .parcel-controls-row {
-    display: flex;
-    gap: 15px;
-    align-items: flex-end;
-    margin-bottom: 15px;
-  }
-
-  .filter-input-wrapper {
-    flex: 0 0 50%;
-  }
-
-  #select-all-container {
-    flex: 1;
-    display: flex;
-    align-items: flex-end;
-  }
-
-  #select-all-container .govuk-checkboxes {
-    margin-bottom: 0;
-  }
-
-  #select-all-container .govuk-checkboxes__item {
-    margin-bottom: -10px;
-    padding-bottom: 0;
-  }
-
-  #select-all-container .govuk-checkboxes__label {
-    font-size: 1rem;
-    white-space: nowrap;
-  }
-
-  #parcel-filter {
-    font-size: 1rem;
-    line-height: 1.25;
-    text-transform: uppercase;
-  }
-
-  #hedgerows-checkbox + .govuk-checkboxes__label {
-    font-size: 1rem;
-  }
-
-  .govuk-button {
-    font-size: 1rem;
-    line-height: 1.25;
-    margin-bottom: 3px;
-  }
-
-  .govuk-checkboxes__hint {
-    margin-top: -14px;
-  }
-
-  /* =====================================================
-     ACCORDION STYLES
-     ===================================================== */
-
-  .govuk-accordion__section-button {
-    font-size: 1.25rem;
-  }
-
-  .govuk-accordion__section-summary {
-    font-size: 1rem;
-    line-height: 1.25;
-  }
-
-  .govuk-accordion__show-all,
-  .govuk-accordion__show-all-text,
-  .govuk-accordion__section-toggle,
-  .govuk-accordion__section-toggle-text {
-    font-size: 1rem;
-    line-height: 1.25;
-  }
-
-  /* Custom popup styles */
-  .custom-popup {
-    position: absolute;
-    z-index: 100;
-    background: #ffffff;
-    padding: 15px 20px;
-    padding-right: 45px;
-    font-size: 1rem;
-    line-height: 1.25;
-    min-width: 200px;
-    max-width: 300px;
-    font-family: "GDS Transport", arial, sans-serif;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-   */
-  }
-
-  .custom-popup__close {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 28px;
-    line-height: 1;
-    padding: 0;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #0b0c0c;
-    font-family: "GDS Transport", arial, sans-serif;
-    cursor: pointer;
-    background: none;
-    border: none;
-  }
-
-  .custom-popup__close:hover {
-    background-color: #f3f2f1;
-  }
-
-  .custom-popup__close:focus {
-    outline: none;
-  }
-
-  .custom-popup__close:focus-visible {
-    outline: 3px solid #ffdd00;
-    outline-offset: 0;
-    background-color: #ffdd00;
-  }
-
-  .custom-popup__content strong {
-    font-size: 1.1875rem;
-    line-height: 1.25;
-    display: block;
-    margin-bottom: 2px;
-    font-weight: 700;
-  }
-
-  /* =====================================================
-     FULL WIDTH LAYOUT
-     ===================================================== */
-
-  .govuk-header__container, .govuk-width-container, .app-full-width-container {
-    max-width: 100%;
-    padding: 0 15px;
-  }
-
-  .govuk-grid-column-one-third {
-    padding-left: 0;
-  }
-
-  .govuk-grid-column-one-third > .govuk-body {
-    font-size: 1rem;
-    line-height: 1.25;
-  }
-</style>
 {% endblock %}
