@@ -90,4 +90,9 @@ router.post('/download-maps-v5/rename-option-c', function (req, res) {
   res.redirect('/download-maps-v5/map-pack-contents');
 });
 
+// Layout debug page
+router.post('/download-maps-v5/get-maps-of-your-land-layout', function (req, res) {
+  res.redirect('/download-maps-v5/map-pack-contents');
+});
+
 module.exports = router;

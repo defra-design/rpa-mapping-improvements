@@ -675,8 +675,19 @@
     // Calculate and set header height
     const govukHeader = document.querySelector('.govuk-header');
     const serviceNav = document.querySelector('.govuk-service-navigation');
-    const headerHeight = (govukHeader?.offsetHeight || 0) + (serviceNav?.offsetHeight || 0);
-    document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+
+    function updateHeaderHeight() {
+      const lastHeaderEl = serviceNav || govukHeader;
+      const height = lastHeaderEl ? lastHeaderEl.getBoundingClientRect().bottom : 0;
+      document.documentElement.style.setProperty('--header-height', height + 'px');
+    }
+
+    updateHeaderHeight();
+
+    // Recalculate when header elements resize (font load, menu collapse, etc.)
+    const headerObserver = new ResizeObserver(updateHeaderHeight);
+    if (govukHeader) headerObserver.observe(govukHeader);
+    if (serviceNav) headerObserver.observe(serviceNav);
 
     // Panel close/open functionality (mobile only)
     const mapPanel = document.getElementById('map-panel');
@@ -720,12 +731,8 @@
       }
     });
 
-    // Recalculate header height on resize
+    // Trigger map resize on window resize
     window.addEventListener('resize', function() {
-      const newHeaderHeight = (govukHeader?.offsetHeight || 0) + (serviceNav?.offsetHeight || 0);
-      document.documentElement.style.setProperty('--header-height', newHeaderHeight + 'px');
-
-      // Trigger map resize (let DEFRA component handle its own layout)
       if (window.interactiveMap && window.interactiveMap.api && window.interactiveMap.api.map) {
         window.interactiveMap.api.map.resize();
       }
@@ -1501,7 +1508,8 @@
     // Using datasetsPlugin and interactPlugin for GeoJSON parcel selection
 
     // Calculate available height for map (viewport minus header)
-    const mapHeight = window.innerHeight - (govukHeader?.offsetHeight || 0) - (serviceNav?.offsetHeight || 0);
+    const lastHeaderEl = serviceNav || govukHeader;
+    const mapHeight = window.innerHeight - (lastHeaderEl ? lastHeaderEl.getBoundingClientRect().bottom : 0);
 
     // Create datasets plugin for land covers and hedgerows with showInKey
     // Note: Need placeholder dataset for Key button to appear
