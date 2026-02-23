@@ -1226,9 +1226,44 @@
           `;
         }).join('');
 
-        container.innerHTML = `<div class="govuk-checkboxes govuk-checkboxes--small">${checkboxesHTML}</div>`;
+        const selectAllHTML = `
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input"
+                   id="land-cover-select-all"
+                   type="checkbox">
+            <label class="govuk-label govuk-checkboxes__label" for="land-cover-select-all">
+              Select all
+            </label>
+          </div>
+        `;
 
-        document.querySelectorAll('.land-cover-checkbox').forEach(checkbox => {
+        container.innerHTML = `<div class="govuk-checkboxes govuk-checkboxes--small">${selectAllHTML}${checkboxesHTML}</div>`;
+
+        const selectAllCheckbox = document.getElementById('land-cover-select-all');
+        const allCheckboxes = document.querySelectorAll('.land-cover-checkbox');
+
+        // Select all handler
+        selectAllCheckbox.addEventListener('change', function() {
+          allCheckboxes.forEach(checkbox => {
+            if (checkbox.checked !== selectAllCheckbox.checked) {
+              checkbox.checked = selectAllCheckbox.checked;
+              const landCoverType = checkbox.value;
+              if (checkbox.checked) {
+                activeLandCovers.add(landCoverType);
+                addLandCoverDataset(landCoverType);
+              } else {
+                activeLandCovers.delete(landCoverType);
+                removeLandCoverDataset(landCoverType);
+              }
+            }
+          });
+          filterParcelsByLandCover();
+          updateLandCoversSelectedCount();
+          updateHiddenInputs();
+        });
+
+        // Individual checkbox handler
+        allCheckboxes.forEach(checkbox => {
           checkbox.addEventListener('change', function() {
             const landCoverType = this.value;
             if (this.checked) {
@@ -1238,6 +1273,12 @@
               activeLandCovers.delete(landCoverType);
               removeLandCoverDataset(landCoverType);
             }
+            // Update select all state
+            const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+
             filterParcelsByLandCover();
             updateLandCoversSelectedCount();
             updateHiddenInputs();
