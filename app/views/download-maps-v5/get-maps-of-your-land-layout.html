@@ -224,9 +224,8 @@
 
     .app-map-fullscreen__panel-close {
       display: flex;
-      position: absolute;
-      top: 10px;
-      right: 10px;
+      float: right;
+      margin: 10px 0 0;
       width: 44px;
       height: 44px;
       background: none;
@@ -237,7 +236,6 @@
       font-size: 32px;
       line-height: 1;
       color: #0b0c0c;
-      z-index: 11;
     }
 
     .app-map-fullscreen__panel-close:hover {
@@ -334,11 +332,11 @@
 
   <!-- Side panel -->
   <div class="app-map-fullscreen__panel" id="map-panel" role="region" aria-label="Map controls and selection panel">
-    <!-- Close button (mobile only) -->
-    <button class="app-map-fullscreen__panel-close" id="panel-close" aria-label="Close panel">
-      <span aria-hidden="true">&times;</span>
-    </button>
     <div class="app-map-fullscreen__panel-content" id="panel-content">
+      <!-- Close button (mobile only) -->
+      <button class="app-map-fullscreen__panel-close" id="panel-close" aria-label="Close panel">
+        <span aria-hidden="true">&times;</span>
+      </button>
       <!-- Title -->
       <h1 class="govuk-heading-m govuk-!-margin-bottom-2 govuk-!-margin-top-4">{{ data['farm-name'] | default('Cannon Hall Farm') }}</h1>
 
