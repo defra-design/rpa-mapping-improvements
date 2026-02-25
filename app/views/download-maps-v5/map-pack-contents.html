@@ -29,7 +29,7 @@
     <h2 class="govuk-heading-m">Parcels in map pack ({{ parcelsGeoJson.features | length }})</h2>
 
     {% if parcelsGeoJson.features and parcelsGeoJson.features.length > 0 %}
-
+    <div style="overflow: scroll;">
       {% from "govuk/components/table/macro.njk" import govukTable %}
 
       {% set tableRows = [] %}
@@ -59,7 +59,7 @@
         ],
         rows: tableRows
       }) }}
-
+    </div>
     {% else %}
       <p class="govuk-body govuk-hint">No parcels selected</p>
     {% endif %}
@@ -71,7 +71,7 @@
     <!-- <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible"> -->
 
     <p class="govuk-body">
-      <a href="/download-maps-v5/get-maps-of-your-land" class="govuk-link">Back to map</a>
+      <a href="javascript:window.history.back()" class="govuk-link">Back to map</a>
     </p>
 
   </div>
