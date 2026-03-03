@@ -59,13 +59,14 @@
 
   <!-- Side panel -->
   <div class="app-map-fullscreen__panel" id="map-panel" role="region" aria-label="Map controls and selection panel">
-    <!-- Close button (mobile only) -->
-    <button class="app-map-fullscreen__panel-close" id="panel-close" aria-label="Close panel">
-      <span aria-hidden="true">&times;</span>
-    </button>
     <div class="app-map-fullscreen__panel-content" id="panel-content">
-      <!-- Title -->
-      <h1 class="govuk-heading-m govuk-!-margin-bottom-2 govuk-!-margin-top-1">{{ data['farm-name'] | default('Cannon Hall Farm') }}</h1>
+      <!-- Title row with close button on mobile -->
+      <div class="app-panel-header">
+        <h1 class="govuk-heading-m govuk-!-margin-bottom-2">{{ data['farm-name'] | default('Cannon Hall Farm') }}</h1>
+        <button class="app-map-fullscreen__panel-close" id="panel-close" aria-label="Close panel">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
 
       <!-- Whole holding information -->
       <p class="govuk-body-s govuk-!-margin-bottom-1">
@@ -104,6 +105,11 @@
         ]
       }) }}
 
+      <button type="button" class="app-map-view-button" id="panel-map-view-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Map view
+      </button>
+
       {% from "govuk/components/button/macro.njk" import govukButton %}
       <form method="post" id="selections-form">
         <input type="hidden" name="selected-parcels" id="selected-parcels-input" value="{{ data['selected-parcels'] | default('') }}">
@@ -137,6 +143,73 @@
 <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/beta/datasets/dist/umd/index.js"></script>
 <script src="/plugin-assets/%40defra%2Finteractive-map/plugins/interact/dist/umd/index.js"></script>
 <script src="/public/javascripts/request.js"></script>
+
+<script>
+  // Keep GOV.UK tabs interactive at all viewport widths.
+  // The GOV.UK tabs JS tears down tab functionality below the tablet
+  // breakpoint (649px), reverting to a plain list of links. This script
+  // detects teardown (all panels losing --hidden) and immediately
+  // re-applies panel visibility, plus adds its own click handlers so
+  // tab switching always works regardless of viewport width.
+  (function() {
+    document.addEventListener('DOMContentLoaded', function() {
+      var tabsEl = document.querySelector('.govuk-tabs');
+      if (!tabsEl) return;
+
+      var tabLinks = Array.from(tabsEl.querySelectorAll('.govuk-tabs__tab'));
+      var panels = Array.from(tabsEl.querySelectorAll('.govuk-tabs__panel'));
+      var listItems = Array.from(tabsEl.querySelectorAll('.govuk-tabs__list-item'));
+      var currentTabId = tabLinks.length ? tabLinks[0].hash.substring(1) : null;
+
+      function showPanel(tabId) {
+        currentTabId = tabId;
+        panels.forEach(function(panel) {
+          if (panel.id === tabId) {
+            panel.classList.remove('govuk-tabs__panel--hidden');
+          } else {
+            panel.classList.add('govuk-tabs__panel--hidden');
+          }
+        });
+        listItems.forEach(function(li) {
+          var link = li.querySelector('.govuk-tabs__tab');
+          if (link && link.hash === '#' + tabId) {
+            li.classList.add('govuk-tabs__list-item--selected');
+          } else {
+            li.classList.remove('govuk-tabs__list-item--selected');
+          }
+        });
+      }
+
+      // Add our own click handlers — these work whether GOV.UK's are
+      // attached (desktop) or torn down (mobile)
+      tabLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          showPanel(this.hash.substring(1));
+        });
+      });
+
+      // Watch for GOV.UK teardown: it removes --hidden from ALL panels.
+      // When that happens, re-hide the inactive ones.
+      var suppressObserver = false;
+      var observer = new MutationObserver(function() {
+        if (suppressObserver) return;
+        var allVisible = panels.every(function(p) {
+          return !p.classList.contains('govuk-tabs__panel--hidden');
+        });
+        if (allVisible && panels.length > 1) {
+          suppressObserver = true;
+          showPanel(currentTabId || panels[0].id);
+          suppressObserver = false;
+        }
+      });
+
+      panels.forEach(function(panel) {
+        observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+      });
+    });
+  })();
+</script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -205,23 +278,32 @@
     // Calculate and set header height
     const govukHeader = document.querySelector('.govuk-header');
     const serviceNav = document.querySelector('.govuk-service-navigation');
-    const headerHeight = (govukHeader?.offsetHeight || 0) + (serviceNav?.offsetHeight || 0);
-    document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+
+    function updateHeaderHeight() {
+      const lastHeaderEl = serviceNav || govukHeader;
+      const height = lastHeaderEl ? lastHeaderEl.getBoundingClientRect().bottom : 0;
+      document.documentElement.style.setProperty('--header-height', height + 'px');
+    }
+
+    updateHeaderHeight();
+
+    // Recalculate when header elements resize (font load, menu collapse, etc.)
+    const headerObserver = new ResizeObserver(updateHeaderHeight);
+    if (govukHeader) headerObserver.observe(govukHeader);
+    if (serviceNav) headerObserver.observe(serviceNav);
 
     // Panel close/open functionality (mobile only)
     const mapPanel = document.getElementById('map-panel');
     const panelClose = document.getElementById('panel-close');
     const menuBtn = document.getElementById('menu-btn');
 
-    // Close panel (mobile)
-    if (panelClose && mapPanel) {
+    // Close panel (mobile) - trigger Map view to enter fullscreen
+    if (panelClose) {
       panelClose.addEventListener('click', function() {
-        mapPanel.classList.add('app-map-fullscreen__panel--closed');
-        setTimeout(() => {
-          if (window.interactiveMap && window.interactiveMap.api && window.interactiveMap.api.map) {
-            window.interactiveMap.api.map.resize();
-          }
-        }, 350);
+        const mapViewButton = document.querySelector('.im-c-open-map-button');
+        if (mapViewButton) {
+          mapViewButton.click();
+        }
       });
     }
 
@@ -252,12 +334,8 @@
       }
     });
 
-    // Recalculate header height on resize
+    // Trigger map resize on window resize
     window.addEventListener('resize', function() {
-      const newHeaderHeight = (govukHeader?.offsetHeight || 0) + (serviceNav?.offsetHeight || 0);
-      document.documentElement.style.setProperty('--header-height', newHeaderHeight + 'px');
-
-      // Trigger map resize (let DEFRA component handle its own layout)
       if (window.interactiveMap && window.interactiveMap.api && window.interactiveMap.api.map) {
         window.interactiveMap.api.map.resize();
       }
@@ -1052,7 +1130,8 @@
     // Using datasetsPlugin and interactPlugin for GeoJSON parcel selection
 
     // Calculate available height for map (viewport minus header)
-    const mapHeight = window.innerHeight - (govukHeader?.offsetHeight || 0) - (serviceNav?.offsetHeight || 0);
+    const lastHeaderEl = serviceNav || govukHeader;
+    const mapHeight = window.innerHeight - (lastHeaderEl ? lastHeaderEl.getBoundingClientRect().bottom : 0);
 
     // Create datasets plugin for land covers and hedgerows with showInKey
     // Note: Need placeholder dataset for Key button to appear
@@ -1087,10 +1166,11 @@
 
     interactiveMap = new defra.InteractiveMap('map', {
       mapProvider: defra.maplibreProvider(),
-      behaviour: 'inline',
+      behaviour: 'hybrid',
       minZoom: 6,
       maxZoom: 20,
       enableZoomControls: true,
+      preserveStateOnClose: true,
       containerHeight: mapHeight + 'px',
       mapStyle: {
         url: '{{ data.VTS_OUTDOOR_URL }}',
@@ -1163,6 +1243,15 @@
     });
 
     window.interactiveMap = interactiveMap;
+
+    // Proxy: our panel "Map view" button clicks the hidden DEFRA button
+    const panelMapViewBtn = document.getElementById('panel-map-view-btn');
+    if (panelMapViewBtn) {
+      panelMapViewBtn.addEventListener('click', function() {
+        const defraButton = document.querySelector('.im-c-open-map-button');
+        if (defraButton) defraButton.click();
+      });
+    }
 
     // =====================================================
     // DATASETS PLUGIN READY EVENT
@@ -1313,6 +1402,57 @@
     z-index: 100;
   }
 
+  /* Hide header and service navigation when DEFRA map is fullscreen */
+  html.im-is-fullscreen .govuk-header,
+  html.im-is-fullscreen .govuk-service-navigation {
+    display: none;
+  }
+
+  /* Hide the DEFRA component's own Map view button - we proxy it via our own */
+  .im-c-open-map-button {
+    display: none !important;
+  }
+
+  /* Our Map view button - only visible on mobile */
+  .app-map-view-button {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #505a5f;
+    background: #ffffff;
+    font-family: "GDS Transport", arial, sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #0b0c0c;
+    cursor: pointer;
+    margin-bottom: 15px;
+  }
+
+  .app-map-view-button:hover {
+    background-color: #f3f2f1;
+  }
+
+  .app-map-view-button:focus-visible {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    background-color: #ffdd00;
+  }
+
+  @media (max-width: 640px) {
+    .app-map-view-button {
+      display: inline-flex;
+    }
+
+    .govuk-tabs__panel {
+      padding: 0;
+    }
+
+    .govuk-tabs__list {
+      margin-bottom: 0;
+    }
+  }
+
   .app-map-fullscreen {
     position: fixed;
     display: flex;
@@ -1420,22 +1560,33 @@
   }
 
   @media (max-width: 640px) {
+    .app-map-fullscreen {
+      z-index: 101;
+    }
+
     .app-map-fullscreen__panel {
       position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-      width: 400px;
-      max-width: calc(100vw - 60px);
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 100vw;
+    }
+
+    .app-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0;
+    }
+
+    .app-panel-header .govuk-heading-m {
+      margin-top: 0;
+      margin-bottom: 0;
     }
 
     .app-map-fullscreen__panel-close {
       display: flex;
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 44px;
-      height: 44px;
+      flex-shrink: 0;
       background: none;
       border: none;
       cursor: pointer;
@@ -1444,7 +1595,6 @@
       font-size: 32px;
       line-height: 1;
       color: #0b0c0c;
-      z-index: 11;
     }
 
     .app-map-fullscreen__panel-close:hover {
@@ -1459,7 +1609,11 @@
 
     .app-map-fullscreen__panel-content {
       padding-top: 15px;
-      padding-right: 50px;
+    }
+
+    .app-map-fullscreen__panel-content > .govuk-heading-m {
+      font-size: 1.5rem;
+      line-height: 1.25;
     }
 
     .app-map-fullscreen__panel--closed ~ .app-map-fullscreen__menu-btn {
@@ -1600,12 +1754,64 @@
     margin-bottom: 0;
   }
 
+  /* Force tabs appearance at all viewport widths (override GOV.UK mobile list) */
+  .govuk-tabs__title {
+    display: none;
+  }
+
   .govuk-tabs__list {
     flex-shrink: 0;
+    border-bottom: 1px solid #b1b4b6;
+  }
+
+  .govuk-tabs__list::after {
+    content: "";
+    display: block;
+    clear: both;
+  }
+
+  .govuk-tabs__list-item {
+    position: relative;
+    margin-right: 5px;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding: 10px 10px;
+    float: left;
+    background-color: #f3f2f1;
+    text-align: center;
+  }
+
+  .govuk-tabs__list-item::before {
+    content: none;
+  }
+
+  .govuk-tabs__list-item--selected {
+    position: relative;
+    margin-top: -5px;
+    margin-bottom: -1px;
+    padding: 14px 9px 16px;
+    border: 1px solid #b1b4b6;
+    border-bottom: 0;
+    background-color: #ffffff;
+  }
+
+  .govuk-tabs__list-item--selected .govuk-tabs__tab {
+    text-decoration: none;
   }
 
   .govuk-tabs__tab {
     font-size: 1rem;
+    margin-bottom: 0;
+    color: #0b0c0c;
+  }
+
+  .govuk-tabs__tab::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
   }
 
   .govuk-tabs__panel {
