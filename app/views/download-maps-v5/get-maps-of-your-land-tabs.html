@@ -1426,7 +1426,7 @@
     font-weight: 400;
     color: #0b0c0c;
     cursor: pointer;
-    margin-bottom: 15px;
+    /* margin-bottom: 15px; */
   }
 
   .app-map-view-button:hover {
@@ -1446,10 +1446,18 @@
 
     .govuk-tabs__panel {
       padding: 0;
+      margin-bottom: 0;
     }
 
     .govuk-tabs__list {
       margin-bottom: 0;
+    }
+
+    .govuk-header__container,
+    .govuk-width-container,
+    .app-full-width-container {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
     }
   }
 
