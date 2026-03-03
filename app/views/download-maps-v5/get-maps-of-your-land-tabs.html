@@ -1368,26 +1368,16 @@
 
   .app-map-fullscreen__panel-content {
     flex: 1;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
     padding: 15px;
   }
 
-  .app-map-fullscreen__panel-content::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .app-map-fullscreen__panel-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-
-  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 0;
-  }
-
-  .app-map-fullscreen__panel-content::-webkit-scrollbar-thumb:hover {
-    background: #555;
+  .app-map-fullscreen__panel-content > .govuk-heading-m,
+  .app-map-fullscreen__panel-content > .govuk-body-s {
+    flex-shrink: 0;
   }
 
   .app-map-fullscreen__panel-close {
@@ -1479,6 +1469,10 @@
     .app-map-fullscreen__panel:not(.app-map-fullscreen__panel--closed) ~ .app-map-fullscreen__menu-btn {
       display: none;
     }
+
+    .scrollable-checkbox-container {
+      min-height: 150px;
+    }
   }
 
   /* =====================================================
@@ -1486,13 +1480,14 @@
      ===================================================== */
 
   .scrollable-checkbox-container {
-    max-height: 325px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: visible;
     margin-left: -15px;
     padding-left: 15px;
     padding-right: 10px;
-    margin-bottom: 30px;
+    margin-bottom: 0;
   }
 
   #parcels-list .govuk-checkboxes,
@@ -1597,12 +1592,41 @@
      TABS STYLES
      ===================================================== */
 
+  .govuk-tabs {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+  }
+
+  .govuk-tabs__list {
+    flex-shrink: 0;
+  }
+
   .govuk-tabs__tab {
     font-size: 1rem;
   }
 
   .govuk-tabs__panel {
     padding: 15px 0;
+    display: none;
+  }
+
+  .govuk-tabs__panel:not(.govuk-tabs__panel--hidden) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .govuk-tabs__panel > p {
+    flex-shrink: 0;
+  }
+
+  #selections-form {
+    flex-shrink: 0;
+    padding-top: 15px;
   }
 
   /* Custom popup styles */
