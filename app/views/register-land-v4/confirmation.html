@@ -47,6 +47,16 @@
         We will aim to action your request within 5 working days. This may take longer if we need to contact you for more information.
       </p>
 
+      {% from "govuk/components/button/macro.njk" import govukButton %}
+
+      {{ govukButton({
+        text: "Print page",
+        classes: "govuk-button--secondary",
+        attributes: {
+          onclick: "window.print()"
+        }
+      }) }}
+
       <ul class="govuk-list">
         <!-- <li>
           <a class="govuk-link" href="../business-overview">Return to business overview</a>
