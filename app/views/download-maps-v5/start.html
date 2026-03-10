@@ -41,7 +41,7 @@
 
       {{ govukButton({
         text: "Start now",
-        href: "get-maps-of-your-land",
+        href: "get-maps-of-your-land-tabs" if data['layout'] == "tabs" else "get-maps-of-your-land",
         isStartButton: true
       }) }}
 
