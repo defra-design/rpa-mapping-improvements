@@ -360,10 +360,9 @@
               label: landCoverType,
               geojson: { type: 'FeatureCollection', features: filteredFeatures },
               fill: color,
-              stroke: '#0b0c0c',
-              strokeWidth: 1.5,
               showInKey: true,
               showInLayers: false,
+              interactive: false,
               minZoom: 0,
               maxZoom: 24
             });
@@ -456,7 +455,7 @@
         type: 'line',
         source: 'parcels',
         paint: {
-          'line-color': '#1d70b8',
+          'line-color': '#B550B5',
           'line-width': 2
         }
       });
@@ -669,7 +668,7 @@
               id: 'parcels-outline',
               type: 'line',
               source: 'parcels',
-              paint: { 'line-color': '#1d70b8', 'line-width': 2 }
+              paint: { 'line-color': '#B550B5', 'line-width': 2 }
             });
 
             interactPlugin.enable();
