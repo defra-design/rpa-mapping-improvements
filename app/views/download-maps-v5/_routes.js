@@ -12,7 +12,7 @@ const router = govukPrototypeKit.requests.setupRouter()
 router.post('/download-maps-v5/demo-start', function (req, res) {
   // Use defaults if fields are empty
   if (!req.session.data['farm-name'] || req.session.data['farm-name'].trim() === '') {
-    req.session.data['farm-name'] = 'Cannon Hall Farm';
+    req.session.data['farm-name'] = 'Orchard Park Farm';
   }
   if (!req.session.data['sbi'] || req.session.data['sbi'].trim() === '') {
     req.session.data['sbi'] = '106332870';
