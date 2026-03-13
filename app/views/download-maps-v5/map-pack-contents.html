@@ -74,7 +74,11 @@
 
     <div class="govuk-button-group">
       {{ govukButton({
-        text: "Download map"
+        text: "Download map",
+        href: "/public/pdf/get-maps-of-your-land-map-pack.pdf",
+        attributes: {
+          download: ""
+        }
       }) }}
 
       {{ govukButton({
