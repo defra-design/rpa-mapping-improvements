@@ -21,6 +21,15 @@ router.post('/download-maps-v5/demo-start', function (req, res) {
 });
 
 // Main map page
+router.post('/download-maps-v5/get-maps-of-your-land-tabs', function (req, res) {
+  console.log('Tabs layout - Saved selections:', {
+    parcels: req.session.data['selected-parcels'],
+    landCovers: req.session.data['selected-land-covers'],
+    hedgerows: req.session.data['hedgerows-enabled']
+  });
+  res.redirect('/download-maps-v5/map-pack-contents');
+});
+
 router.post('/download-maps-v5/get-maps-of-your-land', function (req, res) {
   console.log('Saved selections:', {
     parcels: req.session.data['selected-parcels'],
