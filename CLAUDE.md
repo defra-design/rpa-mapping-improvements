@@ -191,3 +191,33 @@ Each prototype version is kept intact for reference and testing. When creating a
 5. Maintain backward compatibility - old versions should continue to work
 
 The homepage (`/`) displays an accordion showing all prototype versions with changelogs.
+
+## Working Conventions
+
+### Visual debugging
+
+When the user shares a screenshot to report a visual issue:
+1. Describe what you see in the screenshot before making changes.
+2. Read the relevant Sass/CSS and Nunjucks template to understand the current layout before adjusting.
+3. For GOV.UK Design System components, check the official component documentation to understand expected behaviour before overriding styles.
+4. Avoid trial-and-error CSS iteration — diagnose first, fix once.
+
+### GOV.UK Design System
+
+- Use GOV.UK Frontend classes and components before writing custom CSS.
+- Follow GDS patterns for form validation, error summaries, and page flow.
+- Nunjucks macros are imported from `govuk-prototype-kit`. Use the macro syntax rather than raw HTML for standard components.
+- Custom styles go in `app/assets/sass/` and should not override GOV.UK Frontend selectors unless strictly necessary.
+
+### DEFRA Map Component
+
+- See `DEFRA-MAP-COMPONENT.md` for the full API reference.
+- Map style URLs, API keys, and tile endpoints are configured in `.env` — never hardcode these.
+- The map component is maintained by a separate DEFRA team. If something doesn't work as expected, check the component docs before assuming a bug in this prototype.
+
+### Console errors
+
+When the user pastes a console error or stack trace:
+1. Read the referenced file and line number first.
+2. Trace the error to its root cause before suggesting a fix.
+3. Do not guess at fixes without reading the source.

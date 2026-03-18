@@ -72,7 +72,7 @@ router.post("/register-land-v4/know-parcel-id", async function (req, res) {
 
     // Not an existing parcel
     if (!parcelId) {
-      req.session.data['know-parcel-id-input-error'] = { text: 'Parcel ID doesn\'t exist' };
+      req.session.data['know-parcel-id-input-error'] = { text: 'The parcel ID you entered is not correct. If you have forgotten it, select \'no\' and search for the land by location.' };
       req.session.data['know-parcel-id-value'] = userEnteredId;
       return res.redirect('/register-land-v4/know-parcel-id');
     }
