@@ -1,0 +1,205 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Land cover colours – Get maps of your land - {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block header %}
+  {{ govukHeader() }}
+{% endblock %}
+
+{% set excludeBackLink = true %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      <h1 class="govuk-heading-l">
+        <span class="govuk-caption-l">Get maps of your land</span>
+        Land cover colours
+      </h1>
+
+      <p class="govuk-body">Full list of RPA land cover classifications with suggested map fill colours. Source: <a class="govuk-link" href="https://www.gov.uk/government/publications/land-use-codes-rural-payments/land-use-codes">GOV.UK land use codes</a>.</p>
+
+      <h2 class="govuk-heading-m">Agricultural land covers</h2>
+
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header" style="width: 80px">Code</th>
+            <th scope="col" class="govuk-table__header">Land cover</th>
+            <th scope="col" class="govuk-table__header" style="width: 100px">Colour</th>
+            <th scope="col" class="govuk-table__header" style="width: 100px">Hex</th>
+            <th scope="col" class="govuk-table__header" style="width: 80px">Preview</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body" id="agricultural-body"></tbody>
+      </table>
+
+      <h2 class="govuk-heading-m">Non-agricultural land covers</h2>
+
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header" style="width: 80px">Code</th>
+            <th scope="col" class="govuk-table__header">Land cover</th>
+            <th scope="col" class="govuk-table__header" style="width: 100px">Colour</th>
+            <th scope="col" class="govuk-table__header" style="width: 100px">Hex</th>
+            <th scope="col" class="govuk-table__header" style="width: 80px">Preview</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body" id="non-agricultural-body"></tbody>
+      </table>
+
+      <h2 class="govuk-heading-m">JavaScript colour map</h2>
+      <p class="govuk-body">Copy this object into your map page to use these colours.</p>
+      <div style="position: relative;">
+        <button class="govuk-button govuk-button--secondary" id="copy-code-btn" style="position: absolute; top: 10px; right: 10px; margin: 0;" onclick="copyColourMap()">Copy code</button>
+        <pre class="govuk-body" id="colour-map-output" style="background: #f3f2f1; padding: 20px; padding-top: 60px; overflow-x: auto; font-size: 14px; line-height: 1.6;"></pre>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const agriculturalLandCovers = [
+      { code: 'PG01', name: 'Permanent Grassland', colour: '#DEFADE' },
+      { code: 'TG01', name: 'Temporary Grassland', colour: '#85994B' },
+      { code: 'FA01', name: 'Fallow Land', colour: '#F3F2F1' },
+      { code: 'AC01', name: 'Arable Land', colour: '#FAF0B9' },
+      { code: 'TC01', name: 'Permanent Crops', colour: '#7B2D8E' },
+      { code: 'NU01', name: 'Nursery Crops', colour: '#A8D08D' },
+      { code: 'SR01', name: 'Short Rotation Coppice', colour: '#6B8E5A' },
+      { code: 'LG01', name: 'Leguminous and Nitrogen-Fixing Crops', colour: '#C5E0B4' }
+    ];
+
+    const nonAgriculturalLandCovers = [
+      { code: 'NA02', name: 'Temporary non-agricultural area/feature', colour: '#E0E0E0' },
+      { code: 'MT05', name: 'Airstrip/airports', colour: '#8C8C8C' },
+      { code: 'PL01', name: 'Non-utilised bank', colour: '#C9B97A' },
+      { code: 'IW07', name: 'Bog', colour: '#7A5C3A' },
+      { code: 'RO03', name: 'Boulders', colour: '#A0A0A0' },
+      { code: 'HE02', name: 'Bracken, heather, heathland', colour: '#D4A0D4' },
+      { code: 'CF01', name: 'Cliff', colour: '#B0B0B0' },
+      { code: 'AB01', name: 'Farm Building', colour: '#D6CABD' },
+      { code: 'AB09', name: 'Farmyards', colour: '#C4B8A8' },
+      { code: 'IW06', name: 'Fen, marsh, swamp', colour: '#7AAB7A' },
+      { code: 'NT01', name: 'Gallop', colour: '#D2B48C' },
+      { code: 'UT06', name: 'General utility', colour: '#CCCCCC' },
+      { code: 'AB06', name: 'Glasshouse/polytunnels', colour: '#D0E8F0' },
+      { code: 'RL04', name: 'Golf course', colour: '#4CAF50' },
+      { code: 'HS01', name: 'Hard Standings', colour: '#F2E6D4' },
+      { code: 'HE03', name: 'Heap', colour: '#B89A6A' },
+      { code: 'MW04', name: 'Intertidal habitats', colour: '#6BAED6' },
+      { code: 'MS04', name: 'Mineral extraction site', colour: '#8B7355' },
+      { code: 'CM01', name: 'Peat production', colour: '#5C4033' },
+      { code: 'WF03', name: 'Pond', colour: '#4A90D9' },
+      { code: 'MT04', name: 'Railway', colour: '#6D6D6D' },
+      { code: 'MW03', name: 'Reed bed', colour: '#8FBC8F' },
+      { code: 'NR01', name: 'Residential dwelling, House', colour: '#E8927C' },
+      { code: 'WO17', name: 'Residential Gardens', colour: '#90C87C' },
+      { code: 'MT03', name: 'Road', colour: '#787878' },
+      { code: 'RO04', name: 'Rocky outcrop', colour: '#9E9E9E' },
+      { code: 'CF03', name: 'Sand dunes', colour: '#F5DEB3' },
+      { code: 'MW05', name: 'Saline habitats', colour: '#5B9BD5' },
+      { code: 'MW01', name: 'Salt marsh', colour: '#7EC8A0' },
+      { code: 'NF02', name: 'Scattered bracken/heather', colour: '#C4A0C4' },
+      { code: 'NF08', name: 'Scattered features (mixed)', colour: '#C8C8C8' },
+      { code: 'NF07', name: 'Scattered manmade features', colour: '#BABABA' },
+      { code: 'NF06', name: 'Scattered natural features', colour: '#B8D4A8' },
+      { code: 'NF01', name: 'Scattered rock', colour: '#AAAAAA' },
+      { code: 'NF03', name: 'Scattered scrub', colour: '#A8C890' },
+      { code: 'NF05', name: 'Scattered water features', colour: '#7CB4D4' },
+      { code: 'RO02', name: 'Scree', colour: '#969696' },
+      { code: 'WO25', name: 'Scrub - Ungrazeable', colour: '#F8CDBC' },
+      { code: 'WO25b', name: 'Notional - Scrub', colour: '#FFDD00' },
+      { code: 'IW05', name: 'Shingle', colour: '#D4C8A0' },
+      { code: 'UT01', name: 'Solar panels', colour: '#3D5A99' },
+      { code: 'RL03', name: 'Sports and Recreation', colour: '#66BB6A' },
+      { code: 'SA02', name: 'Storage Area', colour: '#D4A76A' },
+      { code: 'ST05', name: 'Structure', colour: '#A08060' },
+      { code: 'MW02', name: 'Tidal areas', colour: '#4682B4' },
+      { code: 'NT03', name: 'Track - Natural Surface', colour: '#B58840' },
+      { code: 'MT01', name: 'Metalled track', colour: '#505A5F' },
+      { code: 'CM02', name: 'Turf production', colour: '#4A7C3F' },
+      { code: 'CF02', name: 'Vegetated shingle', colour: '#B8C890' },
+      { code: 'WF01', name: 'Drain/Ditch/Dyke', colour: '#5CACEE' },
+      { code: 'IW02', name: 'Rivers and streams type 2', colour: '#4A7FB5' },
+      { code: 'IW03', name: 'Rivers and streams type 3', colour: '#3A6FA5' },
+      { code: 'UT07', name: 'Water treatment works', colour: '#4F94CD' },
+      { code: 'WO12', name: 'Woodland', colour: '#E4EFDF' },
+      { code: 'WO18', name: 'Natural Woodland', colour: '#2D7A3A' },
+      { code: 'BB01', name: 'Stone wall', colour: '#8E8E8E' }
+    ];
+
+    function renderTable(data, tbodyId) {
+      const tbody = document.getElementById(tbodyId);
+      data.forEach(item => {
+        const row = document.createElement('tr');
+        row.className = 'govuk-table__row';
+        row.innerHTML = `
+          <td class="govuk-table__cell">${item.code}</td>
+          <td class="govuk-table__cell">${item.name}</td>
+          <td class="govuk-table__cell">
+            <input type="color" value="${item.colour}" data-name="${item.name}"
+              style="width: 40px; height: 30px; padding: 0; border: 1px solid #b1b4b6; cursor: pointer;"
+              onchange="updateColour(this)">
+          </td>
+          <td class="govuk-table__cell">
+            <code class="hex-value">${item.colour}</code>
+          </td>
+          <td class="govuk-table__cell">
+            <div style="width: 60px; height: 30px; background: ${item.colour}; border: 1px solid #b1b4b6;"></div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function copyColourMap() {
+      const code = document.getElementById('colour-map-output').textContent;
+      const btn = document.getElementById('copy-code-btn');
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = 'Copy code'; }, 2000);
+      });
+    }
+
+    function updateColour(input) {
+      const row = input.closest('tr');
+      const hexCell = row.querySelector('.hex-value');
+      const preview = row.querySelector('td:last-child div');
+      hexCell.textContent = input.value.toUpperCase();
+      preview.style.background = input.value;
+      generateColourMap();
+    }
+
+    function generateColourMap() {
+      const allCovers = [...agriculturalLandCovers, ...nonAgriculturalLandCovers];
+      const inputs = document.querySelectorAll('input[type="color"]');
+      const map = {};
+
+      inputs.forEach((input, i) => {
+        const name = input.getAttribute('data-name');
+        const colour = input.value.toUpperCase();
+        map[name] = colour;
+      });
+
+      let output = 'const landCoverColors = {\n';
+      const entries = Object.entries(map);
+      entries.forEach(([name, colour], i) => {
+        const comma = i < entries.length - 1 ? ',' : '';
+        output += `  '${name}': '${colour}'${comma}\n`;
+      });
+      output += '};';
+
+      document.getElementById('colour-map-output').textContent = output;
+    }
+
+    renderTable(agriculturalLandCovers, 'agricultural-body');
+    renderTable(nonAgriculturalLandCovers, 'non-agricultural-body');
+    generateColourMap();
+  </script>
+
+{% endblock %}

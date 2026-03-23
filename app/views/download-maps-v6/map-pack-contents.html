@@ -1,0 +1,134 @@
+{% extends "layouts/main.html" %}
+
+{% block pageTitle %}
+  Map pack contents – {{ serviceName }} – GOV.UK Prototype Kit
+{% endblock %}
+
+{% block content %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+    <h1 class="govuk-heading-xl">
+      <span class="govuk-caption-xl">{{ data['farm-name'] | default('Orchard Park Farm') }}</span>
+      Map pack contents
+    </h1>
+
+    {% set parcels = data['selected-parcels'] | default('[]') | fromJson %}
+    {% set landCovers = data['selected-land-covers'] | default('[]') | fromJson %}
+    {% set hedgerows = data['selected-hedgerows'] | default('[]') | fromJson %}
+
+    <h2 class="govuk-heading-m">Parcels in map pack: {{ parcels | length }}</h2>
+
+    {% if parcels and parcels.length > 0 %}
+    <div style="overflow: scroll;">
+      {% from "govuk/components/table/macro.njk" import govukTable %}
+
+      {% set tableRows = [] %}
+      {% for parcel in parcels %}
+        {% set parcelId = parcel.SHEET_ID + " " + parcel.PARCEL_ID %}
+        {% set parcelNgc = parcel.SHEET_ID + parcel.PARCEL_ID %}
+        {% set tableRows = (tableRows.push([
+          { text: parcelId, classes: "govuk-!-font-weight-bold" },
+          { text: parcel.AREA_HA | default(0) | round(4), format: "numeric" },
+          { html: '<span class="land-covers-cell" data-parcel-id="' + parcelNgc + '">—</span>' },
+          { html: '<span class="hedgerows-cell" data-parcel-id="' + parcelNgc + '">—</span>' }
+        ]), tableRows) %}
+      {% endfor %}
+
+      {{ govukTable({
+        caption: "Land parcels",
+        captionClasses: "govuk-visually-hidden",
+        firstCellIsHeader: true,
+        head: [
+          { text: "Parcel ID" },
+          { text: "Area (ha)", format: "numeric" },
+          { text: "Land covers" },
+          { text: "Hedgerows" }
+        ],
+        rows: tableRows
+      }) }}
+    </div>
+    {% else %}
+      <p class="govuk-body govuk-hint">No parcels selected</p>
+    {% endif %}
+
+    <!-- Store data for JavaScript processing -->
+    <script type="application/json" id="land-covers-data">{{ data['selected-land-covers'] | default('[]') | safe }}</script>
+    <script type="application/json" id="hedgerows-data">{{ data['selected-hedgerows'] | default('[]') | safe }}</script>
+
+    {% from "govuk/components/button/macro.njk" import govukButton %}
+
+    <div class="govuk-button-group">
+      {{ govukButton({
+        text: "Download map",
+        href: "/public/pdf/get-maps-of-your-land-map-pack-01.pdf",
+        attributes: {
+          download: ""
+        }
+      }) }}
+
+      {{ govukButton({
+        text: "Back to map",
+        classes: "govuk-button--secondary",
+        href: "javascript:window.history.back()"
+      }) }}
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Load and display land covers for each parcel
+  try {
+    var landCoversDataEl = document.getElementById('land-covers-data');
+    var landCovers = landCoversDataEl ? JSON.parse(landCoversDataEl.textContent) : [];
+
+    if (landCovers.length > 0) {
+      document.querySelectorAll('.land-covers-cell').forEach(function(cell) {
+        var parcelId = cell.dataset.parcelId;
+        var parcelLandCovers = landCovers.filter(function(lc) {
+          return (lc.SHEET_ID + lc.PARCEL_ID) === parcelId;
+        });
+
+        if (parcelLandCovers.length > 0) {
+          var html = parcelLandCovers.map(function(lc) {
+            var area = parseFloat(lc.AREA_HA || 0).toFixed(4);
+            return (lc.DESCRIPTION || 'Unknown') + ' (' + area + ' ha)';
+          }).join('<br>');
+          cell.innerHTML = html;
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error loading land covers:', e);
+  }
+
+  // Load and display hedgerows for each parcel
+  try {
+    var hedgerowsDataEl = document.getElementById('hedgerows-data');
+    var hedgerowsArr = hedgerowsDataEl ? JSON.parse(hedgerowsDataEl.textContent) : [];
+
+    if (hedgerowsArr.length > 0) {
+      document.querySelectorAll('.hedgerows-cell').forEach(function(cell) {
+        var parcelId = cell.dataset.parcelId;
+        var parcelHedgerows = hedgerowsArr.filter(function(h) {
+          return (h.REF_PARCEL_SHEET_ID + h.REF_PARCEL_PARCEL_ID) === parcelId;
+        });
+
+        if (parcelHedgerows.length > 0) {
+          var totalLength = parcelHedgerows.reduce(function(sum, h) {
+            return sum + (parseFloat(h.LENGTH) || 0);
+          }, 0);
+          cell.innerHTML = parcelHedgerows.length + ' hedgerow' + (parcelHedgerows.length !== 1 ? 's' : '') + '<br>' + totalLength.toFixed(2) + ' m total';
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error loading hedgerows:', e);
+  }
+});
+</script>
+
+{% endblock %}
