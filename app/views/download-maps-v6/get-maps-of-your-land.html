@@ -446,6 +446,9 @@
   .parcel-details-section:last-child {
     border-bottom: none;
   }
+  .parcel-details-section .govuk-summary-list__key {
+    width: 55%;
+  }
   </style>
 {% endblock %}
 
@@ -1438,8 +1441,8 @@
 
       let html = '<div class="parcel-details-section">';
       html += '<dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0">';
-      html += `<div class="govuk-summary-list__row"><dt class="govuk-summary-list__key" style="font-size:1rem;padding:4px 0;width:40%">Parcel ID</dt><dd class="govuk-summary-list__value" style="font-size:1rem;padding:4px 0">${sheetId} ${parcelId}</dd></div>`;
-      html += `<div class="govuk-summary-list__row"><dt class="govuk-summary-list__key" style="font-size:1rem;padding:4px 0;width:40%">Area (ha)</dt><dd class="govuk-summary-list__value" style="font-size:1rem;padding:4px 0">${areaHa}</dd></div>`;
+      html += `<div class="govuk-summary-list__row"><dt class="govuk-summary-list__key govuk-body-s govuk-!-padding-bottom-0">Parcel ID</dt><dd class="govuk-summary-list__value govuk-body-s govuk-!-padding-bottom-0">${sheetId} ${parcelId}</dd></div>`;
+      html += `<div class="govuk-summary-list__row"><dt class="govuk-summary-list__key govuk-body-s govuk-!-padding-bottom-0">Area (ha)</dt><dd class="govuk-summary-list__value govuk-body-s govuk-!-padding-bottom-0">${areaHa}</dd></div>`;
       html += '</dl></div>';
 
       // Land covers
@@ -1454,7 +1457,7 @@
           html += '<dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0">';
           parcelLandCovers.forEach(lc => {
             const lcArea = parseFloat(lc.properties.AREA_HA || 0).toFixed(4);
-            html += `<div class="govuk-summary-list__row"><dt class="govuk-summary-list__key" style="font-size:0.875rem;padding:2px 0;width:60%">${lc.properties.DESCRIPTION}</dt><dd class="govuk-summary-list__value" style="font-size:0.875rem;padding:2px 0">${lcArea} ha</dd></div>`;
+            html += `<div class="govuk-summary-list__row"><dt class="govuk-summary-list__key govuk-body-s govuk-!-padding-bottom-0">${lc.properties.DESCRIPTION}</dt><dd class="govuk-summary-list__value govuk-body-s govuk-!-padding-bottom-0">${lcArea} ha</dd></div>`;
           });
           html += '</dl></div>';
         }
@@ -1482,8 +1485,8 @@
       label: 'Parcel details',
       html: '<p class="govuk-body-s govuk-hint">Click a parcel to see details</p>',
       mobile: { slot: 'bottom', modal: true, dismissable: true, initiallyOpen: false },
-      tablet: { slot: 'inset', width: '320px', dismissable: true, initiallyOpen: false },
-      desktop: { slot: 'inset', width: '320px', dismissable: true, initiallyOpen: false }
+      tablet: { slot: 'inset', width: '400px', dismissable: true, initiallyOpen: false },
+      desktop: { slot: 'inset', width: '400px', dismissable: true, initiallyOpen: false }
     };
 
     let lastClickedParcelFeature = null;
